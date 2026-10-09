@@ -1,7 +1,7 @@
 import { mergeLog } from './merge';
 import { initialState } from './scheduler';
 import type { Card, Deck, ReviewLog } from './schemas';
-import { studyDayKey } from './studyDay';
+import { endOfStudyDay, studyDayKey } from './studyDay';
 import type { CardState, UUID } from './types';
 
 /** A learning card due within this window is offered early when nothing else is due. */
@@ -28,14 +28,17 @@ export interface QueueInput {
 }
 
 export interface Queue {
-  /** Review, learning and relearning cards due now, ordered by due ascending. */
+  /**
+   * Cards to study now, ordered by due ascending: review cards due at any time in the
+   * current study day, plus learning/relearning cards whose due time has passed.
+   */
   due: UUID[];
   /** New cards allowed today, ordered by createdAt ascending. */
   newCards: UUID[];
   /** When nothing is due: the earliest learning card due within 20 minutes. */
   learnAheadNext: { cardId: UUID; due: number } | null;
   /**
-   * Disjoint counts for the Home screen: `due` = review cards due now,
+   * Disjoint counts for the Home screen: `due` = review cards due today,
    * `learning` = learning/relearning cards due now, `new` = newCards.length.
    */
   counts: { due: number; new: number; learning: number };
@@ -48,7 +51,7 @@ const byCreatedThenId = (a: Card, b: Card) =>
   a.createdAt - b.createdAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 export function buildQueue(input: QueueInput): Queue {
-  const { now, newPerDay } = input;
+  const { now, newPerDay, timeZone, rolloverHour } = input;
   if (!Number.isInteger(newPerDay) || newPerDay < 0) {
     throw new RangeError(`newPerDay must be a non-negative integer, got ${String(newPerDay)}`);
   }
@@ -64,10 +67,13 @@ export function buildQueue(input: QueueInput): Queue {
   );
   const stateOf = (card: Card) => input.states.get(card.id) ?? initialState(card);
 
-  const dueStates = cards
-    .map(stateOf)
-    .filter((s) => s.state !== 'new' && s.due <= now)
-    .sort(byDueThenId);
+  // Review cards are scheduled in whole days, so they are due for the whole study day
+  // they fall in: a card due at 23:00 can be studied in the morning. Learning steps
+  // are minutes long, so learning/relearning cards wait for their exact due time.
+  const endOfToday = endOfStudyDay(now, timeZone, rolloverHour);
+  const isDue = (s: CardState) =>
+    s.state === 'review' ? s.due <= endOfToday : s.state !== 'new' && s.due <= now;
+  const dueStates = cards.map(stateOf).filter(isDue).sort(byDueThenId);
 
   const allowance = Math.max(0, newPerDay - countIntroducedToday(input));
   const newCards = cards

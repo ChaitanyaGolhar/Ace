@@ -13,6 +13,7 @@ import { DAY, HOUR, makeCard, makeDeck, makeLog, MINUTE, T0, uuid } from './help
 // study day ("2026-10-10") began at 2026-10-09T22:30Z.
 const NOW = T0;
 const START_OF_TODAY = Date.parse('2026-10-09T22:30:00Z');
+const END_OF_TODAY = Date.parse('2026-10-10T22:30:00Z'); // 04:00 IST on 11 Oct
 const DECK = makeDeck({ id: uuid(1) });
 const OTHER_DECK = makeDeck({ id: uuid(2), name: 'Other' });
 
@@ -79,18 +80,102 @@ describe('buildQueue: due cards', () => {
     expect(q.due).toEqual([uuid(11), uuid(12), uuid(10)]);
   });
 
-  it('excludes cards due in the future and new cards', () => {
-    const cards = [makeCard({ id: uuid(10) }), makeCard({ id: uuid(11) })];
+  it('excludes review cards due in a later study day, future learning cards, and new cards', () => {
+    const cards = [
+      makeCard({ id: uuid(10) }),
+      makeCard({ id: uuid(11) }),
+      makeCard({ id: uuid(12) }),
+    ];
     const q = buildQueue(
       input({
         ...withStates(cards, [
-          state(uuid(10), { due: NOW + 1 }),
-          state(uuid(11), { state: 'new' }),
+          state(uuid(10), { due: END_OF_TODAY + 1 }),
+          state(uuid(11), { state: 'learning', due: NOW + 1 }),
+          state(uuid(12), { state: 'new' }),
         ]),
         newPerDay: 0,
       }),
     );
     expect(q.due).toEqual([]);
+  });
+
+  describe('review cards are due by study day; learning cards by the clock', () => {
+    // 05:00 IST on 10 Oct: one hour into the "2026-10-10" study day.
+    const FIVE_AM = Date.parse('2026-10-09T23:30:00Z');
+    const review = makeCard({ id: uuid(10) });
+    const learning = makeCard({ id: uuid(11) });
+
+    it('a review card due at 23:00 local appears at 05:00 the same study day', () => {
+      const elevenPm = Date.parse('2026-10-10T17:30:00Z'); // 23:00 IST on 10 Oct
+      const q = buildQueue(
+        input({ ...withStates([review], [state(review.id, { due: elevenPm })]), now: FIVE_AM }),
+      );
+      expect(q.due).toEqual([review.id]);
+      expect(q.counts.due).toBe(1);
+    });
+
+    it('a learning card due in 10 minutes is not due yet (only learn-ahead may offer it)', () => {
+      const tenMinutes = FIVE_AM + 10 * MINUTE;
+      const withReview = buildQueue(
+        input({
+          ...withStates(
+            [review, learning],
+            [
+              state(review.id, { due: FIVE_AM + 2 * HOUR }),
+              state(learning.id, { state: 'learning', due: tenMinutes }),
+            ],
+          ),
+          now: FIVE_AM,
+        }),
+      );
+      expect(withReview.due).toEqual([review.id]);
+      expect(withReview.counts.learning).toBe(0);
+      expect(withReview.learnAheadNext).toBeNull();
+
+      const alone = buildQueue(
+        input({
+          ...withStates([learning], [state(learning.id, { state: 'learning', due: tenMinutes })]),
+          now: FIVE_AM,
+        }),
+      );
+      expect(alone.due).toEqual([]);
+      expect(alone.learnAheadNext).toEqual({ cardId: learning.id, due: tenMinutes });
+    });
+
+    it('the same rule applies to relearning cards', () => {
+      const q = buildQueue(
+        input(
+          withStates([learning], [state(learning.id, { state: 'relearning', due: NOW + HOUR })]),
+        ),
+      );
+      expect(q.due).toEqual([]);
+    });
+
+    it('a review card due up to the next rollover is due today; one due after it is not', () => {
+      const dueAt = (due: number) =>
+        buildQueue(input(withStates([review], [state(review.id, { due })]))).due;
+      expect(dueAt(END_OF_TODAY - 1)).toEqual([review.id]); // 03:59:59.999 IST on 11 Oct
+      // §6.1 says `due <= endOfStudyDay`, and endOfStudyDay is the first instant of the
+      // next study day, so a card due at exactly that instant is included.
+      expect(dueAt(END_OF_TODAY)).toEqual([review.id]);
+      expect(dueAt(END_OF_TODAY + 1)).toEqual([]);
+    });
+
+    it('orders review cards due later today after learning cards due now, by due', () => {
+      const q = buildQueue(
+        input(
+          withStates(
+            [review, learning],
+            [
+              state(review.id, { due: NOW + 3 * HOUR }),
+              state(learning.id, { state: 'learning', due: NOW - MINUTE }),
+            ],
+          ),
+        ),
+      );
+      expect(q.due).toEqual([learning.id, review.id]);
+      expect(q.counts).toMatchObject({ due: 1, learning: 1 });
+    });
   });
 
   it('breaks ties on due by card id', () => {
@@ -264,6 +349,7 @@ describe('buildQueue: learn-ahead', () => {
 
   it('offers relearning cards but not review cards', () => {
     expect(learnAheadFor(5 * MINUTE, 'relearning')).not.toBeNull();
+    // A review card due in 5 minutes is already due today, so it is in `due` instead.
     expect(learnAheadFor(5 * MINUTE, 'review')).toBeNull();
   });
 

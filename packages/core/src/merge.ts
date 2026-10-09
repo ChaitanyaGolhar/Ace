@@ -9,24 +9,26 @@ interface Versioned {
 /**
  * Last-write-wins between two versions of a deck or card. Returns one of its inputs.
  *
- * Order of tie-breaks:
- *  1. newer `updatedAt` wins;
- *  2. on equal `updatedAt`, a tombstone (non-null `deletedAt`) wins;
+ * Rules, in order:
+ *  1. if exactly one version is a tombstone (non-null `deletedAt`), it wins, however
+ *     old it is. Tombstones are sticky (invariant 9): once a row is deleted anywhere,
+ *     no edit can bring it back, so "deleted" is a one-way door like `voidedAt`;
+ *  2. otherwise (both live, or both tombstones) the newer `updatedAt` wins;
  *  3. then the higher `id` (lexical) wins;
  *  4. then, for two different versions of the *same* row, the one with the greater
- *     canonical serialisation wins. The brief's id tie-break can't separate two
- *     versions of one row (they share an id), and without this step `lww(a, b)` and
- *     `lww(b, a)` could disagree, so two devices would never converge.
+ *     canonical serialisation wins. The id tie-break can't separate two versions of
+ *     one row (they share an id), and without this step `lww(a, b)` and `lww(b, a)`
+ *     could disagree, so two devices would never converge.
  *
  * Because the result depends only on the values, not the argument order, lww is
  * commutative and associative: merging the same set of versions in any order on any
- * device gives the same winner.
+ * device gives the same winner, and if any of them is a tombstone, so is the winner.
  */
 export function lww<T extends Versioned>(a: T, b: T): T {
-  if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? a : b;
   const aDeleted = a.deletedAt !== null;
   const bDeleted = b.deletedAt !== null;
   if (aDeleted !== bDeleted) return aDeleted ? a : b;
+  if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? a : b;
   if (a.id !== b.id) return a.id > b.id ? a : b;
   return canonical(a) >= canonical(b) ? a : b;
 }

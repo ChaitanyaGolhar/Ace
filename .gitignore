@@ -5,3 +5,7 @@ coverage/
 .env.*
 !.env.example
 *.log
+dev-dist/
+playwright-report/
+test-results/
+e2e/.tmp/

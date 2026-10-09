@@ -4,3 +4,6 @@ dist
 coverage
 BUILD_BRIEF.md
 packages/core/test/fixtures
+dev-dist
+playwright-report
+test-results

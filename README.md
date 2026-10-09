@@ -8,7 +8,7 @@ via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 
 ## Setup
 
-Requirements: Node 22.12+ and pnpm (the version is pinned in `package.json` →
+Requirements: Node 24+ (see `.nvmrc`) and pnpm (the version is pinned in `package.json` →
 `packageManager`; `corepack enable` will pick it up).
 
 ```sh
@@ -73,10 +73,22 @@ Any stored `CardState` is just a cache of this result, so it can always be rebui
 - **Review logs** never conflict: two devices create logs with different ids, so
   merging is a set union. The only mutable field, `voidedAt`, can only go from null
   to a timestamp, and `mergeLog` keeps the earliest one.
-- **Decks and cards** use last-write-wins (`lww`): newer `updatedAt` wins; on a tie a
-  tombstone wins, then the higher id, then a deterministic content comparison. `lww`
-  is commutative and associative (property-tested), so every device that sees the
-  same versions picks the same winner, whatever order they arrive in.
+- **Decks and cards** use last-write-wins (`lww`), with **sticky tombstones**: a
+  deleted version (non-null `deletedAt`) beats any live version, however old it is,
+  so once a row is deleted anywhere it stays deleted everywhere. Otherwise the newer
+  `updatedAt` wins, then the higher id, then a deterministic content comparison.
+  `lww` is commutative and associative (property-tested), so every device that sees
+  the same versions picks the same winner, whatever order they arrive in. Because a
+  tombstone can never be cleared, "undo delete" in the UI works by delaying the
+  tombstone write, not by reverting it.
+
+### What counts as due
+
+`buildQueue` treats the two kinds of scheduled card differently. Review cards are
+scheduled in days, so they are due for the whole study day they fall in (a card due at
+23:00 is offered at 05:00). Learning and relearning steps are minutes long, so those
+cards are due only once their exact due time has passed, apart from the 20-minute
+learn-ahead rule.
 
 ### Changing the scheduler
 
@@ -86,3 +98,18 @@ exact version on purpose) can change every card's schedule. That requires bumpin
 `test/golden.test.ts` enforces this: it replays fixed histories and compares them with
 `test/fixtures/golden.json`. If the output changes, bump the version, then run
 `pnpm --filter @recall/core golden:update` (it refuses to run without the bump).
+
+### Notes on ts-fsrs
+
+- **It patches `Date.prototype`.** Importing ts-fsrs adds methods such as `scheduler`,
+  `diff`, `format` and `dueFormat` to every `Date` (deprecated upstream, to be removed
+  in ts-fsrs 6). Our code never calls them, but they are there globally in any bundle
+  that includes `core`.
+- **Fuzz is off by design.** FSRS can add a small random spread to intervals so that
+  cards learned together don't stay bunched up. We disable it (`enable_fuzz: false`),
+  so the interval shown on each rating button is exactly what the card gets and replay
+  is trivially deterministic. Revisit in M4 with deterministic, seeded fuzz (for
+  example seeded from the card and log ids), which would need a `SCHEDULER_VERSION`
+  bump.
+- **Elapsed days are counted in UTC calendar days** inside ts-fsrs, independent of our
+  04:00 local study day. This is deterministic and doesn't affect correctness.

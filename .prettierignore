@@ -3,3 +3,4 @@ node_modules
 dist
 coverage
 BUILD_BRIEF.md
+packages/core/test/fixtures

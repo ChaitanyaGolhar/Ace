@@ -1,0 +1,2453 @@
+{
+  "schedulerVersion": 1,
+  "cases": [
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000001",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-0000000003e8",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1791712800000,
+          "durationMs": 4425,
+          "deviceId": "device-a",
+          "voidedAt": 1791712860000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003e9",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1794304800000,
+          "durationMs": 3267,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003ea",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 1,
+          "reviewedAt": 1794305400000,
+          "durationMs": 6215,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003eb",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 1,
+          "reviewedAt": 1794651000000,
+          "durationMs": 6795,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003ec",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 2,
+          "reviewedAt": 1794651060000,
+          "durationMs": 3005,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003ed",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1794737460000,
+          "durationMs": 3173,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003ee",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1795083060000,
+          "durationMs": 3152,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003ef",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1795428660000,
+          "durationMs": 9307,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f0",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1795428720000,
+          "durationMs": 6548,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f1",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1795429320000,
+          "durationMs": 6013,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f2",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 1,
+          "reviewedAt": 1795515720000,
+          "durationMs": 9392,
+          "deviceId": "device-a",
+          "voidedAt": 1795515780000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f3",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1795602120000,
+          "durationMs": 5728,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f4",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1795602720000,
+          "durationMs": 8713,
+          "deviceId": "device-a",
+          "voidedAt": 1795602780000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f5",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 4,
+          "reviewedAt": 1795948320000,
+          "durationMs": 8315,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f6",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 1,
+          "reviewedAt": 1798540320000,
+          "durationMs": 4024,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f7",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 2,
+          "reviewedAt": 1798540920000,
+          "durationMs": 3120,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f8",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1798886520000,
+          "durationMs": 7421,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003f9",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 2,
+          "reviewedAt": 1799232120000,
+          "durationMs": 3610,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003fa",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 3,
+          "reviewedAt": 1799577720000,
+          "durationMs": 3955,
+          "deviceId": "device-a",
+          "voidedAt": 1799577780000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000003fb",
+          "cardId": "01920000-0000-7000-8000-000000000001",
+          "rating": 2,
+          "reviewedAt": 1799664120000,
+          "durationMs": 3991,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000001",
+        "due": 1800355320000,
+        "stability": 8.0043664,
+        "difficulty": 9.73568743,
+        "reps": 16,
+        "lapses": 2,
+        "state": "review",
+        "lastReviewedAt": 1799664120000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000002",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-0000000007d0",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1791972000000,
+          "durationMs": 9420,
+          "deviceId": "device-a",
+          "voidedAt": 1791972060000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d1",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1794564000000,
+          "durationMs": 7596,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d2",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1794564060000,
+          "durationMs": 4907,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d3",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 1,
+          "reviewedAt": 1794650460000,
+          "durationMs": 2029,
+          "deviceId": "device-a",
+          "voidedAt": 1794650520000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d4",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1794650520000,
+          "durationMs": 8541,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d5",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1794651120000,
+          "durationMs": 1303,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d6",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1794737520000,
+          "durationMs": 7133,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d7",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1794738120000,
+          "durationMs": 5199,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d8",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 1,
+          "reviewedAt": 1794824520000,
+          "durationMs": 1203,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007d9",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1794825120000,
+          "durationMs": 4606,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007da",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1794825720000,
+          "durationMs": 6009,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007db",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 3,
+          "reviewedAt": 1795171320000,
+          "durationMs": 2001,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007dc",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1797763320000,
+          "durationMs": 8271,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007dd",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 1,
+          "reviewedAt": 1800355320000,
+          "durationMs": 5626,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007de",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1800355380000,
+          "durationMs": 1244,
+          "deviceId": "device-a",
+          "voidedAt": 1800355440000
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007df",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 3,
+          "reviewedAt": 1800355980000,
+          "durationMs": 2006,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007e0",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 2,
+          "reviewedAt": 1800356040000,
+          "durationMs": 8562,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007e1",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 1,
+          "reviewedAt": 1800356640000,
+          "durationMs": 5171,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007e2",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 4,
+          "reviewedAt": 1800356700000,
+          "durationMs": 3899,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-0000000007e3",
+          "cardId": "01920000-0000-7000-8000-000000000002",
+          "rating": 1,
+          "reviewedAt": 1802948700000,
+          "durationMs": 5606,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000002",
+        "due": 1802949300000,
+        "stability": 0.62442228,
+        "difficulty": 9.90330308,
+        "reps": 17,
+        "lapses": 4,
+        "state": "relearning",
+        "lastReviewedAt": 1802948700000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000003",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000000bb8",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1791972000000,
+          "durationMs": 4920,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bb9",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1792058400000,
+          "durationMs": 4992,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bba",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 1,
+          "reviewedAt": 1792404000000,
+          "durationMs": 9687,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bbb",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 4,
+          "reviewedAt": 1792749600000,
+          "durationMs": 8366,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bbc",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1792749660000,
+          "durationMs": 1155,
+          "deviceId": "device-a",
+          "voidedAt": 1792749720000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bbd",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 3,
+          "reviewedAt": 1792836060000,
+          "durationMs": 1914,
+          "deviceId": "device-a",
+          "voidedAt": 1792836120000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bbe",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1795428060000,
+          "durationMs": 7161,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bbf",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1795514460000,
+          "durationMs": 7378,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc0",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1795600860000,
+          "durationMs": 8569,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc1",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 1,
+          "reviewedAt": 1795600920000,
+          "durationMs": 1188,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc2",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 3,
+          "reviewedAt": 1798192920000,
+          "durationMs": 1486,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc3",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 4,
+          "reviewedAt": 1798279320000,
+          "durationMs": 2789,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc4",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 3,
+          "reviewedAt": 1798279380000,
+          "durationMs": 1047,
+          "deviceId": "device-a",
+          "voidedAt": 1798279440000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc5",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 4,
+          "reviewedAt": 1800871380000,
+          "durationMs": 3284,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc6",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 4,
+          "reviewedAt": 1800871440000,
+          "durationMs": 7750,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc7",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 1,
+          "reviewedAt": 1803463440000,
+          "durationMs": 8639,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc8",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 1,
+          "reviewedAt": 1803463500000,
+          "durationMs": 5922,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bc9",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 1,
+          "reviewedAt": 1803463560000,
+          "durationMs": 9907,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bca",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 3,
+          "reviewedAt": 1803549960000,
+          "durationMs": 6194,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000bcb",
+          "cardId": "01920000-0000-7000-8000-000000000003",
+          "rating": 2,
+          "reviewedAt": 1803895560000,
+          "durationMs": 3345,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000003",
+        "due": 1803981960000,
+        "stability": 1.42023423,
+        "difficulty": 9.94982926,
+        "reps": 17,
+        "lapses": 2,
+        "state": "review",
+        "lastReviewedAt": 1803895560000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000004",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000000fa0",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 1,
+          "reviewedAt": 1791972000000,
+          "durationMs": 2120,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa1",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1794564000000,
+          "durationMs": 4616,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa2",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 3,
+          "reviewedAt": 1794909600000,
+          "durationMs": 6569,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa3",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1794996000000,
+          "durationMs": 3701,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa4",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1794996060000,
+          "durationMs": 7001,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa5",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1795341660000,
+          "durationMs": 1191,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa6",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1797933660000,
+          "durationMs": 8067,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa7",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 1,
+          "reviewedAt": 1798020060000,
+          "durationMs": 4284,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa8",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1798365660000,
+          "durationMs": 6803,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fa9",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1798452060000,
+          "durationMs": 4326,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000faa",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1798538460000,
+          "durationMs": 4618,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fab",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1798624860000,
+          "durationMs": 6409,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fac",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 1,
+          "reviewedAt": 1798970460000,
+          "durationMs": 6592,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fad",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1801562460000,
+          "durationMs": 2054,
+          "deviceId": "device-a",
+          "voidedAt": 1801562520000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fae",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1801908060000,
+          "durationMs": 3671,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000faf",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1801908120000,
+          "durationMs": 3226,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fb0",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 2,
+          "reviewedAt": 1801908720000,
+          "durationMs": 2896,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fb1",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1801908780000,
+          "durationMs": 8237,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fb2",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 4,
+          "reviewedAt": 1804500780000,
+          "durationMs": 5151,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000000fb3",
+          "cardId": "01920000-0000-7000-8000-000000000004",
+          "rating": 1,
+          "reviewedAt": 1804500840000,
+          "durationMs": 8876,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000004",
+        "due": 1804501440000,
+        "stability": 8.35755436,
+        "difficulty": 9.89053738,
+        "reps": 19,
+        "lapses": 2,
+        "state": "relearning",
+        "lastReviewedAt": 1804500840000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000005",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000001388",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1791972000000,
+          "durationMs": 7857,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001389",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1794564000000,
+          "durationMs": 3841,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138a",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 1,
+          "reviewedAt": 1794650400000,
+          "durationMs": 8823,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138b",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1794651000000,
+          "durationMs": 6621,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138c",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 2,
+          "reviewedAt": 1794651060000,
+          "durationMs": 8043,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138d",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 4,
+          "reviewedAt": 1794651120000,
+          "durationMs": 9595,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138e",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 1,
+          "reviewedAt": 1794737520000,
+          "durationMs": 7044,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000138f",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1794823920000,
+          "durationMs": 6538,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001390",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 1,
+          "reviewedAt": 1794824520000,
+          "durationMs": 1572,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001391",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 4,
+          "reviewedAt": 1797416520000,
+          "durationMs": 5904,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001392",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1797502920000,
+          "durationMs": 9439,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001393",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1800094920000,
+          "durationMs": 9909,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001394",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 4,
+          "reviewedAt": 1800440520000,
+          "durationMs": 8498,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001395",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1800440580000,
+          "durationMs": 2885,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001396",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1800440640000,
+          "durationMs": 3817,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001397",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 2,
+          "reviewedAt": 1800440700000,
+          "durationMs": 5682,
+          "deviceId": "device-a",
+          "voidedAt": 1800440760000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001398",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 4,
+          "reviewedAt": 1800786300000,
+          "durationMs": 1497,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001399",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 2,
+          "reviewedAt": 1800786360000,
+          "durationMs": 7426,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000139a",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 3,
+          "reviewedAt": 1800786960000,
+          "durationMs": 7915,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000139b",
+          "cardId": "01920000-0000-7000-8000-000000000005",
+          "rating": 4,
+          "reviewedAt": 1800787020000,
+          "durationMs": 2028,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000005",
+        "due": 1803811020000,
+        "stability": 34.84299274,
+        "difficulty": 9.22779268,
+        "reps": 19,
+        "lapses": 3,
+        "state": "review",
+        "lastReviewedAt": 1800787020000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000006",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000001770",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1791712800000,
+          "durationMs": 3950,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001771",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1792058400000,
+          "durationMs": 6631,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001772",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1792059000000,
+          "durationMs": 8719,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001773",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 2,
+          "reviewedAt": 1792059600000,
+          "durationMs": 5199,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001774",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 1,
+          "reviewedAt": 1792405200000,
+          "durationMs": 4138,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001775",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1792750800000,
+          "durationMs": 4204,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001776",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 1,
+          "reviewedAt": 1795342800000,
+          "durationMs": 6986,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001777",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1795343400000,
+          "durationMs": 7165,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001778",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1795343460000,
+          "durationMs": 9796,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001779",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 1,
+          "reviewedAt": 1795343520000,
+          "durationMs": 4171,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177a",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1795429920000,
+          "durationMs": 6296,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177b",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1798021920000,
+          "durationMs": 4427,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177c",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1798022520000,
+          "durationMs": 2059,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177d",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1798022580000,
+          "durationMs": 2263,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177e",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 1,
+          "reviewedAt": 1798368180000,
+          "durationMs": 1029,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000177f",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1798713780000,
+          "durationMs": 5971,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001780",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1799059380000,
+          "durationMs": 5429,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001781",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1801651380000,
+          "durationMs": 3616,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001782",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 3,
+          "reviewedAt": 1804243380000,
+          "durationMs": 4174,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001783",
+          "cardId": "01920000-0000-7000-8000-000000000006",
+          "rating": 4,
+          "reviewedAt": 1806835380000,
+          "durationMs": 2979,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000006",
+        "due": 1811414580000,
+        "stability": 52.97896662,
+        "difficulty": 9.55894227,
+        "reps": 20,
+        "lapses": 4,
+        "state": "review",
+        "lastReviewedAt": 1806835380000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000007",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000001b58",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1794218400000,
+          "durationMs": 2633,
+          "deviceId": "device-a",
+          "voidedAt": 1794218460000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b59",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 2,
+          "reviewedAt": 1794219000000,
+          "durationMs": 5724,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5a",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 4,
+          "reviewedAt": 1794305400000,
+          "durationMs": 7357,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5b",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1794306000000,
+          "durationMs": 5368,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5c",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 3,
+          "reviewedAt": 1794306600000,
+          "durationMs": 1388,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5d",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1794652200000,
+          "durationMs": 1376,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5e",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 4,
+          "reviewedAt": 1794738600000,
+          "durationMs": 2778,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b5f",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1794738660000,
+          "durationMs": 5029,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b60",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 2,
+          "reviewedAt": 1797330660000,
+          "durationMs": 8324,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b61",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 4,
+          "reviewedAt": 1797330720000,
+          "durationMs": 2986,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b62",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 3,
+          "reviewedAt": 1797331320000,
+          "durationMs": 7790,
+          "deviceId": "device-a",
+          "voidedAt": 1797331380000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b63",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1797417720000,
+          "durationMs": 2989,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b64",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1797418320000,
+          "durationMs": 3774,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b65",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 4,
+          "reviewedAt": 1797504720000,
+          "durationMs": 9708,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b66",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1797504780000,
+          "durationMs": 2179,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b67",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 4,
+          "reviewedAt": 1797850380000,
+          "durationMs": 5977,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b68",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1800442380000,
+          "durationMs": 1170,
+          "deviceId": "device-a",
+          "voidedAt": 1800442440000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b69",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 3,
+          "reviewedAt": 1800787980000,
+          "durationMs": 6117,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b6a",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1801133580000,
+          "durationMs": 1505,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001b6b",
+          "cardId": "01920000-0000-7000-8000-000000000007",
+          "rating": 1,
+          "reviewedAt": 1801133640000,
+          "durationMs": 5474,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000007",
+        "due": 1801134240000,
+        "stability": 0.34635453,
+        "difficulty": 9.97082934,
+        "reps": 17,
+        "lapses": 6,
+        "state": "relearning",
+        "lastReviewedAt": 1801133640000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000008",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000001f40",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 1,
+          "reviewedAt": 1791972000000,
+          "durationMs": 4185,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f41",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1792317600000,
+          "durationMs": 9947,
+          "deviceId": "device-a",
+          "voidedAt": 1792317660000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f42",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 2,
+          "reviewedAt": 1792318200000,
+          "durationMs": 5558,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f43",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1792318800000,
+          "durationMs": 9370,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f44",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1792319400000,
+          "durationMs": 3512,
+          "deviceId": "device-a",
+          "voidedAt": 1792319460000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f45",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1794911400000,
+          "durationMs": 2534,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f46",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1794912000000,
+          "durationMs": 1775,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f47",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 1,
+          "reviewedAt": 1794912060000,
+          "durationMs": 1771,
+          "deviceId": "device-a",
+          "voidedAt": 1794912120000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f48",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 2,
+          "reviewedAt": 1794998460000,
+          "durationMs": 7406,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f49",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1795344060000,
+          "durationMs": 7218,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4a",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1795344660000,
+          "durationMs": 4834,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4b",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 1,
+          "reviewedAt": 1797936660000,
+          "durationMs": 8699,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4c",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 1,
+          "reviewedAt": 1798282260000,
+          "durationMs": 6439,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4d",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1800874260000,
+          "durationMs": 5510,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4e",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1800874860000,
+          "durationMs": 7016,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f4f",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 2,
+          "reviewedAt": 1800874920000,
+          "durationMs": 8718,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f50",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1800875520000,
+          "durationMs": 7297,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f51",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1800875580000,
+          "durationMs": 5334,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f52",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 4,
+          "reviewedAt": 1800961980000,
+          "durationMs": 4407,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000001f53",
+          "cardId": "01920000-0000-7000-8000-000000000008",
+          "rating": 3,
+          "reviewedAt": 1801048380000,
+          "durationMs": 5062,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000008",
+        "due": 1802344380000,
+        "stability": 14.55148178,
+        "difficulty": 9.31709632,
+        "reps": 17,
+        "lapses": 1,
+        "state": "review",
+        "lastReviewedAt": 1801048380000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-000000000009",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000002328",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 2,
+          "reviewedAt": 1791627000000,
+          "durationMs": 3851,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002329",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 2,
+          "reviewedAt": 1791713400000,
+          "durationMs": 6899,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232a",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1794305400000,
+          "durationMs": 1861,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232b",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 1,
+          "reviewedAt": 1794651000000,
+          "durationMs": 7067,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232c",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 2,
+          "reviewedAt": 1794996600000,
+          "durationMs": 6238,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232d",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 3,
+          "reviewedAt": 1794996660000,
+          "durationMs": 7947,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232e",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 1,
+          "reviewedAt": 1795083060000,
+          "durationMs": 2133,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000232f",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 3,
+          "reviewedAt": 1795428660000,
+          "durationMs": 4093,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002330",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1795428720000,
+          "durationMs": 4346,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002331",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 2,
+          "reviewedAt": 1795428780000,
+          "durationMs": 5172,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002332",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 3,
+          "reviewedAt": 1798020780000,
+          "durationMs": 7734,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002333",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1798107180000,
+          "durationMs": 8728,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002334",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 3,
+          "reviewedAt": 1800699180000,
+          "durationMs": 8939,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002335",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1800785580000,
+          "durationMs": 3219,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002336",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1800785640000,
+          "durationMs": 5927,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002337",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 1,
+          "reviewedAt": 1800785700000,
+          "durationMs": 2590,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002338",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 3,
+          "reviewedAt": 1803377700000,
+          "durationMs": 9424,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002339",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1803464100000,
+          "durationMs": 6866,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000233a",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 4,
+          "reviewedAt": 1803809700000,
+          "durationMs": 8579,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000233b",
+          "cardId": "01920000-0000-7000-8000-000000000009",
+          "rating": 1,
+          "reviewedAt": 1803896100000,
+          "durationMs": 5616,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-000000000009",
+        "due": 1803896700000,
+        "stability": 1.78698352,
+        "difficulty": 9.77891115,
+        "reps": 20,
+        "lapses": 4,
+        "state": "relearning",
+        "lastReviewedAt": 1803896100000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-00000000000a",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000002710",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 4,
+          "reviewedAt": 1791626460000,
+          "durationMs": 1588,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002711",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1791627060000,
+          "durationMs": 9722,
+          "deviceId": "device-a",
+          "voidedAt": 1791627120000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002712",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 4,
+          "reviewedAt": 1791627660000,
+          "durationMs": 4345,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002713",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1791973260000,
+          "durationMs": 4097,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002714",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1792318860000,
+          "durationMs": 8565,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002715",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 3,
+          "reviewedAt": 1792319460000,
+          "durationMs": 9723,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002716",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 3,
+          "reviewedAt": 1792665060000,
+          "durationMs": 8671,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002717",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1793010660000,
+          "durationMs": 8879,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002718",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1795602660000,
+          "durationMs": 6877,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002719",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 4,
+          "reviewedAt": 1795602720000,
+          "durationMs": 8128,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271a",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1798194720000,
+          "durationMs": 6631,
+          "deviceId": "device-a",
+          "voidedAt": 1798194780000
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271b",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1798195320000,
+          "durationMs": 3906,
+          "deviceId": "device-a",
+          "voidedAt": 1798195380000
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271c",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1798195920000,
+          "durationMs": 8281,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271d",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 4,
+          "reviewedAt": 1798282320000,
+          "durationMs": 3868,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271e",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1798282380000,
+          "durationMs": 8450,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-00000000271f",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1798282980000,
+          "durationMs": 3359,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002720",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1798628580000,
+          "durationMs": 8437,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002721",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 1,
+          "reviewedAt": 1798974180000,
+          "durationMs": 5106,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002722",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 2,
+          "reviewedAt": 1799319780000,
+          "durationMs": 9044,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002723",
+          "cardId": "01920000-0000-7000-8000-00000000000a",
+          "rating": 3,
+          "reviewedAt": 1801911780000,
+          "durationMs": 4396,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-00000000000a",
+        "due": 1802084580000,
+        "stability": 2.13219911,
+        "difficulty": 9.95086468,
+        "reps": 17,
+        "lapses": 4,
+        "state": "review",
+        "lastReviewedAt": 1801911780000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-00000000000b",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000002af8",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 1,
+          "reviewedAt": 1791627000000,
+          "durationMs": 2059,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002af9",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1794219000000,
+          "durationMs": 7772,
+          "deviceId": "device-a",
+          "voidedAt": 1794219060000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002afa",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1794305400000,
+          "durationMs": 4237,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002afb",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 3,
+          "reviewedAt": 1796897400000,
+          "durationMs": 1592,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002afc",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1796897460000,
+          "durationMs": 2075,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002afd",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1796897520000,
+          "durationMs": 1189,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002afe",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 3,
+          "reviewedAt": 1796897580000,
+          "durationMs": 7864,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002aff",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 3,
+          "reviewedAt": 1796983980000,
+          "durationMs": 3030,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b00",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1797070380000,
+          "durationMs": 5433,
+          "deviceId": "device-a",
+          "voidedAt": 1797070440000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b01",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1797070440000,
+          "durationMs": 4475,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b02",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1799662440000,
+          "durationMs": 2424,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b03",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1800008040000,
+          "durationMs": 6556,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b04",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1800008100000,
+          "durationMs": 5503,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b05",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1800008160000,
+          "durationMs": 4563,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b06",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1802600160000,
+          "durationMs": 9316,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b07",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1805192160000,
+          "durationMs": 2690,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b08",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1805278560000,
+          "durationMs": 4469,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b09",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 2,
+          "reviewedAt": 1805278620000,
+          "durationMs": 1938,
+          "deviceId": "device-a",
+          "voidedAt": 1805278680000
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b0a",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1805278680000,
+          "durationMs": 3953,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002b0b",
+          "cardId": "01920000-0000-7000-8000-00000000000b",
+          "rating": 4,
+          "reviewedAt": 1805624280000,
+          "durationMs": 1427,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-00000000000b",
+        "due": 1818584280000,
+        "stability": 150.15333394,
+        "difficulty": 8.5812878,
+        "reps": 17,
+        "lapses": 0,
+        "state": "review",
+        "lastReviewedAt": 1805624280000,
+        "learningSteps": 0
+      }
+    },
+    {
+      "card": {
+        "id": "01920000-0000-7000-8000-00000000000c",
+        "deckId": "01920000-0000-7000-8000-000000000001",
+        "front": "front",
+        "back": "back",
+        "createdAt": 1791626400000,
+        "updatedAt": 1791626400000,
+        "deletedAt": null
+      },
+      "logs": [
+        {
+          "id": "01920000-0000-7000-8000-000000002ee0",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 2,
+          "reviewedAt": 1794218400000,
+          "durationMs": 4242,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee1",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1794304800000,
+          "durationMs": 3944,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee2",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 4,
+          "reviewedAt": 1794304860000,
+          "durationMs": 6475,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee3",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 2,
+          "reviewedAt": 1796896860000,
+          "durationMs": 9834,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee4",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 4,
+          "reviewedAt": 1796897460000,
+          "durationMs": 1332,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee5",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 1,
+          "reviewedAt": 1799489460000,
+          "durationMs": 2579,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee6",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 1,
+          "reviewedAt": 1799490060000,
+          "durationMs": 1085,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee7",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1802082060000,
+          "durationMs": 6626,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee8",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 1,
+          "reviewedAt": 1804674060000,
+          "durationMs": 7063,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ee9",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 2,
+          "reviewedAt": 1804760460000,
+          "durationMs": 3216,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eea",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1804846860000,
+          "durationMs": 1207,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eeb",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 4,
+          "reviewedAt": 1804933260000,
+          "durationMs": 2347,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eec",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 2,
+          "reviewedAt": 1805019660000,
+          "durationMs": 2809,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eed",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1805106060000,
+          "durationMs": 2393,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eee",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 4,
+          "reviewedAt": 1807698060000,
+          "durationMs": 1529,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002eef",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 1,
+          "reviewedAt": 1810290060000,
+          "durationMs": 1606,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ef0",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 1,
+          "reviewedAt": 1810635660000,
+          "durationMs": 1004,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ef1",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1810981260000,
+          "durationMs": 4257,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ef2",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 3,
+          "reviewedAt": 1811067660000,
+          "durationMs": 9406,
+          "deviceId": "device-a",
+          "voidedAt": null
+        },
+        {
+          "id": "01920000-0000-7000-8000-000000002ef3",
+          "cardId": "01920000-0000-7000-8000-00000000000c",
+          "rating": 2,
+          "reviewedAt": 1813659660000,
+          "durationMs": 6348,
+          "deviceId": "device-a",
+          "voidedAt": null
+        }
+      ],
+      "expected": {
+        "cardId": "01920000-0000-7000-8000-00000000000c",
+        "due": 1814091660000,
+        "stability": 4.60232161,
+        "difficulty": 9.93225507,
+        "reps": 20,
+        "lapses": 3,
+        "state": "review",
+        "lastReviewedAt": 1813659660000,
+        "learningSteps": 0
+      }
+    }
+  ]
+}

@@ -1,3 +1,6 @@
 packages:
   - packages/*
   - apps/*
+
+# Run package scripts through pnpm's cross-platform shell, so `VAR=1 cmd` works on Windows too.
+shellEmulator: true

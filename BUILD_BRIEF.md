@@ -76,7 +76,7 @@ A web app (installable as a PWA) that helps students remember what they study, u
 
 ## 4. Tech stack
 
-**Monorepo:** pnpm workspaces, Node 22, TypeScript strict.
+**Monorepo:** pnpm workspaces, Node 24, TypeScript strict.
 
 ```
 recall/
@@ -118,7 +118,7 @@ interface Deck {
   prebuiltId: string | null;   // which content/decks/*.json it came from
   createdAt: number;           // epoch ms
   updatedAt: number;           // epoch ms, set on every edit
-  deletedAt: number | null;    // tombstone
+  deletedAt: number | null;    // tombstone; sticky: once set, never cleared (invariant 9)
 }
 
 interface Card {
@@ -154,6 +154,7 @@ interface CardState {
   lapses: number;
   state: 'new' | 'learning' | 'review' | 'relearning';
   lastReviewedAt: number | null;
+  learningSteps: number;       // current (re)learning step index; ts-fsrs reads it (added in M0)
 }
 ```
 
@@ -165,8 +166,9 @@ interface CardState {
 4. **Replay is duplicate-proof:** logs with the same `id` count once.
 5. **Voided logs are ignored** by replay.
 6. **Deleted cards and decks (tombstoned)** never appear in queues or stats. Their logs are kept.
-7. **Deck/card conflicts resolve last-write-wins:** compare `updatedAt`; if equal, the higher `id` (lexical) wins. A non-null `deletedAt` beats an edit with an older or equal `updatedAt`.
+7. **Deck/card conflicts resolve last-write-wins:** if exactly one version is tombstoned, it wins (invariant 9). Otherwise compare `updatedAt`; if equal, the higher `id` (lexical) wins; if still tied (two versions of the same row share an `id`), a deterministic comparison of the row contents decides. `lww(a, b)` and `lww(b, a)` always give the same result.
 8. **Changing FSRS params or the replay logic** bumps `SCHEDULER_VERSION` in `core`. On startup, if the stored version differs, every CardState is rebuilt by replay. This is the entire migration strategy.
+9. **Tombstones are sticky.** `deletedAt` is monotonic: once set, it never clears. In `lww`, a tombstoned version beats any non-tombstoned version regardless of `updatedAt`; if both are tombstoned, the normal rules apply. A tombstone survives any sequence of merges, in any order.
 
 ---
 
@@ -180,23 +182,24 @@ export const SCHEDULER_VERSION: number;
 export function initialState(card: Card): CardState;
 export function applyReview(state: CardState, log: ReviewLog, params?: SchedulerParams): CardState;
 export function replay(card: Card, logs: ReviewLog[], params?: SchedulerParams): CardState;
-export function previewIntervals(state: CardState, now: number): Record<1|2|3|4, number>; // ms until due per rating, for the buttons
+export function previewIntervals(state: CardState, now: number, params?: SchedulerParams): Record<1|2|3|4, number>; // ms until due per rating, for the buttons
 
 // study day
 export function studyDayKey(at: number, timeZone: string, rolloverHour: number): string; // e.g. "2026-10-10"
-export function endOfStudyDay(now: number, timeZone: string, rolloverHour: number): number;
+export function endOfStudyDay(now: number, timeZone: string, rolloverHour: number): number; // first instant of the next study day
 
 // queue
 export interface QueueInput {
+  decks: Deck[]; // added in M0: cards of a tombstoned or unknown deck are excluded (invariant 6)
   cards: Card[]; states: Map<UUID, CardState>; logs: ReviewLog[];
   now: number; timeZone: string; rolloverHour: number; newPerDay: number;
   deckId?: UUID; // optional filter
 }
 export interface Queue {
-  due: UUID[];           // review/relearning/learning cards due now, ordered by due asc
+  due: UUID[];           // review cards due today + learning/relearning cards due now (§6.1), ordered by due asc
   newCards: UUID[];      // new cards allowed today, ordered by createdAt asc
   learnAheadNext: { cardId: UUID; due: number } | null; // learning card due within 20 min
-  counts: { due: number; new: number; learning: number };
+  counts: { due: number; new: number; learning: number }; // disjoint: review due / new / learning+relearning due
 }
 export function buildQueue(input: QueueInput): Queue;
 
@@ -210,7 +213,9 @@ export const DeckSchema, CardSchema, ReviewLogSchema; // zod
 
 ### 6.1 Queue rules
 
-- **Due cards:** any card whose `state !== 'new'` and `due <= now`, sorted by `due` ascending.
+- **Due cards:** sorted by `due` ascending.
+  - `review` cards are due by **study day**: `due <= endOfStudyDay(now, timeZone, rolloverHour)`. A review card due at 23:00 is already offered at 05:00 the same study day.
+  - `learning` and `relearning` cards are due by the **clock**: `due <= now` (apart from the learn-ahead rule below).
 - **New cards allowed today:** `newPerDay` minus the number of cards whose *first non-voided log* falls in today's study day. Never negative.
 - **Learn-ahead:** if nothing is due, but a learning or relearning card is due within the next 20 minutes, offer it now.
 - **Session order:** due cards first, then new cards. A card rated *Again* goes back into the session when it becomes due again (learning steps).
@@ -230,6 +235,8 @@ export const DeckSchema, CardSchema, ReviewLogSchema; // zod
   - a voided first review frees up its slot.
 - Learn-ahead window boundary: 19:59 away is offered; 20:01 away is not.
 - `lww`: newer edit wins; equal timestamp falls back to `id`; a tombstone beats an older edit.
+- Sticky tombstones (property tests): a tombstone beats any live version, even a newer one; `lww` gives the same result in either argument order; a tombstone survives any sequence of merges.
+- Day-based due: a review card due at 23:00 local appears at 05:00 the same study day; a learning card due in 10 minutes is not in `due` yet (it may only be offered via learn-ahead).
 
 ---
 
@@ -258,6 +265,7 @@ db.version(1).stores({
 - **Undo last review:** set `voidedAt` on the latest non-voided log of the session (`dirty=1`), then recompute that card's state by replay.
 - **Edit card/deck:** set `updatedAt=now`, `dirty=1`, increment `localVersion`.
 - **Delete:** set `deletedAt=now` and `updatedAt=now`, `dirty=1`. Deleting a deck tombstones all its cards too.
+- **Undo delete (toast):** tombstones are sticky (invariant 9), so undo can never clear one. The toast instead **delays writing the tombstone** until it is dismissed or times out; "Undo" simply cancels the pending write.
 
 ### 7.3 Service worker / PWA
 
@@ -577,6 +585,7 @@ No sign-up, no settings, no tutorial screens. A single one-line hint on the firs
 - [ ] Anonymous local data is uploaded on first sign-in, then merged with another device's data.
 - [ ] **E2E:** two browser contexts signed in as the same user; study offline in A, go online, and B shows the updated due counts after sync.
 - [ ] Studying is never blocked by sync errors (kill the API mid-session in E2E).
+- [ ] zod max lengths, enforced on both client and server: deck name 200 chars, card front/back 20,000 chars each.
 - [ ] The M2 report explains the advisory-lock and sequence reasoning in plain words.
 
 ### M3 — Prebuilt decks, onboarding and backup

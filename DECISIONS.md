@@ -210,3 +210,29 @@ decisions:
 ### D-212 Sync triggers
 
 - **What:** app start (after first render), the `online` event, the tab becoming visible again, every 60 s while visible and online, the end of a study session (the X button / "Back to home"), and "Sync now". One sync at a time; requests during a sync cause exactly one follow-up round. Backoff 5 s, 10 s, ... up to 5 min.
+
+## M3 — Ready-made decks, onboarding and backup
+
+### D-306 Build-time deck pipeline as a Vite plugin
+
+- **What:** `apps/web/build/readyMadeDecks.ts` reads `content/decks/*.json`, validates each with core `PrebuiltDeckSchema` (strict: unknown keys and duplicate questions are errors; the file name must equal `prebuiltId`), and serves them as `virtual:ready-made-decks`. Any problem fails `vite build` with a list naming file and field. The decks are compiled into the JS bundle, so the service worker precaches them.
+- **Note:** the web scripts use `vite --configLoader runner`, because the config now imports the TypeScript-source workspace package `@recall/core`, which Vite's default config bundler can't load.
+- **Reverse:** remove the plugin from `vite.config.ts`.
+
+### D-307 Placeholder deck content written for the build
+
+- **What:** `content/decks/dbms-basics-v1.json`, 20 original cards (ACID, keys, normal forms, isolation anomalies, 2PL, indexes, joins, WAL), written from scratch for this run.
+- **Why:** §11 asks for one ~20-card placeholder; Chaitanya writes the real decks.
+- **Reverse:** edit or replace the file; the build validates it.
+
+### D-308 Ready-made deck flows
+
+- **What:** "Add & start" on the welcome screen adds the deck and opens the review session (1 tap to the first card). On Browse, "Add" opens the new deck's page; adding a deck you already have opens the warning with "Keep one copy" focused as the safe default. Copies get new UUIDs, `source='prebuilt'`, `prebuiltId` set.
+
+### D-309 Backup file
+
+- **What:** JSON `{ format: "recall-backup", version: 1, exportedAt, decks, cards, reviewLogs }`, including tombstones and undone (voided) logs, without local-only fields. Import validates with zod (all-or-nothing), merges with `lww`/`mergeLog`, marks changed rows dirty (so they sync), and replays affected cards.
+
+### D-310 Dialog focus
+
+- **What:** dialogs focus the element marked `data-autofocus` when they open (React's `autoFocus` only fires on mount, and dialog content mounts before it opens). Found by the M3 E2E test that checks "Keep one copy" is focused.

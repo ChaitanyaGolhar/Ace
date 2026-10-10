@@ -4,7 +4,7 @@ An offline-first spaced-repetition web app (PWA) for students. Scheduling uses F
 via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 [`BUILD_BRIEF.md`](./BUILD_BRIEF.md) for the full product and technical spec.
 
-**Status:** M0 (core), M1 (local-only PWA) and M2 (API, auth, sync) done; the approved visual design is applied. See `MORNING_REPORT.md` for the
+**Status:** M0 (core), M1 (local-only PWA), M2 (API, auth, sync) and M3 (ready-made decks, onboarding, backup) done; the approved visual design is applied. See `MORNING_REPORT.md` for the
 latest milestone status, `DECISIONS.md` for decisions the brief didn't cover, and
 `apps/web/UI_CONTRACT.md` for the screen-by-screen UI contract.
 
@@ -181,3 +181,10 @@ exact version on purpose) can change every card's schedule. That requires bumpin
   `dirty` only if `localVersion` didn't change during the push; apply each pulled page
   (lww/mergeLog, replay affected cards, save the cursor) in one Dexie transaction; one
   sync at a time; exponential backoff; never blocks studying.
+
+## Ready-made decks
+
+Decks live in `content/decks/<prebuiltId>.json` (format in `BUILD_BRIEF.md` §11). The web
+build validates every file with `PrebuiltDeckSchema` and fails with a clear message if one
+is wrong; valid decks are compiled into the app and work offline. Add a deck by dropping a
+new file there.

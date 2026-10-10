@@ -172,7 +172,7 @@ export function CardEditorScreen() {
           <button type="button" className="btn-danger" onClick={vm.discardAndLeave}>
             Discard
           </button>
-          <button type="button" className="btn-primary" onClick={vm.keepEditing} autoFocus>
+          <button type="button" className="btn-primary" onClick={vm.keepEditing} data-autofocus>
             Keep editing
           </button>
         </div>

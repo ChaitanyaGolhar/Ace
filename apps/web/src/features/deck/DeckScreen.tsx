@@ -170,7 +170,7 @@ export function DeckScreen() {
               className="field"
               value={vm.renameValue}
               maxLength={MAX_DECK_NAME_LENGTH}
-              autoFocus
+              data-autofocus
               onChange={(e) => {
                 vm.setRenameValue(e.target.value);
               }}
@@ -198,7 +198,7 @@ export function DeckScreen() {
           can’t be undone.
         </p>
         <div className="flex flex-col-reverse gap-3 lg:flex-row lg:justify-end">
-          <button type="button" className="btn-secondary" onClick={vm.closeDelete} autoFocus>
+          <button type="button" className="btn-secondary" onClick={vm.closeDelete} data-autofocus>
             Keep deck
           </button>
           <button type="button" className="btn-danger" onClick={vm.confirmDelete}>

@@ -94,7 +94,7 @@ export function BrowseScreen() {
             type="button"
             className="btn-primary min-h-14 text-section"
             onClick={vm.keepOneCopy}
-            autoFocus
+            data-autofocus
           >
             Keep one copy
           </button>

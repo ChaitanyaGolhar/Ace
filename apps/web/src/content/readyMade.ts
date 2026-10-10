@@ -1,11 +1,9 @@
+import decks from 'virtual:ready-made-decks';
 import type { ReadyMadeDeck } from '../services/readyMade';
 
 /**
- * Ready-made decks bundled with the app (brief §11).
- *
- * Empty on purpose: the deck content (`content/decks/*.json`, validated at build time)
- * belongs to milestone M3, which hasn't been built. The welcome screen, the Browse
- * screen and "Add a ready-made deck" all read this list and hide their ready-made parts
- * while it is empty. See UI_REPORT.md › "Data that doesn't exist yet".
+ * Ready-made decks bundled with the app (brief §11): every `content/decks/*.json`,
+ * validated at build time by `build/readyMadeDecks.ts` and compiled into the bundle, so
+ * they are precached by the service worker and available offline.
  */
-export const READY_MADE_DECKS: readonly ReadyMadeDeck[] = [];
+export const READY_MADE_DECKS: readonly ReadyMadeDeck[] = decks;

@@ -11,7 +11,8 @@ interface DialogProps {
 
 /**
  * Modal built on the native <dialog>: `showModal()` makes the rest of the page inert
- * (focus stays inside) and Esc closes it, with no extra library.
+ * (focus stays inside) and Esc closes it, with no extra library. On open, focus goes to
+ * the element marked `data-autofocus` (else the first focusable one).
  */
 export function Dialog({ open, onClose, title, children, testId }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -20,7 +21,12 @@ export function Dialog({ open, onClose, title, children, testId }: DialogProps) 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      // React's autoFocus only runs when an element mounts, and the dialog's content
+      // mounts long before it opens. Mark the safe default with data-autofocus instead.
+      dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+    }
     if (!open && dialog.open) dialog.close();
   }, [open]);
 

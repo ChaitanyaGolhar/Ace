@@ -8,8 +8,8 @@ _Status: in progress. This file is updated after every milestone and every block
 | --------- | ----------------------- |
 | M1        | ✅ done — tag `m1-done` |
 | M2        | ✅ done — tag `m2-done` |
-| M3        | in progress             |
-| M4        | not started (paused)    |
+| M3        | ✅ done — tag `m3-done` |
+| M4        | in progress             |
 
 **Change of plan mid-run.** While M2 was in progress, a new instruction arrived: apply
 the approved visual design to `apps/web` as a UI-only change ("don't change
@@ -81,3 +81,18 @@ help there; the fix was to read all three in one database snapshot (DECISIONS D-
 
 Commands run (all green): `pnpm check` (core 132, API 38, web 178 tests) and `pnpm e2e`
 (20 passed; the 4 screenshot tests are opt-in).
+
+### M3 — Ready-made decks, onboarding and backup
+
+| Criterion                                                                         | Status | Proof                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E2E: fresh browser → first card within 3 taps, with no forms                      | ✅     | `apps/web/e2e/m3-onboarding.spec.ts` › "first visit: the first card is shown within 3 taps, with no forms" (1 tap: "Add & start"; no textbox on the way)                                                                    |
+| Importing an exported backup into a fresh install reproduces identical CardStates | ✅     | `apps/web/test/library.test.ts` › "importing into a fresh install reproduces identical CardStates"; E2E `m3-onboarding.spec.ts` › "backup: export, import into a fresh browser…" (real download/upload)                     |
+| Importing the same backup twice changes nothing (idempotent)                      | ✅     | `library.test.ts` › "importing the same backup twice changes nothing" (full table snapshots compared) and "re-importing your own backup changes nothing"; E2E second import → "Everything was already here."                |
+| An invalid deck JSON fails the build with a clear message                         | ✅     | `apps/web/test/readyMadeDecks.test.ts` › "the production build › fails with a clear message when a deck file is invalid" (runs a real `vite build` against an invalid deck folder) plus unit tests for each kind of problem |
+
+Also: the placeholder deck `content/decks/dbms-basics-v1.json` (20 original cards), the
+Browse screen with the duplicate warning (E2E "ready-made decks: adding a deck you already
+have warns first"), and a dialog-focus fix that test found (DECISIONS D-310).
+
+Commands run (all green): `pnpm check` (core 140, API 38, web 184 tests) and `pnpm e2e`.

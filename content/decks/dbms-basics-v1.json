@@ -1,0 +1,88 @@
+{
+  "prebuiltId": "dbms-basics-v1",
+  "name": "DBMS Basics",
+  "description": "Core DBMS concepts for semester and GATE revision.",
+  "version": 1,
+  "cards": [
+    {
+      "front": "What does ACID stand for?",
+      "back": "Atomicity, Consistency, Isolation, Durability — the four guarantees a transaction should give."
+    },
+    {
+      "front": "Atomicity: what does it guarantee?",
+      "back": "A transaction happens completely or not at all. If any part fails, every change it made is rolled back."
+    },
+    {
+      "front": "Durability: what does it guarantee?",
+      "back": "Once a transaction commits, its changes survive crashes and power loss (usually via a write-ahead log on disk)."
+    },
+    {
+      "front": "Primary key vs candidate key?",
+      "back": "A candidate key is any minimal set of attributes that uniquely identifies a row. The primary key is the one candidate key chosen to identify rows; it can't be NULL."
+    },
+    {
+      "front": "What is a superkey?",
+      "back": "Any set of attributes that uniquely identifies each row. A candidate key is a superkey with nothing removable."
+    },
+    {
+      "front": "What does a foreign key constraint guarantee?",
+      "back": "Every non-NULL value in the referencing column matches an existing key in the referenced table (referential integrity)."
+    },
+    {
+      "front": "When is a relation in 1NF?",
+      "back": "When every attribute holds a single, atomic value — no repeating groups or lists inside one cell."
+    },
+    {
+      "front": "When is a relation in 2NF?",
+      "back": "When it is in 1NF and no non-key attribute depends on only part of a composite candidate key (no partial dependencies)."
+    },
+    {
+      "front": "When is a relation in 3NF?",
+      "back": "When it is in 2NF and no non-key attribute depends on another non-key attribute (no transitive dependencies on the key)."
+    },
+    {
+      "front": "What extra condition does BCNF add over 3NF?",
+      "back": "For every non-trivial functional dependency X → Y, X must be a superkey. 3NF allows an exception when Y is part of a candidate key; BCNF doesn't."
+    },
+    {
+      "front": "What is a functional dependency X → Y?",
+      "back": "Whenever two rows agree on the attributes X, they must also agree on Y."
+    },
+    {
+      "front": "What is a dirty read?",
+      "back": "Reading data written by another transaction that hasn't committed yet — it may still be rolled back."
+    },
+    {
+      "front": "What is a phantom read?",
+      "back": "Running the same range query twice in one transaction and getting a different set of rows, because another transaction inserted or deleted matching rows."
+    },
+    {
+      "front": "Which SQL isolation level prevents dirty, non-repeatable and phantom reads?",
+      "back": "SERIALIZABLE."
+    },
+    {
+      "front": "What does two-phase locking (2PL) require?",
+      "back": "A growing phase where a transaction only acquires locks, then a shrinking phase where it only releases them. This guarantees conflict-serializable schedules."
+    },
+    {
+      "front": "What is the purpose of an index on a column?",
+      "back": "To find rows by that column's value without scanning the whole table, at the cost of extra storage and slower writes."
+    },
+    {
+      "front": "Why are B+ trees common for database indexes?",
+      "back": "They stay balanced, have a high fan-out (few disk reads per lookup) and keep leaves linked in order, which makes range scans fast."
+    },
+    {
+      "front": "What does a natural join match on?",
+      "back": "All columns with the same name in both tables, keeping one copy of each matched column."
+    },
+    {
+      "front": "WHERE vs HAVING?",
+      "back": "WHERE filters rows before grouping; HAVING filters groups after GROUP BY, so it can use aggregates like COUNT(*)."
+    },
+    {
+      "front": "What is a write-ahead log (WAL)?",
+      "back": "A log where changes are recorded before they are applied to the data files, so the database can redo or undo work after a crash."
+    }
+  ]
+}

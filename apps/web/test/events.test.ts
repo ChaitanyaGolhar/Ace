@@ -1,4 +1,6 @@
+import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
+import { RecallDB } from '../src/db/db';
 import { initialize } from '../src/services/bootstrap';
 import { createCard } from '../src/services/cards';
 import { createDeck } from '../src/services/decks';
@@ -163,5 +165,30 @@ describe('events sync like review logs', () => {
     ]);
     // Pulled events never go back up.
     expect(await b.db.events.where('dirty').equals(1).count()).toBe(0);
+  });
+});
+
+describe('local database upgrade', () => {
+  it('a version-1 database (before events) opens as version 2 with its data intact', async () => {
+    const name = 'upgrade-v1-to-v2';
+    const v1 = new Dexie(name);
+    v1.version(1).stores({
+      decks: 'id, updatedAt, deletedAt, dirty',
+      cards: 'id, deckId, updatedAt, deletedAt, dirty',
+      reviewLogs: 'id, cardId, reviewedAt, dirty',
+      cardStates: 'cardId, due, state',
+      meta: 'key',
+    });
+    await v1.table('meta').put({ key: 'deviceId', value: 'old-device' });
+    await v1.table('decks').put({ id: 'd1', name: 'Kept', dirty: 1 });
+    v1.close();
+
+    const db = new RecallDB(name);
+    await db.open();
+    expect(db.verno).toBe(2);
+    expect(await db.decks.get('d1')).toMatchObject({ name: 'Kept' });
+    expect(await db.meta.get('deviceId')).toEqual({ key: 'deviceId', value: 'old-device' });
+    expect(await db.events.count()).toBe(0);
+    db.close();
   });
 });

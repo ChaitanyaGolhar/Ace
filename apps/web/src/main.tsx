@@ -31,7 +31,8 @@ async function start() {
   await initialize(ctx, {
     requestPersist: typeof storage?.persist === 'function' ? () => storage.persist() : undefined,
   });
-  await recordEvent(ctx, 'app_opened', {});
+  // Analytics must never stop the app from starting (DECISIONS D-312).
+  void recordEvent(ctx, 'app_opened', {}).catch(() => undefined);
   const sync = new SyncEngine({
     ctx,
     transport: httpTransport(API_URL, window.fetch.bind(window)),

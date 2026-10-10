@@ -4,7 +4,7 @@ An offline-first spaced-repetition web app (PWA) for students. Scheduling uses F
 via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 [`BUILD_BRIEF.md`](./BUILD_BRIEF.md) for the full product and technical spec.
 
-**Status:** M0 (core), M1 (local-only PWA), M2 (API, auth, sync) and M3 (ready-made decks, onboarding, backup) done; the approved visual design is applied. See `MORNING_REPORT.md` for the
+**Status:** M0 (core), M1 (local-only PWA), M2 (API, auth, sync), M3 (ready-made decks, onboarding, backup) and M4 (stats, product events, retention analytics) done; the approved visual design is applied. See `MORNING_REPORT.md` for the
 latest milestone status, `DECISIONS.md` for decisions the brief didn't cover, and
 `apps/web/UI_CONTRACT.md` for the screen-by-screen UI contract.
 
@@ -51,6 +51,15 @@ API terminal.
 
 In `packages/core`, `pnpm test:watch` runs Vitest in watch mode, and `pnpm golden:update`
 regenerates the scheduler golden fixture (see "Changing the scheduler" below).
+
+## Product events and analytics (M4)
+
+The app records a small set of product events (`app_opened`, `first_review_completed`,
+`session_started`, `session_completed`, `session_abandoned`, `deck_added_prebuilt`,
+`card_created`, `signed_in`) locally and syncs them like review logs. Their payloads hold
+only counts, enums and deck slugs, never card text: the core schema rejects anything
+else. The retention queries are in `apps/api/analytics.sql`, one `-- name:` block each,
+tested in `apps/api/test/analytics.test.ts`. Definitions: DECISIONS D-311–D-314.
 
 ## Layout
 
@@ -141,9 +150,9 @@ exact version on purpose) can change every card's schedule. That requires bumpin
 - **Fuzz is off by design.** FSRS can add a small random spread to intervals so that
   cards learned together don't stay bunched up. We disable it (`enable_fuzz: false`),
   so the interval shown on each rating button is exactly what the card gets and replay
-  is trivially deterministic. Revisit in M4 with deterministic, seeded fuzz (for
-  example seeded from the card and log ids), which would need a `SCHEDULER_VERSION`
-  bump.
+  is trivially deterministic. Still off after M4. Deterministic, seeded fuzz (for
+  example seeded from the card and log ids) remains an option; it would need a
+  `SCHEDULER_VERSION` bump.
 - **Elapsed days are counted in UTC calendar days** inside ts-fsrs, independent of our
   04:00 local study day. This is deterministic and doesn't affect correctness.
 

@@ -1,5 +1,7 @@
 # UI report — approved design applied to `apps/web`
 
+> **Later status:** this report describes the app when the design was applied, mid-M2. Since then, M2 (sign-in and sync), M3 (ready-made decks and backup) and M4 (events) have filled the gaps listed in section 3. See `MORNING_REPORT.md`.
+
 `pnpm check` is green (format, lint, typecheck; 132 core + 152 web + 18 API unit tests).
 The full E2E suite passes (17 tests, including 6 axe accessibility checks). Screenshots
 of every screen at 390×844 and 1280×800 in both themes are in `docs/ui-design/_actual/`.

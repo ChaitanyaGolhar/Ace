@@ -236,3 +236,47 @@ decisions:
 ### D-310 Dialog focus
 
 - **What:** dialogs focus the element marked `data-autofocus` when they open (React's `autoFocus` only fires on mount, and dialog content mounts before it opens). Found by the M3 E2E test that checks "Keep one copy" is focused.
+
+## M4 — Stats and retention instrumentation
+
+### D-311 Event schema: strict, text-free payloads
+
+- **What:** `packages/core/src/events.ts`. One strict props schema per event type (unknown keys rejected); props hold only non-negative integers, enums and, for `deck_added_prebuilt`, the deck slug (`prebuiltId`, slug regex, ≤100 chars). A test inspects every props schema and fails if any field is a free-text string. Props: `session_started {scope: all|deck, due, new}`, `session_completed {reviewed, durationMs}`, `session_abandoned {reviewed, remaining ≥ 1}`, `deck_added_prebuilt {prebuiltId}`, all others `{}`.
+- **Why:** the brief requires "no card text" to be enforced by the schema. Strict objects plus "no free strings" make it impossible, not just unlikely.
+- **Sync protocol:** `events` is optional in a push (defaults to `[]`, so an older client still validates) and counts towards the 500-row limit; pulls always include it.
+- **Reverse:** add props fields in `EVENT_PROPS`; the introspection test will force a decision on any new string field.
+
+### D-312 When each event is recorded (web)
+
+- **What:**
+  - `app_opened`: every app start (each page load), after the database is initialized. Fire-and-forget: a failed analytics write never blocks startup.
+  - `card_created`: in the same Dexie transaction as the card. Not for cards copied from a ready-made deck or imported from a backup.
+  - `deck_added_prebuilt`: in the same transaction as the copied deck (one event, not one per card).
+  - `first_review_completed`: in the rating transaction, when this device has no such event yet. So it is once per device. The analytics take the earliest per user. Undo doesn't remove it (append-only).
+  - `session_started`: only when a new session starts (not when one is resumed after a reload), with the due (review + learning) and new counts at that moment.
+  - `session_completed` / `session_abandoned`: when the user ends the session (✕ or "Back to home"). It's abandoned if ≥1 card was left. A session with nothing studied and nothing left records neither. A session left by closing the tab records neither: there is no reliable moment to write it.
+  - `signed_in`: when this device goes from signed out to signed in (not on every `/me` check).
+- **Why:** writing an event in the same transaction as the change it describes means the two can't disagree. `occurredAt` uses the device clock, like `reviewedAt`.
+- **Reverse:** move or remove the `recordEvent` calls (`apps/web/src/services/*`, `main.tsx`, `sync/engine.ts`).
+
+### D-313 Events storage and sync
+
+- **What:** Dexie schema version 2 adds `events: 'id, type, occurredAt, dirty'`. That is additive, so existing v1 databases upgrade in place (tested). On the server, migration `0002_events` creates `events` with `props JSONB` and `server_seq` from the shared `change_seq`. Push inserts events if absent, never updates them, and applies the same ownership check (403) and future-clamp as other rows. Pull returns them in the same snapshot and `server_seq` order. Pulled events are stored clean (`dirty=0`), so they never go back up.
+- **Not in the backup file:** backups stay decks, cards and logs (§7, D-309). Events are analytics data, not user data.
+- **Reverse:** drop the table in a new migration; remove `events` from push/pull (clients without it still validate).
+
+### D-314 Analytics definitions (`apps/api/analytics.sql`)
+
+- **What:** five named queries (`-- name: …`), each tested against a hand-made fixture. The tests were also checked against deliberately broken versions of the SQL: every mutation tried made a test fail.
+  - "First seen" = a user's earliest event. Anonymous use is synced at sign-in, so it is truer than `users.created_at`.
+  - D1/D7/D30 return: any event in [first seen + N days, + N+1 days). Only users whose day N has ended by the as-of time (`$1`) count. Rate NULL when nobody is eligible yet.
+  - Weekly active learners: distinct users with a non-voided review, per UTC week (Monday start).
+  - Due-review completion rate: completed / started sessions per UTC week. Approximation: events carry no session id.
+  - True retention per user: the server has no CardState, so a review counts as "review state" when the previous non-voided review of that card was ≥ 1 day earlier. Pass = not rated Again.
+- **Alternatives:** a session id on session events (would make completion exact; a small additive change to the props); storing CardState snapshots server-side (rejected: CardState is derived and never synced, §7).
+
+### D-315 "Calendar of days studied" on the Stats screen
+
+- **What:** following the approved design, the calendar is the 30-day "Reviews per day" strip (a grey marker on days without study, today highlighted) plus the "Days studied · N of 30" figure. There is no separate month grid.
+- **Why:** this is the approved mock (`docs/ui-design/*/Stats — desktop*.png`). It shows the same information without a second chart.
+- **Reverse:** add a month-grid component fed by `perDay` (the data is already computed and tested).

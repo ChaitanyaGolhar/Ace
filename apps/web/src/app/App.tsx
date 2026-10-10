@@ -31,7 +31,7 @@ const focused: RouteHandle = { chrome: 'focused' };
 
 // A data router (not <BrowserRouter>) so the card editor can block navigation while
 // there is unsaved text.
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     element: <Root />,
     children: [

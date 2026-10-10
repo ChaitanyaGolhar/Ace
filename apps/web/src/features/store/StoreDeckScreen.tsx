@@ -1,12 +1,12 @@
 import { CARD_TYPES } from '@recall/core';
-import { ChevronLeft, Plus, WifiOff } from 'lucide-react';
+import { Check, ChevronLeft, KeyRound, Plus, WifiOff } from 'lucide-react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { formatCount } from '../../services/format';
 import { Dialog } from '../../ui/Dialog';
 import { ErrorMessage, Loading, NotFound } from '../shell/states';
 import { SampleCard } from './SampleCard';
 import { formatPrice, subjectCodeLabel, TYPE_NAMES } from './storeView';
-import { OFFLINE_ADD_MESSAGE, useStoreDeck } from './useStoreDeck';
+import { OFFLINE_ADD_MESSAGE, useStoreDeck, type StoreDeckViewModel } from './useStoreDeck';
 
 const dateFormat = new Intl.DateTimeFormat('en-IN', {
   day: 'numeric',
@@ -29,7 +29,7 @@ export function StoreDeckScreen() {
     return <NotFound message="This deck isn’t in the store." />;
   const { deck } = vm;
   const code = subjectCodeLabel(deck.catalog.subjectCodes, branch);
-  const free = deck.price === 0;
+  const canAdd = !vm.paid || vm.owned;
 
   return (
     <div className="flex flex-col gap-8">
@@ -45,8 +45,17 @@ export function StoreDeckScreen() {
       </header>
 
       <section aria-label="Add" className="flex flex-col gap-3">
-        <p className="text-section font-semibold">{formatPrice(deck.price)}</p>
-        {free ? (
+        <p className="flex items-center gap-2 text-section font-semibold">
+          {vm.paid && vm.owned ? (
+            <>
+              <Check aria-hidden="true" className="size-5 text-success" />
+              Owned
+            </>
+          ) : (
+            formatPrice(deck.price)
+          )}
+        </p>
+        {canAdd ? (
           <>
             <button
               type="button"
@@ -63,7 +72,9 @@ export function StoreDeckScreen() {
             )}
           </>
         ) : (
-          <p className="text-body text-text-secondary">Paid decks open soon.</p>
+          <a href="#unlock" className="link self-start">
+            How to buy, and unlock with a code
+          </a>
         )}
         {vm.offline && (
           <p
@@ -161,6 +172,8 @@ export function StoreDeckScreen() {
         )}
       </section>
 
+      {vm.paid && !vm.owned && <Unlock vm={vm} slug={deck.slug} price={formatPrice(deck.price)} />}
+
       <Dialog
         open={vm.confirming}
         onClose={vm.keepOneCopy}
@@ -190,5 +203,77 @@ export function StoreDeckScreen() {
         </div>
       </Dialog>
     </div>
+  );
+}
+
+/** A paid deck's purchase section (§8.4): price, How to buy, and "Have a code?". */
+function Unlock({ vm, slug, price }: { vm: StoreDeckViewModel; slug: string; price: string }) {
+  return (
+    <section id="unlock" aria-labelledby="unlock-title" className="flex flex-col gap-4">
+      <h2 id="unlock-title" className="text-section font-semibold">
+        Unlock this deck · {price}
+      </h2>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-body font-medium">How to buy</h3>
+        {vm.purchaseInfo === null ? (
+          <p className="text-body text-text-secondary">
+            Connect to the internet to see how to buy this deck.
+          </p>
+        ) : (
+          <p
+            data-testid="purchase-info"
+            className="text-body whitespace-pre-line text-text-secondary"
+          >
+            {vm.purchaseInfo}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-body font-medium">Have a code?</h3>
+        {vm.signedIn ? (
+          <form
+            className="flex flex-col gap-2 lg:flex-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              vm.redeem();
+            }}
+          >
+            <label className="flex-1">
+              <span className="sr-only">Unlock code</span>
+              <input
+                type="text"
+                className="field font-mono uppercase"
+                placeholder="ACE-XXXX-XXXX-XX"
+                autoComplete="off"
+                autoCapitalize="characters"
+                spellCheck={false}
+                value={vm.code}
+                aria-invalid={vm.redeemError !== null}
+                aria-describedby={vm.redeemError ? 'redeem-error' : undefined}
+                onChange={(e) => {
+                  vm.setCode(e.target.value);
+                }}
+              />
+            </label>
+            <button type="submit" className="btn-primary" disabled={vm.redeeming || vm.offline}>
+              <KeyRound aria-hidden="true" className="size-5" />
+              Redeem
+            </button>
+          </form>
+        ) : (
+          <Link
+            to={`/signin?next=${encodeURIComponent(`/store/${slug}`)}`}
+            className="btn-secondary self-start"
+          >
+            Sign in to unlock
+          </Link>
+        )}
+        {vm.redeemError && (
+          <p id="redeem-error" role="alert" className="text-error">
+            {vm.redeemError}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }

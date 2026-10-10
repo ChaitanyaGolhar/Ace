@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { CatalogApi } from '../services/catalog';
 import type { AppContext } from '../services/context';
+import type { EntitlementsApi } from '../services/entitlements';
 import type { PendingActions } from '../services/pendingActions';
 import type { SyncEngine } from '../sync/engine';
 
@@ -14,6 +15,8 @@ export interface AppServices {
   sync: SyncEngine;
   /** M7: the deck store's API. */
   catalog: CatalogApi;
+  /** M8: unlock codes and entitlements. */
+  entitlements: EntitlementsApi;
   /** Whether the browser thinks it's online (adding a store deck needs the network). */
   isOnline: () => boolean;
 }

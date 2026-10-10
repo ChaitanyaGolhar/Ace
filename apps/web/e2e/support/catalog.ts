@@ -73,3 +73,17 @@ export function publish(file: Record<string, unknown>): string {
     },
   );
 }
+
+/** `pnpm codes create …` against the E2E database. Returns the plaintext codes it printed. */
+export function createCodes(args: string[]): string[] {
+  const out = execFileSync(
+    process.execPath,
+    ['--import', 'tsx', 'scripts/codes.ts', 'create', ...args],
+    {
+      cwd: API_DIR,
+      env: { ...process.env, DATABASE_URL: e2eDatabaseUrl() },
+      encoding: 'utf8',
+    },
+  );
+  return out.split(/\r?\n/).filter((l) => /^ACE-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{2}$/.test(l));
+}

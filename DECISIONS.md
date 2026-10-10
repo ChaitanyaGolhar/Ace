@@ -433,3 +433,47 @@ Per slug, in distinct users:
 - **Adders:** users with a `catalog_deck_added` event.
 - **Reviewers:** users with at least one non-undone review of a card in their copy.
 - **Retained after 7 days:** users with a review at least 7 days after their copy was created (deck `created_at`, device clock).
+
+## M8 — Paid decks
+
+### D-337 Unlock codes and how they're stored
+
+- **Format:** `ACE-XXXX-XXXX-XX` in Crockford base32 (no I, L, O or U). That's 10 characters, or 50 bits, taken from `crypto.randomBytes`. Students can type it in lower case, with spaces or without dashes; I/L read as 1 and O as 0, and the `ACE` prefix is optional.
+- **Storage:** only `scrypt(code, fixed salt 'ace-unlock-code-v1', N=2^14)` is kept, as hex. The lookup is by that hash, with a constant-time compare. A fixed salt is needed for lookup. 50 random bits plus scrypt plus the rate limits put guessing out of reach, so a per-code salt would add nothing.
+- **Shown once:** the plaintext appears only in the output of `pnpm codes create`. The database, logs and events never contain it, and `pnpm codes list` shows an 8-character id instead.
+
+### D-338 Redemption
+
+- **Concurrency:** it runs in one transaction that locks the code row (`FOR UPDATE`). Ten parallel redemptions of a one-use code give exactly one success.
+- **Idempotent:** re-redeeming your own code returns 200 and doesn't count again.
+- **Messages:**
+  - Unknown or disabled codes get "This code isn't valid" (400). Disabled is deliberately not told apart, so a revoked code says nothing more.
+  - Used-up codes get "This code has already been used" (409).
+  - Expired codes get "This code has expired" (410). `--expires YYYY-MM-DD` lasts through the whole India day.
+- **Rate limits:** 5 attempts a minute per user and 20 an hour per IP, with a 429 "rate_limited". Failures are logged with the reason only.
+
+### D-339 Access to paid content
+
+`GET /catalog/:slug/versions/:v` for a paid deck needs a signed-in user with an entitlement: 403 otherwise, `Cache-Control: private`. The listing and detail (with samples) stay public, so the store can show paid decks to everyone. An entitlement covers every version of the deck.
+
+### D-340 Purchase screen (§8.4)
+
+- **What the page shows:** the price, then "How to buy" with the text of `PURCHASE_INSTRUCTIONS` from the API's environment (shown with line breaks; a literal `\n` in the value becomes a newline). Until it's set, the placeholder reads "Paid decks are sold by the deck author. Payment details will appear here soon." Then "Have a code?" with a Redeem field.
+- **Signed out:** the page shows "Sign in to unlock", which leads to sign-in and comes back to the deck page after the magic link. Only `/store/<slug>` paths are accepted as return targets.
+- **On success:** a toast reading "Unlocked — added <deck>", and the deck's page opens.
+- **Store list:** an unlocked paid deck reads "Owned". On a new device the deck page shows "Owned" with "Add to my decks". The deck isn't added automatically, so nothing appears unasked.
+- **Events:** `purchase_info_viewed {slug}`, `code_redeemed {slugs}` and `code_redeem_failed {reason}`. They never carry the code.
+
+### D-341 Owner CLIs
+
+- **Codes:** `pnpm codes create --deck <slug> [--deck …] --count N [--max-uses M] [--expires YYYY-MM-DD] --note "…"`. The note is required (who paid, how), so every code can be traced to a payment. Also `pnpm codes list [--deck <slug>]` and `pnpm codes disable <id>`.
+- **Sales:** `pnpm sales` shows redemptions per India day per deck.
+- **Analytics:** `paid_deck_funnel` gives, per paid deck, viewers → purchase-info viewers → redeemers → studied 7+ days after unlocking.
+
+### D-342 "Update required to sync" reloads in one tap
+
+The banner now waits for the new service worker to install and activates it. Before, a plain reload came back on the old version while the new worker waited, which was seen in the M7 deploy.
+
+### D-343 Weak ETags
+
+Render compresses responses and weakens ETags to `W/"…"`. The catalog now compares If-None-Match weakly, as RFC 9110 allows for GET, so 304s work in production.

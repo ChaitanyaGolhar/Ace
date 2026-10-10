@@ -34,3 +34,5 @@ services:
         value: 'true'
       - key: TRUST_PROXY # Render's proxy: rate limiting sees the real client IP
         value: 'true'
+      - key: PURCHASE_INSTRUCTIONS # M8: "How to buy" on paid decks (plain text, line breaks as \n). Optional
+        sync: false

@@ -13,6 +13,8 @@ import { branchesIn, filterStoreDecks, semestersFor } from './storeView';
 export interface StoreRow {
   deck: CatalogDeckSummary;
   inMyDecks: boolean;
+  /** M8: a paid deck this account unlocked. */
+  owned: boolean;
 }
 
 export interface StoreViewModel {
@@ -85,6 +87,8 @@ export function useStore(): StoreViewModel {
 
   const owned = useQuery(() => ownedCatalogSlugs(ctx), [ctx]);
   const ownedSlugs = owned.status === 'ready' ? owned.data : new Set<string>();
+  const unlocked = useQuery(() => getMeta(ctx.db, 'entitlements'), [ctx]);
+  const unlockedSlugs = new Set(unlocked.status === 'ready' ? (unlocked.data ?? []) : []);
 
   const update = (next: StoreFilters) => {
     setFilters(next);
@@ -103,6 +107,7 @@ export function useStore(): StoreViewModel {
     rows: filterStoreDecks(decks, filters, search).map((deck) => ({
       deck,
       inMyDecks: ownedSlugs.has(deck.slug),
+      owned: deck.price > 0 && unlockedSlugs.has(deck.slug),
     })),
     hasDecks: decks.length > 0,
     setYear: (year) => {

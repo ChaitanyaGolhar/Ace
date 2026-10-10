@@ -48,6 +48,10 @@ export interface MetaMap {
   catalogCheckedAt: number;
   /** M7: the store's filters, remembered on this device. */
   storeFilters: StoreFilters;
+  /** M8: paid decks this account has unlocked (slugs), as last fetched. */
+  entitlements: string[];
+  /** M8: "Sign in to unlock": the store page to come back to after the magic link. */
+  signInReturnTo: string | null;
 }
 
 export interface StoreFilters {

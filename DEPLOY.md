@@ -68,6 +68,8 @@ Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml)
 
    The others (`MAIL_MODE=resend`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `NODE_VERSION=24`) are already in the file.
 
+   Optional, from M8: `PURCHASE_INSTRUCTIONS`, the "How to buy" text on paid decks (for example a UPI ID and a WhatsApp number). Plain text; type `\n` where a line should break. Unset, the app shows a placeholder. Changing it in **Environment** redeploys the API; nothing else is needed.
+
 3. **Apply.** The first build takes a few minutes. The start command applies the database migrations, then starts the API. The log should end with `API listening … (mail: resend)`.
 4. **Settings → Custom Domains → Add `api.ace.orizenn.com`.** Render shows a CNAME target (`recall-api.onrender.com`). Add that CNAME at your registrar and wait until Render shows it verified, with a certificate.
 5. Check: `https://api.ace.orizenn.com/health` → `{"ok":true}`.

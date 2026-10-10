@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { v7 as uuidv7 } from 'uuid';
-import { App } from './app/App';
+import { App, router } from './app/App';
 import { ServicesProvider, type AppServices } from './app/services';
 import { ToastProvider } from './app/toasts';
 import { RecallDB } from './db/db';
@@ -9,6 +9,7 @@ import './index.css';
 import { initialize } from './services/bootstrap';
 import { checkForUpdates } from './services/catalog';
 import { httpCatalogApi } from './services/catalogHttp';
+import { httpEntitlementsApi, takeSignInReturn } from './services/entitlements';
 import type { AppContext } from './services/context';
 import { recordEvent } from './services/events';
 import { PendingActions } from './services/pendingActions';
@@ -47,8 +48,22 @@ async function start() {
     pendingDeletes: new PendingActions(5000),
     sync,
     catalog,
+    entitlements: httpEntitlementsApi(API_URL, window.fetch.bind(window)),
     isOnline: () => navigator.onLine,
   };
+
+  // Coming back from a magic link (?signedIn=1): drop the flag and, if "Sign in to unlock"
+  // sent the student, go back to that store page (M8, §8.4). Before the first render, so
+  // the router starts there.
+  const url = new URL(window.location.href);
+  const justSignedIn = url.searchParams.get('signedIn') === '1';
+  if (justSignedIn) {
+    url.searchParams.delete('signedIn');
+    const back = await takeSignInReturn(ctx).catch(() => null);
+    // The router already read the location when it was created, so go through it.
+    if (back) void router.navigate(back, { replace: true });
+    else window.history.replaceState(null, '', url);
+  }
   root.render(
     <StrictMode>
       <ServicesProvider services={services}>
@@ -62,10 +77,7 @@ async function start() {
   // Sync never blocks the UI: it starts after the first render and runs in the background.
   // Coming back from a magic link (?signedIn=1) asks the API who is signed in; otherwise
   // the cached sign-in state decides (works offline).
-  const url = new URL(window.location.href);
-  if (url.searchParams.get('signedIn') === '1') {
-    url.searchParams.delete('signedIn');
-    window.history.replaceState(null, '', url);
+  if (justSignedIn) {
     void sync.refreshAuth();
   } else {
     void sync.start();

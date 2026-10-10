@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
+import { rememberSignInReturn } from '../../services/entitlements';
 import { requestMagicLink, type MagicLinkResult } from '../../services/signIn';
 
 export interface SignInViewModel {
@@ -36,6 +38,12 @@ export function decksNote(count: number): string | null {
 
 export function useSignIn(): SignInViewModel {
   const { ctx } = useServices();
+  const [params] = useSearchParams();
+  const next = params.get('next');
+  // "Sign in to unlock" (M8): come back to that store page after the magic link.
+  useEffect(() => {
+    if (next !== null) void rememberSignInReturn(ctx, next).catch(() => undefined);
+  }, [ctx, next]);
   const [step, setStep] = useState<'form' | 'sent'>('form');
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);

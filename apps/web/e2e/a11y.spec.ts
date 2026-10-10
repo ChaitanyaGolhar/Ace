@@ -65,7 +65,9 @@ test.beforeAll(() => {
 
 for (const theme of ['dark', 'light'] as const) {
   test.describe(`axe · ${theme}`, () => {
-    test.use({ colorScheme: theme, timezoneId: 'Asia/Kolkata' });
+    // Reduced motion turns transitions off, so axe measures settled colours, never a 150 ms
+    // fade midway (a button turning enabled was once caught half-faded).
+    test.use({ colorScheme: theme, reducedMotion: 'reduce', timezoneId: 'Asia/Kolkata' });
 
     test.beforeEach(async ({ page }) => {
       await page.clock.setFixedTime(NOW);

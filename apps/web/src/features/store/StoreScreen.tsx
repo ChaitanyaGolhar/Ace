@@ -58,7 +58,7 @@ export function StoreScreen() {
 
       {vm.rows.length > 0 && (
         <ul aria-label="Store decks" className="border-t border-border">
-          {vm.rows.map(({ deck, inMyDecks }) => (
+          {vm.rows.map(({ deck, inMyDecks, owned }) => (
             <li key={deck.slug} className="border-b border-border">
               <Link
                 to={`/store/${deck.slug}${branchQuery}`}
@@ -76,7 +76,7 @@ export function StoreScreen() {
                   <p className="text-meta text-text-muted">{typesLabel(deck.typeCounts)}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1 text-body">
-                  <span className="font-medium">{formatPrice(deck.price)}</span>
+                  <span className="font-medium">{owned ? 'Owned' : formatPrice(deck.price)}</span>
                   {inMyDecks && (
                     <span className="flex items-center gap-1 text-meta text-text-secondary">
                       <Check aria-hidden="true" className="size-4 text-success" />

@@ -1,4 +1,5 @@
-import { buildQueue, type Queue } from '@recall/core';
+import { buildQueue, type Queue, type QueueInput } from '@recall/core';
+import type { LocalCard, LocalDeck, LocalReviewLog } from '../db/db';
 import type { AppContext } from './context';
 import { effectiveTimeZone, getSettings } from './settings';
 
@@ -8,8 +9,18 @@ export interface LoadQueueOptions {
   deckId?: string;
 }
 
+/** QueueInput, keeping the local row types (with dirty/localVersion) for callers that need them. */
+export interface LocalQueueInput extends QueueInput {
+  decks: LocalDeck[];
+  cards: LocalCard[];
+  logs: LocalReviewLog[];
+}
+
 /** Reads everything buildQueue needs from IndexedDB, in one read transaction. */
-export async function loadQueue(ctx: AppContext, options: LoadQueueOptions): Promise<Queue> {
+export async function loadQueueInput(
+  ctx: AppContext,
+  browserTimeZone: string,
+): Promise<LocalQueueInput> {
   const { db } = ctx;
   const settings = await getSettings(ctx);
   return db.transaction('r', [db.decks, db.cards, db.cardStates, db.reviewLogs], async () => {
@@ -19,21 +30,28 @@ export async function loadQueue(ctx: AppContext, options: LoadQueueOptions): Pro
       db.cardStates.toArray(),
       db.reviewLogs.toArray(),
     ]);
-    return buildQueue({
+    return {
       decks,
       cards,
       states: new Map(states.map((s) => [s.cardId, s])),
       logs,
       now: ctx.now(),
-      timeZone: effectiveTimeZone(settings, options.browserTimeZone),
+      timeZone: effectiveTimeZone(settings, browserTimeZone),
       rolloverHour: settings.rolloverHour,
       newPerDay: settings.newPerDay,
-      ...(options.deckId === undefined ? {} : { deckId: options.deckId }),
-    });
+    };
   });
 }
 
-export type NextCard = { cardId: string; kind: 'due' | 'new' | 'learnAhead' };
+export async function loadQueue(ctx: AppContext, options: LoadQueueOptions): Promise<Queue> {
+  const input = await loadQueueInput(ctx, options.browserTimeZone);
+  return buildQueue(options.deckId === undefined ? input : { ...input, deckId: options.deckId });
+}
+
+export interface NextCard {
+  cardId: string;
+  kind: 'due' | 'new' | 'learnAhead';
+}
 
 /** Session order (§6.1): due cards first, then new cards, then a learn-ahead card. */
 export function nextCard(queue: Queue): NextCard | null {

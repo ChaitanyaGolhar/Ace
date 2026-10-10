@@ -162,6 +162,7 @@ decisions:
 - **What:** stats computations and backup export/import were written as tested web services.
 - **Why:** the UI task forbade changes to `packages/core`; the brief's M4 stats functions didn't exist yet.
 - **Reverse:** move `services/stats.ts` into core in M4 (pure already; uses only core types and functions).
+- **Superseded (post-M4 audit):** `computeStats` and `BackupSchema` now live in `packages/core` (`stats.ts`, `backup.ts`) with their tests. The web keeps only what touches Dexie or is screen copy (`loadStats`, readouts, import/export). See `AUDIT_REPORT.md`.
 
 ### D-304 Completion is part of the review screen
 
@@ -280,3 +281,15 @@ decisions:
 - **What:** following the approved design, the calendar is the 30-day "Reviews per day" strip (a grey marker on days without study, today highlighted) plus the "Days studied · N of 30" figure. There is no separate month grid.
 - **Why:** this is the approved mock (`docs/ui-design/*/Stats — desktop*.png`). It shows the same information without a second chart.
 - **Reverse:** add a month-grid component fed by `perDay` (the data is already computed and tested).
+
+## Post-M4 audit
+
+### D-316 One copy of shared pure logic, in core
+
+- **What:**
+  - `computeStats` and `BackupSchema` moved from `apps/web` to `packages/core`.
+  - `sameRow` (copies in web and API) moved to core `merge.ts`.
+  - The web `ReadyMadeDeck` interface was deleted in favour of core's `PrebuiltDeck`.
+- **Kept on purpose:** true retention has two definitions. The app's (core `computeStats`) replays each card's FSRS state. The server's (`analytics.sql`) has no card state and uses a ≥ 1-day gap. They can differ in both directions; `apps/api/test/trueRetention.test.ts` pins down how. The app's number is the brief's definition.
+- **Reverse:** move the files back; the tests move with them.
+

@@ -2,6 +2,8 @@ import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { buildSeedBackup } from './fixtures/seedBackup';
+import { uniqueEmail } from './helpers';
+import { magicLinkFor } from './support/apiServer';
 
 // Screenshots of every screen at 390×844 and 1280×800, dark and light, into
 // docs/ui-design/_actual/ for comparison with the approved mocks. Opt-in:
@@ -40,6 +42,9 @@ for (const viewport of VIEWPORTS) {
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
       await page.clock.setFixedTime(NOW);
       const shot = async (name: string) => {
+        // Every page load starts a sync; capture the settled status, not "Syncing…".
+        await expect(page.getByText('Syncing…')).toHaveCount(0);
+        await expect(page.getByRole('link', { name: /^Sync status: Syncing/ })).toHaveCount(0);
         await page.waitForTimeout(150);
         // Mobile mocks are one screen tall (fixed tab bar); desktop mocks show the whole page.
         await page.screenshot({
@@ -54,6 +59,18 @@ for (const viewport of VIEWPORTS) {
       await shot('welcome');
 
       await seed(page);
+
+      // Sign in (the real API), so every later screen shows the real "Synced" status.
+      await page.goto('/signin');
+      await expect(page.getByLabel('Email')).toBeVisible();
+      await shot('signin');
+      const email = uniqueEmail();
+      await page.getByLabel('Email').fill(email);
+      await page.getByRole('button', { name: 'Email me a link' }).click();
+      await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+      await shot('signin-check-email');
+      await page.goto(await magicLinkFor(email));
+      await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
 
       await page.goto('/');
       await expect(page.getByRole('heading', { name: 'Your decks' })).toBeVisible();
@@ -108,14 +125,20 @@ for (const viewport of VIEWPORTS) {
 
       await page.goto('/browse');
       await shot('browse');
+      await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
+      await page.goto('/browse');
+      await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
+      await expect(page.getByRole('dialog', { name: 'Add DBMS Basics again?' })).toBeVisible();
+      await shot('browse-duplicate');
+      await page.getByRole('button', { name: 'Keep one copy' }).click();
       await page.goto('/stats');
       await expect(page.getByRole('heading', { name: 'Stats' })).toBeVisible();
       await shot('stats');
       await page.goto('/settings');
       await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+      await expect(page.getByRole('main').getByTestId('sync-status')).toContainText('Synced');
       await shot('settings');
-      await page.goto('/signin');
-      await shot('signin');
       await page.goto('/search');
       await page.getByLabel('Search decks and cards').fill('process');
       await shot('search');

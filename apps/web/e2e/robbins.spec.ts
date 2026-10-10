@@ -1,12 +1,28 @@
 import { expect, test, type Page } from '@playwright/test';
+import { ROBBINS_SUBJECT, robbinsCatalogFile } from './fixtures/robbinsCatalog';
 import { waitForServiceWorker } from './helpers';
+import { publish, uniqueSlug } from './support/catalog';
 
-// The bundled Robbins ch. 3 deck (1,014 cards): its multi-line questions and bulleted
-// answers on a 390 px phone in both themes, and adding it with no network at all.
+// The Robbins ch. 3 deck (1,014 cards), bundled before M7 and now a store deck: its
+// multi-line questions and bulleted answers on a 390 px phone in both themes, and, once
+// added, studying it with no network at all.
 
-const ROBBINS = 'Robbins Ch. 3 — Inflammation and Repair';
-const addAndStartRobbins = (page: Page) =>
-  page.getByRole('button', { name: `Add & start with ${ROBBINS}` }).click();
+test.beforeAll(() => {
+  publish(robbinsCatalogFile(uniqueSlug('robbins-ch3')));
+});
+
+/** Adds Robbins from the store and opens its first card. */
+async function addAndStartRobbins(page: Page) {
+  await page.goto('/store');
+  await page.getByPlaceholder('Search subjects').fill('Robbins');
+  await page
+    .getByRole('list', { name: 'Store decks' })
+    .getByRole('link', { name: /Robbins Ch\. 3/ })
+    .first()
+    .click();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  await page.getByRole('link', { name: 'Study deck' }).click();
+}
 
 /** The page doesn't scroll sideways, and the answer's last line clears the rating bar. */
 async function expectLongCardScrolls(page: Page) {
@@ -37,7 +53,6 @@ for (const theme of ['dark', 'light'] as const) {
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: theme });
-    await page.goto('/');
     await addAndStartRobbins(page);
 
     // Card 1, the longest in the deck: the options are on their own lines.
@@ -66,16 +81,18 @@ for (const theme of ['dark', 'light'] as const) {
   });
 }
 
-test('the Robbins deck can be added and studied fully offline (precached)', async ({
+test('once added, the Robbins deck (1,014 cards) is studied fully offline', async ({
   page,
   context,
 }) => {
   await page.goto('/');
   await waitForServiceWorker(page);
+  // Adding needs the network (§7.5); studying doesn't.
+  await addAndStartRobbins(page);
+  await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
 
   await context.setOffline(true);
   await page.reload();
-  await addAndStartRobbins(page);
   await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
   await page.getByRole('button', { name: 'Show answer' }).click();
   await page.getByRole('button', { name: /^Good · / }).click();
@@ -84,6 +101,15 @@ test('the Robbins deck can be added and studied fully offline (precached)', asyn
   );
 
   await page.goto('/decks');
-  await expect(page.getByRole('list', { name: 'Decks' })).toContainText(ROBBINS);
   await expect(page.getByRole('list', { name: 'Decks' })).toContainText('1,014 cards');
+  await expect(page.getByRole('list', { name: 'Decks' })).toContainText('From the store');
+  await context.setOffline(false);
+});
+
+test('the store shows it under its subject', async ({ page }) => {
+  await page.goto('/store');
+  await page.getByPlaceholder('Search subjects').fill('Pathology');
+  await expect(page.getByRole('list', { name: 'Store decks' }).first()).toContainText(
+    ROBBINS_SUBJECT,
+  );
 });

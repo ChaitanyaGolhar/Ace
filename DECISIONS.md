@@ -357,3 +357,79 @@ decisions:
 - **What:** light `--success` #2f8f62 → **#237a52** and `--error` #c94a4a → **#b23c3c**. Contrast as text is now 4.9 / 5.4 on the page background, 5.3 / 5.8 on surface and 4.6 / 5.1 on raised surface. The old values gave 3.5–4.6. Dark theme is unchanged (5.3–7.8 already).
 - **Why:** M6 shows "Correct" / "Not quite" / "Correct answer" as coloured text (always with an icon and words). axe flagged the light green on the review screen. The old red was also under 4.5:1 on the page background for the existing form errors; no axe test had shown one before.
 - **Reverse:** restore the two values in `apps/web/src/index.css`.
+
+## M7: Deck Store
+
+### D-326 Bundled decks removed; their files kept as source material
+
+- **What:** the build-time bundling, the Browse screen and the Welcome screen's ready-made decks are gone (§7.7). `/browse` redirects to `/store`, and Welcome offers "Find your subject". The two old deck files moved to `content/legacy-decks/` (not bundled), as source material for converting to `ace-deck@2`. Copies students already have are untouched (`prebuilt` stays a valid deck source; tested with a fixture database and a fixture backup).
+- **Consequence:** a first visit now needs 4 taps to the first card (Find your subject → the subject → Add to my decks → Study deck), up from 3 with a bundled deck. The M3 onboarding E2E was updated to say so.
+- **Reverse:** restore the plugin and `content/readyMade.ts` from git history.
+
+### D-327 Protocol 3; old apps are refused on pull as well as push
+
+- **What:** `PROTOCOL_VERSION = 3`. Pulls carry `protocolVersion` too, and the server answers 426 to a push or a pull without 3.
+- **Why:** an M6 app can't parse a `catalog` deck, a v5 card id or the new event types, so its whole pull would fail. It would also push a catalog deck back without its catalog fields. M6 apps treat a 426 on any request as "Update required to sync", with no retry loop, which is exactly what M6 built for this.
+- **Also:** Dexie v4 adds `catalogSlug`/`catalogVersion` (null for existing decks) and re-pulls once, as v3 did.
+
+### D-328 Catalog card ids are UUID v5; content hashes are SHA-1 of canonical JSON
+
+- **Ids:** `catalogCardId(deckId, key)` = UUID v5 of the key in the local deck's namespace. Two devices applying the same update make the same ids, and a second copy of a deck gets its own. Card ids (and review logs' `cardId`) accept v7 or v5; deck ids stay v7.
+- **Hashes:** `contentHash` = SHA-1 of the content's canonical JSON (keys sorted, so jsonb reordering doesn't matter).
+- **SHA-1 is in core, in pure TypeScript,** because core may not use `crypto`. It's tested against Node's SHA-1 over every length 0–199 and Unicode, and against the RFC v5 example. It identifies content; it isn't used for security.
+
+### D-329 The catalog in Postgres
+
+- **Storage:** `catalog_deck_version` stores each version's full validated file (defaults filled in). Rows are immutable (a trigger refuses UPDATE/DELETE). `catalog_deck.status` is `published | unlisted` (CHECK).
+- **Endpoints:**
+  - `GET /catalog` and `GET /catalog/:slug`: `Cache-Control: public, no-cache` with a strong ETag over the body, so browsers revalidate every time (304 when nothing changed) and a new version shows at once. (At first `max-age=60`; the E2E caught the browser serving a stale list for a minute after a publish.)
+  - `GET /catalog/:slug/versions/:v`: `immutable`. Free decks are public. Paid decks get 403 until M8's entitlements. Unlisted decks' versions stay fetchable.
+- **List order:** year (FE→BE), semester, subject, slug.
+
+### D-330 Update checks and the banner
+
+- **When:** at start, on an hourly timer and on the `online` event, all throttled to once per 12 hours (§7.6). Opening the Store also refreshes the latest versions, so a student who browses sees updates sooner.
+- **Banner counts** come from the real plan (`planDeckUpdate` over both versions' files), so edited cards count as changed. Offline, the banner says "Connect to the internet to update this deck".
+
+### D-331 Update rules, beyond the §7.6 table
+
+- A card moved to another unit counts as changed.
+- A key the student deleted is never replaced or re-added.
+- A key already present locally (e.g. applied on another device and synced) isn't added again.
+- New cards get `createdAt = now + i` in file order, so they're introduced after every existing new card.
+- Applying twice changes nothing the second time.
+
+### D-332 ace-deck@2 details the brief left open
+
+- **Keys:** `u<1–2 digits>-<3 digits>`, so at most 999 cards per unit. A key's unit number isn't required to equal the card's `unit`, so a card can move units without changing its key.
+- **Limits:** title ≤ 200, description ≤ 2,000, branch names ≤ 30, units 1–99, semester 1–8. `price` is whole paise. `lastVerifiedAt` must be a real calendar date. `reviewedBy` is optional (null).
+- **Warnings:**
+  - Near-duplicate questions compare the prompt normalised as by the cloze matcher.
+  - The marks-note warning matches `[6 marks]` and `(6 marks)`, any number, any case.
+
+### D-333 The `pnpm deck` CLI
+
+- **How it runs:** from the repo root, with file paths relative to where it's typed. It uses `DATABASE_URL` from the environment, or `apps/api/.env` if that isn't set.
+- **Before publishing** it prints a summary, the warnings and the diff against the latest version (one line per card, at most 90 characters). The confirmation names the target host and database. `--yes` skips the question.
+- **Versions:** the version must be exactly latest + 1, checked before asking and again under a row lock.
+
+### D-334 Store UI choices
+
+- **Filtering** is done in the app, over the list as last fetched, so it also works offline. The year, semester and branch chips are remembered on the device (Dexie meta); the search isn't. Semesters follow the year (FE 1–2 … BE 7–8).
+- **Sample cards:** the first card of each type (in file order), then key order up to 8, shown in key order (unit, then number). They use the real `CardFace`; nothing is recorded.
+- **After Add:** the new deck's page, with a toast, rather than straight into a session, so the student can pick a unit first.
+- **Paid decks** show "Paid decks open soon" until M8.
+- **Store decks** carry a note on their deck page: edits are kept on update.
+
+### D-335 Unit filter
+
+"Study: All units / Unit N · title" on the deck page, for decks whose cards have units. Unit titles come from the cached store listing. A session remembers its unit, and another unit starts a new session. The review header reads "Deck · Unit N". `session_started` counts only that unit's cards.
+
+### D-336 Store analytics (`catalog_deck_funnel`)
+
+Per slug, in distinct users:
+
+- **Viewers:** users with a `catalog_deck_viewed` event.
+- **Adders:** users with a `catalog_deck_added` event.
+- **Reviewers:** users with at least one non-undone review of a card in their copy.
+- **Retained after 7 days:** users with a review at least 7 days after their copy was created (deck `created_at`, device clock).

@@ -1,5 +1,12 @@
 import { prepareDatabase, startTestServer, type TestServer } from '@recall/api/testing';
-import { PROTOCOL_VERSION, replay, type CardContent } from '@recall/core';
+import {
+  PROTOCOL_VERSION,
+  replay,
+  summarizeDeck,
+  validateDeckFile,
+  type CardContent,
+  type DeckFile,
+} from '@recall/core';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { initialize } from '../../src/services/bootstrap';
 import {
@@ -8,6 +15,12 @@ import {
   updateCard,
   updateCardContent,
 } from '../../src/services/cards';
+import {
+  checkForUpdates,
+  createCatalogDeck,
+  updateCatalogDeck,
+  type CatalogApi,
+} from '../../src/services/catalog';
 import { createDeck } from '../../src/services/decks';
 import { recordEvent } from '../../src/services/events';
 import { rateCard } from '../../src/services/review';
@@ -342,5 +355,107 @@ describe('two clients against the real API', () => {
       events: [],
     } as unknown as Parameters<SyncTransport['push']>[0];
     await expect(t.push(legacy)).rejects.toBeInstanceOf(UpgradeRequiredError);
+  });
+});
+
+// M7 (BUILD_BRIEF_M6_M8 §7.5, §7.8): catalog card ids are deterministic, so two devices that
+// apply the same update offline converge when they sync: no duplicates, identical state.
+describe('M7: catalog decks between two devices', () => {
+  const basic = (front: string): CardContent => ({ type: 'basic', front, back: `${front}!` });
+  function file(version: number, cards: [string, CardContent][]): DeckFile {
+    const result = validateDeckFile({
+      format: 'ace-deck@2',
+      slug: 'sppu-te-cse-dbms',
+      version,
+      title: 'DBMS',
+      description: 'd',
+      catalog: {
+        university: 'SPPU',
+        pattern: '2024',
+        year: 'TE',
+        semester: 5,
+        branches: ['CSE'],
+        subject: 'DBMS',
+        subjectCodes: { CSE: null },
+        units: [{ number: 1, title: 'One' }],
+      },
+      price: 0,
+      author: 'A',
+      lastVerifiedAt: '2026-10-11',
+      cards: cards.map(([key, content]) => ({ key, unit: 1, ...content })),
+    });
+    if (!result.ok) throw new Error(result.errors.join(' '));
+    return result.deck;
+  }
+  const v1 = file(1, [
+    ['u1-001', basic('What is a DBMS?')],
+    ['u1-002', basic('What is a key?')],
+    ['u1-003', basic('What is a view?')],
+  ]);
+  const v2 = file(2, [
+    ['u1-001', basic('What is a DBMS?')],
+    ['u1-002', basic('What is a primary key?')],
+    ['u1-004', basic('What is a join?')],
+  ]);
+  // The catalog itself is not under test here; the sync of the update is.
+  const catalog: CatalogApi = {
+    list: () => Promise.resolve({ decks: [summarizeDeck(v2)] }),
+    detail: () => Promise.reject(new Error('unused')),
+    version: (_slug, version) => Promise.resolve(structuredClone(version === 1 ? v1 : v2)),
+  };
+  const strip = <T extends { id: string; dirty: unknown; localVersion: unknown }>(rows: T[]) =>
+    [...rows]
+      .sort((x, y) => (x.id < y.id ? -1 : 1))
+      .map(({ dirty: _d, localVersion: _v, ...r }) => r);
+
+  it('both devices apply the same update offline, then sync: no duplicate cards, identical final state', async () => {
+    const a = await newDevice();
+    const b = await newDevice();
+    const ta = await transportFor(email);
+    const tb = await transportFor(email);
+
+    const deck = await createCatalogDeck(a, v1);
+    await syncOnce(a, ta);
+    await syncOnce(b, tb);
+    expect(await b.db.cards.where('deckId').equals(deck.id).count()).toBe(3);
+
+    // Both learn about v2, then go offline and apply it, at different times.
+    await checkForUpdates(a, catalog, { force: true });
+    await checkForUpdates(b, catalog, { force: true });
+    a.setNow(T0 + DAY);
+    expect(await updateCatalogDeck(a, catalog, deck.id)).toEqual({
+      fixed: 1,
+      added: 1,
+      removed: 1,
+      keptEdits: 0,
+    });
+    b.setNow(T0 + DAY + 5 * MINUTE);
+    expect(await updateCatalogDeck(b, catalog, deck.id)).toEqual({
+      fixed: 1,
+      added: 1,
+      removed: 1,
+      keptEdits: 0,
+    });
+
+    // Back online, in any order.
+    await syncOnce(a, ta);
+    await syncOnce(b, tb);
+    await syncOnce(a, ta);
+
+    const cardsA = strip(await a.db.cards.toArray());
+    const cardsB = strip(await b.db.cards.toArray());
+    expect(cardsA).toEqual(cardsB);
+    // No duplicates: one row per key (3 from v1 + the new one; the removed one tombstoned).
+    expect(cardsA.map((c) => c.sourceKey).sort()).toEqual(['u1-001', 'u1-002', 'u1-003', 'u1-004']);
+    expect(
+      cardsA
+        .filter((c) => c.deletedAt === null)
+        .map((c) => c.sourceKey)
+        .sort(),
+    ).toEqual(['u1-001', 'u1-002', 'u1-004']);
+    expect(cardsA.find((c) => c.sourceKey === 'u1-002')?.front).toBe('What is a primary key?');
+    expect(strip(await a.db.decks.toArray())).toEqual(strip(await b.db.decks.toArray()));
+    expect((await a.db.decks.get(deck.id))?.catalogVersion).toBe(2);
+    expect(await a.db.cardStates.toArray()).toEqual(await b.db.cardStates.toArray());
   });
 });

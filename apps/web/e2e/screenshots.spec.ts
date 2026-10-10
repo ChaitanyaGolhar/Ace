@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { buildSeedBackup } from './fixtures/seedBackup';
 import { uniqueEmail } from './helpers';
+import { robbinsCatalogFile, ROBBINS_SUBJECT } from './fixtures/robbinsCatalog';
 import { magicLinkFor } from './support/apiServer';
+import { deckFile, publish, uniqueSlug, type CardJson } from './support/catalog';
 
 // Screenshots of every screen at 390×844 and 1280×800, dark and light, into
 // docs/ui-design/_actual/ for comparison with the approved mocks. Opt-in:
@@ -21,7 +23,109 @@ const VIEWPORTS = [
   { name: 'desktop', width: 1280, height: 800 },
 ] as const;
 const THEMES = ['dark', 'light'] as const;
-const ROBBINS = 'Robbins Ch. 3 — Inflammation and Repair';
+const DBMS = 'Database Management Systems';
+
+// The store (M7): a small, realistic catalog, published once through the real CLI.
+const mcq = (
+  key: string,
+  unit: number,
+  question: string,
+  options: string[],
+  correct: number,
+): CardJson => ({
+  key,
+  unit,
+  type: 'mcq',
+  question,
+  options: options.map((text, i) => ({ id: 'abcdef'[i] ?? 'a', text })),
+  correct: 'abcdef'[correct] ?? 'a',
+  explanation: null,
+});
+test.beforeAll(() => {
+  if (process.env.SCREENSHOTS !== '1') return;
+  publish(
+    deckFile({
+      slug: uniqueSlug('dbms'),
+      subject: DBMS,
+      title: 'DBMS — unit-wise revision',
+      branches: ['CSE', 'CSE-DS'],
+      subjectCodes: { CSE: 'PCC301COM', 'CSE-DS': 'PCC301CDS' },
+      units: [
+        { number: 1, title: 'Introduction to DBMS' },
+        { number: 2, title: 'Relational model' },
+        { number: 3, title: 'SQL' },
+      ],
+      cards: [
+        {
+          key: 'u1-001',
+          unit: 1,
+          type: 'basic',
+          front: 'What is a DBMS?',
+          back: 'Software that stores, retrieves and manages data in databases.',
+        },
+        mcq(
+          'u1-002',
+          1,
+          'Which key uniquely identifies each row of a table?',
+          ['Foreign key', 'Primary key', 'Alternate key', 'Composite key'],
+          1,
+        ),
+        {
+          key: 'u2-001',
+          unit: 2,
+          type: 'cloze',
+          text: 'A {{foreign key}} refers to the primary key of another table.',
+          accepted: ['fk'],
+          hint: null,
+          extra: null,
+        },
+        {
+          key: 'u2-002',
+          unit: 2,
+          type: 'short',
+          question: 'What is a view?',
+          answer: 'A virtual table defined by a stored query.',
+          explanation: null,
+        },
+        {
+          key: 'u3-001',
+          unit: 3,
+          type: 'long',
+          question: 'Explain the ACID properties of a transaction.',
+          marks: 6,
+          keyPoints: [
+            'Atomicity: all or nothing',
+            'Consistency: valid state to valid state',
+            'Isolation: no partial work seen',
+            'Durability: survives crashes',
+          ],
+          modelAnswer: null,
+        },
+      ],
+    }),
+  );
+  publish(
+    deckFile({
+      slug: uniqueSlug('ml'),
+      subject: 'Machine Learning',
+      semester: 6,
+      branches: ['AIDS'],
+      subjectCodes: { AIDS: 'PCC302AID' },
+      price: 4900,
+      units: [{ number: 1, title: 'Introduction to ML' }],
+      cards: [
+        {
+          key: 'u1-001',
+          unit: 1,
+          type: 'basic',
+          front: 'What is supervised learning?',
+          back: 'Learning from labelled examples.',
+        },
+      ],
+    }),
+  );
+  publish(robbinsCatalogFile(uniqueSlug('robbins')));
+});
 
 async function seed(page: Page) {
   await page.goto('/settings');
@@ -124,23 +228,40 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByRole('heading', { name: 'Review complete' })).toBeVisible();
       await shot('review-complete');
 
-      await page.goto('/browse');
-      await shot('browse');
-      await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
-      await page.goto('/browse');
-      await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-      await expect(page.getByRole('dialog', { name: 'Add DBMS Basics again?' })).toBeVisible();
-      await shot('browse-duplicate');
+      // The store (M7): the list, a deck page with sample cards, the duplicate sheet.
+      await page.goto('/store');
+      await expect(page.getByRole('list', { name: 'Store decks' })).toBeVisible();
+      await shot('store');
+      await page
+        .getByRole('list', { name: 'Store decks' })
+        .getByRole('link', { name: new RegExp(DBMS) })
+        .click();
+      await expect(page.getByRole('heading', { level: 1, name: DBMS })).toBeVisible();
+      await shot('store-deck');
+      await page.getByRole('button', { name: 'Add to my decks' }).click();
+      await expect(page.getByRole('heading', { level: 1, name: /DBMS/ })).toBeVisible();
+      await shot('deck-from-store');
+      await page.goto('/store');
+      await page
+        .getByRole('list', { name: 'Store decks' })
+        .getByRole('link', { name: new RegExp(DBMS) })
+        .click();
+      await page.getByRole('button', { name: 'Add to my decks' }).click();
+      await expect(page.getByRole('dialog', { name: `Add ${DBMS} again?` })).toBeVisible();
+      await shot('store-duplicate');
       await page.getByRole('button', { name: 'Keep one copy' }).click();
 
-      // A card from the bundled Robbins deck: multi-line question, long answer.
+      // A card from the Robbins deck: multi-line question, long answer.
       // (The frozen clock moves on 5 minutes: a new session must start after the
       // earlier session's reviews, as it always does with a running clock.)
       await page.clock.setFixedTime(NOW + 5 * 60_000);
-      await page.goto('/browse');
-      await page.getByRole('button', { name: `Add ${ROBBINS}` }).click();
-      await expect(page.getByRole('heading', { level: 1, name: ROBBINS })).toBeVisible();
+      await page.goto('/store');
+      await page
+        .getByRole('list', { name: 'Store decks' })
+        .getByRole('link', { name: new RegExp(ROBBINS_SUBJECT.replace(/[().]/g, '\\$&')) })
+        .click();
+      await page.getByRole('button', { name: 'Add to my decks' }).click();
+      await expect(page.getByRole('link', { name: 'Study deck' })).toBeVisible();
       await page.getByRole('link', { name: 'Study deck' }).click();
       await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
       // What the window shows: a full-page capture would draw the sticky rating bar

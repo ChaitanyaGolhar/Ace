@@ -221,6 +221,12 @@ export function DeckScreen() {
             Ready-made deck. These are your copies — edit any card freely.
           </p>
         )}
+        {vm.isFromStore && (
+          <p className="text-meta text-text-muted lg:text-body">
+            From the store. These are your copies — edit any card freely. Cards you edit are kept as
+            you wrote them when the deck is updated.
+          </p>
+        )}
       </section>
 
       <Dialog open={vm.renameOpen} onClose={vm.closeRename} title="Rename deck">

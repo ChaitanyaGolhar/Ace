@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { buildSeedBackup } from './fixtures/seedBackup';
+import { deckFile, publish, uniqueSlug } from './support/catalog';
 
 // Automated accessibility checks (WCAG 2.1 A/AA, incl. 4.5:1 text contrast) on Home,
 // Review and Settings, in both themes.
@@ -27,6 +28,40 @@ async function expectNoViolations(page: Page) {
   }));
   expect(summary).toEqual([]);
 }
+
+const STORE_SUBJECT = `Accessible DBMS ${uniqueSlug('a11y')}`;
+test.beforeAll(() => {
+  publish(
+    deckFile({
+      slug: uniqueSlug('a11y'),
+      subject: STORE_SUBJECT,
+      branches: ['CSE', 'CSE-DS'],
+      subjectCodes: { CSE: 'PCC301COM', 'CSE-DS': null },
+      cards: [
+        { key: 'u1-001', unit: 1, type: 'basic', front: 'What is a DBMS?', back: 'Software.' },
+        {
+          key: 'u1-002',
+          unit: 1,
+          type: 'mcq',
+          question: 'Which key identifies a row?',
+          options: [
+            { id: 'a', text: 'Foreign key' },
+            { id: 'b', text: 'Primary key' },
+          ],
+          correct: 'b',
+        },
+        { key: 'u2-001', unit: 2, type: 'cloze', text: 'A {{view}} is a stored query.' },
+        {
+          key: 'u2-002',
+          unit: 2,
+          type: 'long',
+          question: 'Explain ACID.',
+          keyPoints: ['A', 'C', 'I'],
+        },
+      ],
+    }),
+  );
+});
 
 for (const theme of ['dark', 'light'] as const) {
   test.describe(`axe · ${theme}`, () => {
@@ -122,6 +157,31 @@ for (const theme of ['dark', 'light'] as const) {
         );
         await expectNoViolations(page);
       }
+    });
+
+    test('Store list and a store deck page (M7), with sample cards answered', async ({ page }) => {
+      await page.goto('/store');
+      await expect(page.getByRole('list', { name: 'Store decks' })).toBeVisible();
+      await page.getByRole('group', { name: 'Year' }).getByRole('button', { name: 'TE' }).click();
+      await expectNoViolations(page);
+      await page.getByPlaceholder('Search subjects').fill(STORE_SUBJECT);
+      await page
+        .getByRole('list', { name: 'Store decks' })
+        .getByRole('link', { name: new RegExp(STORE_SUBJECT) })
+        .click();
+      await expect(page.getByRole('heading', { level: 1, name: STORE_SUBJECT })).toBeVisible();
+      await expectNoViolations(page);
+      const mcq = page
+        .getByTestId('sample-card')
+        .filter({ hasText: 'Which key identifies a row?' });
+      await mcq.getByRole('radio', { name: /^B\./ }).click();
+      await mcq.getByRole('button', { name: 'Check' }).click();
+      await page
+        .getByTestId('sample-card')
+        .filter({ hasText: 'Explain ACID.' })
+        .getByRole('button', { name: 'Show key points' })
+        .click();
+      await expectNoViolations(page);
     });
 
     test('Settings', async ({ page }) => {

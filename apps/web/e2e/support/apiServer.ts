@@ -43,7 +43,7 @@ async function waitForHealth(timeoutMs: number): Promise<boolean> {
 export async function startApi(): Promise<void> {
   mkdirSync(TMP, { recursive: true });
   if (!existsSync(OUTBOX)) writeFileSync(OUTBOX, '');
-  const log = openSync(API_LOG, 'w');
+  const log = openSync(API_LOG, 'a');
   const child = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
     cwd: API_DIR,
     env: {
@@ -57,7 +57,10 @@ export async function startApi(): Promise<void> {
       COOKIE_SECURE: 'true',
     },
     stdio: ['ignore', log, log],
-    detached: false,
+    // Detached: when a test restarts the API (m2-sync), the new process must outlive that
+    // test's worker; otherwise every later test loses the API (DEPLOY_LOG_M6, M7 report).
+    detached: true,
+    windowsHide: true,
   });
   if (child.pid === undefined) throw new Error('could not start the API');
   child.unref();

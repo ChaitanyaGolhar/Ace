@@ -1,25 +1,40 @@
 import { expect, test, type Page } from '@playwright/test';
 import { addCards, createDeck, finishSession, numberedCards, signIn, uniqueEmail } from './helpers';
+import { deckFile, publish, uniqueSlug } from './support/catalog';
 
 // Audit after M4: everything UI_REPORT.md listed as hidden or "can't show yet" (it was
 // written mid-M2) now works with real data: the real catalog, the real API, real reviews.
 
-test('ready-made links: welcome screen, Home and Decks all lead to Browse', async ({ page }) => {
+test('store links: welcome screen, Home and Decks all lead to the Store', async ({ page }) => {
+  const subject = `Links ${uniqueSlug('s')}`;
+  publish(
+    deckFile({
+      slug: uniqueSlug('links'),
+      subject,
+      cards: [{ key: 'u1-001', unit: 1, type: 'basic', front: 'Q', back: 'A' }],
+    }),
+  );
   await page.goto('/');
   await expect(page.getByTestId('welcome')).toBeVisible();
-  await page.getByRole('link', { name: 'See all ready-made decks' }).click();
-  await expect(page.getByRole('list', { name: 'Ready-made decks' })).toContainText('DBMS Basics');
+  await page.getByRole('link', { name: 'Find your subject' }).click();
+  await expect(page.getByRole('list', { name: 'Store decks' })).toContainText(subject);
 
   await createDeck(page, 'Mine');
   await page.goto('/');
-  await page.getByRole('link', { name: 'Add a ready-made deck' }).click();
-  await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
+  await page.getByRole('link', { name: 'Find decks in the store' }).click();
+  await page.getByPlaceholder('Search subjects').fill(subject);
+  await page
+    .getByRole('list', { name: 'Store decks' })
+    .getByRole('link', { name: new RegExp(subject) })
+    .click();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: subject })).toBeVisible();
 
   await page.goto('/decks');
   await expect(page.getByRole('list', { name: 'Decks' }).getByRole('listitem')).toHaveCount(2);
-  await page.getByRole('link', { name: 'Add a ready-made deck' }).click();
-  await expect(page.getByRole('list', { name: 'Ready-made decks' })).toContainText('In your decks');
+  await page.getByRole('link', { name: 'Find decks in the store' }).click();
+  await page.getByPlaceholder('Search subjects').fill(subject);
+  await expect(page.getByRole('list', { name: 'Store decks' })).toContainText('In your decks');
 });
 
 test('the sign-in screen states the real number of decks that will be merged', async ({ page }) => {

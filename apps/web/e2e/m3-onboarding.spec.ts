@@ -1,56 +1,78 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { readStore, type StoredState } from './helpers';
+import { deckFile, publish, uniqueSlug, type CardJson } from './support/catalog';
 
-test('first visit: the first card is shown within 3 taps, with no forms', async ({ page }) => {
+const cards = (n: number): CardJson[] =>
+  Array.from({ length: n }, (_, i) => ({
+    key: `u1-${String(i + 1).padStart(3, '0')}`,
+    unit: 1,
+    type: 'basic',
+    front: `Question ${String(i + 1)}`,
+    back: `Answer ${String(i + 1)}`,
+  }));
+
+// M7 (BUILD_BRIEF_M6_M8 §7.7): no decks are bundled any more; the welcome screen leads to
+// the Store. The first card is now 4 taps away (was 3 with a bundled deck): Find your
+// subject → the subject → Add to my decks → Study deck.
+test('first visit: Find your subject → a store deck → its first card in 4 taps, with no forms', async ({
+  page,
+}) => {
+  const subject = `First visit ${uniqueSlug('s')}`;
+  publish(deckFile({ slug: uniqueSlug('first'), subject, cards: cards(20) }));
   await page.goto('/');
   await expect(page.getByTestId('welcome')).toBeVisible();
   let taps = 0;
 
-  // Both bundled decks are offered right on the welcome screen, Robbins first.
-  const offered = page.getByRole('list', { name: 'Start with a ready-made deck' });
-  await expect(offered.getByRole('heading', { level: 3 })).toHaveText([
-    'Robbins Ch. 3 — Inflammation and Repair',
-    'DBMS Basics',
-  ]);
-  await expect(offered.getByRole('listitem').first()).toContainText('1,014 cards');
-  await expect(offered.getByRole('listitem').last()).toContainText('20 cards');
+  await page.getByRole('link', { name: 'Find your subject' }).click();
+  taps += 1;
   await page
-    .getByRole('button', { name: 'Add & start with Robbins Ch. 3 — Inflammation and Repair' })
+    .getByRole('list', { name: 'Store decks' })
+    .getByRole('link', { name: new RegExp(subject) })
     .click();
   taps += 1;
+  await expect(page.getByRole('heading', { level: 1, name: subject })).toBeVisible();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  taps += 1;
+  await page.getByRole('link', { name: 'Study deck' }).click();
+  taps += 1;
 
-  await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
+  await expect(page.getByTestId('card-front')).toHaveText('Question 1');
   await expect(page.getByTestId('card-kind')).toHaveText('New');
   await expect(page.getByTestId('first-card-hint')).toHaveText(
     'Try to recall the answer, then tap Show answer.',
   );
-  expect(taps).toBeLessThanOrEqual(3);
+  expect(taps).toBe(4);
   // No form was involved: nothing on the way asked for text.
   await expect(page.getByRole('textbox')).toHaveCount(0);
 });
 
-test('ready-made decks: adding a deck you already have warns first', async ({ page }) => {
-  await page.goto('/browse');
-  const rows = page.getByRole('list', { name: 'Ready-made decks' }).getByRole('listitem');
-  await expect(rows).toHaveCount(2);
-  await expect(rows.nth(0)).toContainText('DBMS Basics');
-  await expect(rows.nth(0)).toContainText('20 cards');
-  await expect(rows.nth(1)).toContainText('Robbins Ch. 3 — Inflammation and Repair');
-  await expect(rows.nth(1)).toContainText('1,014 cards');
-  const row = rows.filter({ hasText: 'DBMS Basics' });
+test('store decks: adding a deck you already have warns first', async ({ page }) => {
+  const subject = `Twice ${uniqueSlug('s')}`;
+  publish(deckFile({ slug: uniqueSlug('twice'), subject, cards: cards(20) }));
+  const open = async () => {
+    await page.goto('/store');
+    await page.getByPlaceholder('Search subjects').fill(subject);
+    await page
+      .getByRole('list', { name: 'Store decks' })
+      .getByRole('link', { name: new RegExp(subject) })
+      .click();
+  };
 
-  await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
+  await open();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: subject })).toBeVisible();
   await expect(
-    page.getByText('Ready-made deck. These are your copies — edit any card freely.'),
+    page.getByText(/From the store\. These are your copies — edit any card freely\./),
   ).toBeVisible();
   await expect(page.getByRole('list', { name: 'Cards' }).getByRole('listitem')).toHaveCount(20);
 
-  await page.goto('/browse');
-  await expect(row).toContainText('In your decks');
-  await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-  const sheet = page.getByRole('dialog', { name: 'Add DBMS Basics again?' });
+  await page.goto('/store');
+  await page.getByPlaceholder('Search subjects').fill(subject);
+  await expect(page.getByRole('list', { name: 'Store decks' })).toContainText('In your decks');
+  await open();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  const sheet = page.getByRole('dialog', { name: `Add ${subject} again?` });
   await expect(sheet).toBeVisible();
   await expect(sheet.getByRole('button', { name: 'Keep one copy' })).toBeFocused();
   await sheet.getByRole('button', { name: 'Keep one copy' }).click();
@@ -58,10 +80,10 @@ test('ready-made decks: adding a deck you already have warns first', async ({ pa
   await page.goto('/decks');
   await expect(page.getByRole('list', { name: 'Decks' }).getByRole('listitem')).toHaveCount(1);
 
-  await page.goto('/browse');
-  await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
+  await open();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Add a second copy' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: subject })).toBeVisible();
   await page.goto('/decks');
   await expect(page.getByRole('list', { name: 'Decks' }).getByRole('listitem')).toHaveCount(2);
 });
@@ -71,8 +93,16 @@ test('backup: export, import into a fresh browser (identical states), import aga
 }) => {
   const source = await browser.newContext();
   const page = await source.newPage();
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Add & start with DBMS Basics' }).click();
+  const subject = `Backup ${uniqueSlug('s')}`;
+  publish(deckFile({ slug: uniqueSlug('backup'), subject, cards: cards(20) }));
+  await page.goto('/store');
+  await page.getByPlaceholder('Search subjects').fill(subject);
+  await page
+    .getByRole('list', { name: 'Store decks' })
+    .getByRole('link', { name: new RegExp(subject) })
+    .click();
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  await page.getByRole('link', { name: 'Study deck' }).click();
   for (let i = 0; i < 3; i++) {
     await page.getByRole('button', { name: 'Show answer' }).click();
     await page.getByRole('button', { name: /^Good · / }).click();

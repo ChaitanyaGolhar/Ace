@@ -113,7 +113,7 @@ describe('GET /catalog', () => {
     const first = await request(t.app).get('/catalog').expect(200);
     const etag = first.headers.etag as string;
     expect(etag).toMatch(/^"[0-9a-f]{40}"$/);
-    expect(first.headers['cache-control']).toMatch(/max-age=\d+/);
+    expect(first.headers['cache-control']).toBe('public, no-cache');
     const second = await request(t.app).get('/catalog').set('If-None-Match', etag).expect(304);
     expect(second.text).toBe('');
     // A new version changes the ETag.

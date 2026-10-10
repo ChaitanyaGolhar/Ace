@@ -8,6 +8,7 @@ import {
   signIn,
   uniqueEmail,
 } from './helpers';
+import { deckFile, publish, uniqueSlug } from './support/catalog';
 
 // M4 product events, one check per event, each driven through the real UI. Events are
 // read back from the app's IndexedDB; none may contain card text.
@@ -37,23 +38,49 @@ test('app_opened: once per app start', async ({ page }) => {
   expect((await ofType(page, 'app_opened'))[0]?.props).toEqual({});
 });
 
-test('deck_added_prebuilt: from the welcome card and from Browse, with the deck id only', async ({
+test('store events: store_opened, catalog_deck_viewed, catalog_deck_added, deck_update_applied — slugs and numbers only', async ({
   page,
 }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Add & start with DBMS Basics' }).click();
-  await expect(page.getByTestId('card-front')).toBeVisible();
-  expect((await ofType(page, 'deck_added_prebuilt')).map((e) => e.props)).toEqual([
-    { prebuiltId: 'dbms-basics-v1' },
-  ]);
+  const slug = uniqueSlug('events');
+  const subject = `Events ${uniqueSlug('s')}`;
+  const card = (front: string) => ({
+    key: 'u1-001',
+    unit: 1,
+    type: 'basic',
+    front,
+    back: 'secret answer',
+  });
+  publish(deckFile({ slug, subject, cards: [card('secret question')] }));
 
-  await page.goto('/browse');
-  await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Add a second copy' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
-  expect(await ofType(page, 'deck_added_prebuilt')).toHaveLength(2);
-  // Copying 20 ready-made cards is not "creating" cards.
+  await page.goto('/store');
+  await expect.poll(async () => (await ofType(page, 'store_opened')).length).toBe(1);
+  await page.getByPlaceholder('Search subjects').fill(subject);
+  await page
+    .getByRole('list', { name: 'Store decks' })
+    .getByRole('link', { name: new RegExp(subject) })
+    .click();
+  await expect
+    .poll(async () => (await ofType(page, 'catalog_deck_viewed')).map((e) => e.props))
+    .toEqual([{ slug }]);
+  await page.getByRole('button', { name: 'Add to my decks' }).click();
+  await expect(page.getByRole('link', { name: 'Study deck' })).toBeVisible();
+  expect((await ofType(page, 'catalog_deck_added')).map((e) => e.props)).toEqual([
+    { slug, version: 1 },
+  ]);
+  const deckUrl = page.url();
+
+  publish(deckFile({ slug, subject, version: 2, cards: [card('secret question, reworded')] }));
+  await page.goto('/store');
+  await expect(page.getByRole('list', { name: 'Store decks' })).toBeVisible();
+  await page.goto(deckUrl);
+  await page.getByTestId('update-available').getByRole('button', { name: 'Update' }).click();
+  await expect(page.getByTestId('toast')).toContainText('Updated:');
+  expect((await ofType(page, 'deck_update_applied')).map((e) => e.props)).toEqual([
+    { slug, from: 1, to: 2 },
+  ]);
+  // Copying store cards is not "creating" cards, and no event carries card text.
   expect(await ofType(page, 'card_created')).toHaveLength(0);
+  await expectNoCardText(page, ['secret question', 'secret answer', 'reworded']);
 });
 
 test('card_created: one per card saved in the editor, without its text', async ({ page }) => {

@@ -29,8 +29,11 @@ const VersionParamsSchema = z.object({
   version: z.coerce.number().int().min(1).max(100_000),
 });
 
-/** The list and the detail change only on publish: short caching, revalidated by ETag. */
-const LISTING_CACHE = 'public, max-age=60';
+/**
+ * The list and the detail change only on publish. `no-cache` = the browser keeps its copy
+ * but revalidates every time (a 304 when nothing changed), so a new version shows at once.
+ */
+const LISTING_CACHE = 'public, no-cache';
 /** A published version never changes. */
 const VERSION_CACHE = 'public, max-age=31536000, immutable';
 

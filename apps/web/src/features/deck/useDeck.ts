@@ -35,6 +35,8 @@ export interface DeckViewModel {
   /** "20 cards · 6 due today · 4 new · last studied yesterday" */
   meta: string;
   isReadyMade: boolean;
+  /** M7: a copy of a store deck. */
+  isFromStore: boolean;
   /** Total live cards in the deck (before search), minus pending deletes. */
   cardCount: number;
   /** Cards matching the search, oldest first: the shown page only (D-317). */
@@ -234,6 +236,7 @@ export function useDeck(deckId: string): DeckViewModel {
     name: '',
     meta: '',
     isReadyMade: false,
+    isFromStore: false,
     cardCount: 0,
     cards: [],
     shownLabel: null,
@@ -273,6 +276,7 @@ export function useDeck(deckId: string): DeckViewModel {
     name: deck.name,
     meta,
     isReadyMade: deck.source === 'prebuilt',
+    isFromStore: deck.source === 'catalog',
     cardCount: visible.length,
     cards: page.visible.map((c) => {
       const dueLabel = cardDueLabel(c.state, now, timeZone, rolloverHour);

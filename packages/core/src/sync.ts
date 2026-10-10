@@ -6,10 +6,16 @@ import { CardSchema, DeckSchema, ReviewLogSchema, Uuid } from './schemas';
 // both sides validate exactly the same thing.
 
 export const MAX_PUSH_ROWS = 500;
+/**
+ * Sync protocol version (M6, §6.6). Pushes from clients that predate typed cards would
+ * overwrite `type`/`content` through last-write-wins, so the server rejects them (426).
+ */
+export const PROTOCOL_VERSION = 2;
 export const MAX_PULL_LIMIT = 500;
 
 export const PushRequestSchema = z
   .object({
+    protocolVersion: z.literal(PROTOCOL_VERSION),
     deviceId: z.string().min(1).max(100),
     decks: z.array(DeckSchema),
     cards: z.array(CardSchema),

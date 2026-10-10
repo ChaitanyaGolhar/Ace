@@ -11,6 +11,7 @@ import { makeCard, makeDeck, makeLog, uuid } from './helpers/fixtures';
 describe('PushRequestSchema', () => {
   it('accepts a batch of decks, cards and logs', () => {
     const body = {
+      protocolVersion: 2,
       deviceId: 'device-a',
       decks: [makeDeck()],
       cards: [makeCard()],
@@ -22,6 +23,7 @@ describe('PushRequestSchema', () => {
   it('allows at most 500 rows in total', () => {
     const logs = (n: number) => Array.from({ length: n }, (_, i) => makeLog({ id: uuid(i + 1) }));
     const at = (n: number) => ({
+      protocolVersion: 2,
       deviceId: 'd',
       decks: [makeDeck()],
       cards: [],
@@ -34,6 +36,7 @@ describe('PushRequestSchema', () => {
 
   it('rejects an invalid row anywhere in the batch', () => {
     const body = {
+      protocolVersion: 2,
       deviceId: 'd',
       decks: [],
       cards: [makeCard({ front: '' })],
@@ -44,6 +47,7 @@ describe('PushRequestSchema', () => {
 
   it('never accepts a userId from the client (unknown keys are stripped)', () => {
     const parsed = PushRequestSchema.parse({
+      protocolVersion: 2,
       deviceId: 'd',
       userId: 'someone-else',
       decks: [{ ...makeDeck(), userId: 'someone-else' }],

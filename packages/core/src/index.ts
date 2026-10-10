@@ -9,3 +9,4 @@ export * from './prebuilt';
 export * from './events';
 export * from './stats';
 export * from './backup';
+export * from './content';

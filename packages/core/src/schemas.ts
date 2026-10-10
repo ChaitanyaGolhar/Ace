@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import {
+  allowedRatings,
+  CARD_TYPES,
+  CardContentSchema,
+  deriveDisplay,
+  OutcomeSchema,
+  type CardContent,
+} from './content';
 
 // Synced entities. These schemas are the single definition of the wire format:
 // the TypeScript types below are inferred from them, so the two can never drift.
@@ -28,27 +36,71 @@ export const DeckSchema = z
     path: ['prebuiltId'],
   });
 
-export const CardSchema = z.object({
-  id: Uuid,
-  deckId: Uuid,
-  front: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
-  back: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
-  createdAt: EpochMs,
-  updatedAt: EpochMs,
-  deletedAt: EpochMs.nullable(),
-});
+/**
+ * A card (M6, BUILD_BRIEF_M6_M8 §6.2). `content` is the source of truth; `front` and
+ * `back` are the plain display text derived from it (for lists, search and pre-M6
+ * clients) and must equal `deriveDisplay(content)`.
+ */
+export const CardSchema = z
+  .object({
+    id: Uuid,
+    deckId: Uuid,
+    type: z.enum(CARD_TYPES),
+    content: CardContentSchema,
+    front: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
+    back: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
+    /** Syllabus unit (M7 unit filter). */
+    unit: z.int().min(1).max(99).nullable().default(null),
+    /** M7: the catalog card this was copied from, and the hash of its content then. */
+    sourceKey: z.string().min(1).max(100).nullable().default(null),
+    sourceHash: z.string().min(1).max(128).nullable().default(null),
+    createdAt: EpochMs,
+    updatedAt: EpochMs,
+    deletedAt: EpochMs.nullable(),
+  })
+  .superRefine((card, ctx) => {
+    if (card.type !== card.content.type) {
+      ctx.addIssue({ code: 'custom', path: ['type'], message: 'type must match content.type' });
+      return;
+    }
+    const display = deriveDisplay(card.content);
+    if (card.front !== display.front || card.back !== display.back) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['front'],
+        message: 'front/back must be derived from content (deriveDisplay)',
+      });
+    }
+  });
+
+/** The content-dependent fields of a card: type, content and the derived display text. */
+export function cardFields(content: CardContent): {
+  type: CardContent['type'];
+  content: CardContent;
+  front: string;
+  back: string;
+} {
+  return { type: content.type, content, ...deriveDisplay(content) };
+}
 
 export const RatingSchema = z.literal([1, 2, 3, 4]);
 
-export const ReviewLogSchema = z.object({
-  id: Uuid,
-  cardId: Uuid,
-  rating: RatingSchema,
-  reviewedAt: EpochMs,
-  durationMs: z.int().nonnegative(),
-  deviceId: z.string().min(1).max(100),
-  voidedAt: EpochMs.nullable(),
-});
+export const ReviewLogSchema = z
+  .object({
+    id: Uuid,
+    cardId: Uuid,
+    rating: RatingSchema,
+    reviewedAt: EpochMs,
+    durationMs: z.int().nonnegative(),
+    deviceId: z.string().min(1).max(100),
+    voidedAt: EpochMs.nullable(),
+    /** M6 (§6.4): what happened in the review. Never typed text. Replay ignores it. */
+    outcome: OutcomeSchema.nullable().default(null),
+  })
+  .refine((log) => allowedRatings(log.outcome).includes(log.rating), {
+    message: 'this rating is not allowed for this outcome',
+    path: ['rating'],
+  });
 
 export type Deck = z.infer<typeof DeckSchema>;
 export type Card = z.infer<typeof CardSchema>;

@@ -18,7 +18,7 @@ describe('BackupSchema', () => {
   };
   const valid = {
     format: 'recall-backup',
-    version: 1,
+    version: 2,
     exportedAt: T0,
     decks: [deck],
     cards: [card],
@@ -37,7 +37,7 @@ describe('BackupSchema', () => {
 
   it('rejects another format or version', () => {
     expect(BackupSchema.safeParse({ ...valid, format: 'anki' }).success).toBe(false);
-    expect(BackupSchema.safeParse({ ...valid, version: 2 }).success).toBe(false);
+    expect(BackupSchema.safeParse({ ...valid, version: 3 }).success).toBe(false);
   });
 
   it('rejects invalid rows (all-or-nothing import)', () => {

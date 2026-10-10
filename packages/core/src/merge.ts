@@ -44,8 +44,15 @@ export function mergeLog(a: ReviewLog, b: ReviewLog): ReviewLog {
   }
   // The other fields should be identical. If a bug ever made them differ, pick a
   // base deterministically so every device still ends up with the same log.
-  const base = canonical({ ...a, voidedAt: null }) <= canonical({ ...b, voidedAt: null }) ? a : b;
-  return { ...base, voidedAt: earliest(a.voidedAt, b.voidedAt) };
+  const neutral = (l: ReviewLog) => canonical({ ...l, voidedAt: null, outcome: null });
+  const base = neutral(a) <= neutral(b) ? a : b;
+  return {
+    ...base,
+    voidedAt: earliest(a.voidedAt, b.voidedAt),
+    // A pre-M6 client strips `outcome` (§6.6). It never changes once written, so a copy
+    // that has one is the true one.
+    outcome: base.outcome ?? (base === a ? b.outcome : a.outcome),
+  };
 }
 
 function earliest(x: number | null, y: number | null): number | null {
@@ -54,9 +61,23 @@ function earliest(x: number | null, y: number | null): number | null {
   return Math.min(x, y);
 }
 
-/** Key-order-independent serialisation of a flat row, used only for tie-breaking. */
-function canonical(row: object): string {
-  return JSON.stringify(Object.entries(row).sort(([k1], [k2]) => (k1 < k2 ? -1 : 1)));
+/**
+ * Key-order-independent serialisation, at every depth (card `content`, log `outcome`):
+ * Postgres `jsonb` and different clients may order object keys differently. Arrays keep
+ * their order, which is meaningful (MCQ options, key points).
+ */
+function canonical(value: unknown): string {
+  return JSON.stringify(sortKeys(value));
+}
+
+function sortKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeys);
+  if (value !== null && typeof value === 'object') {
+    return Object.keys(value)
+      .sort()
+      .map((k) => [k, sortKeys((value as Record<string, unknown>)[k])]);
+  }
+  return value;
 }
 
 /**
@@ -64,7 +85,5 @@ function canonical(row: object): string {
  * Used by the server push, the client pull and backup import alike.
  */
 export function sameRow(a: object, b: object): boolean {
-  const canonical = (row: object) =>
-    JSON.stringify(Object.entries(row).sort(([x], [y]) => (x < y ? -1 : 1)));
   return canonical(a) === canonical(b);
 }

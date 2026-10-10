@@ -1,6 +1,7 @@
 // Stats (brief §10 screen 7, M4), moved from apps/web in the post-M4 audit.
 import { describe, expect, it } from 'vitest';
 import {
+  cardFields,
   computeStats,
   type Card,
   type CardState,
@@ -31,8 +32,10 @@ const deck: Deck = {
 const card = (n: number, deletedAt: number | null = null): Card => ({
   id: id(n),
   deckId: deck.id,
-  front: 'q',
-  back: 'a',
+  ...cardFields({ type: 'basic', front: 'q', back: 'a' }),
+  unit: null,
+  sourceKey: null,
+  sourceHash: null,
   createdAt: day(-60),
   updatedAt: day(-60),
   deletedAt,
@@ -44,7 +47,12 @@ const c4 = card(14); // first seen today
 const c5 = card(15); // learned 10 days ago
 
 let logN = 100;
-const log = (c: Card, at: number, rating: 1 | 2 | 3 | 4, voidedAt: number | null = null) => ({
+const log = (
+  c: Card,
+  at: number,
+  rating: 1 | 2 | 3 | 4,
+  voidedAt: number | null = null,
+): ReviewLog => ({
   id: id(logN++),
   cardId: c.id,
   rating,
@@ -52,6 +60,7 @@ const log = (c: Card, at: number, rating: 1 | 2 | 3 | 4, voidedAt: number | null
   durationMs: 5000,
   deviceId: 'd',
   voidedAt,
+  outcome: null,
 });
 
 const logs: ReviewLog[] = [

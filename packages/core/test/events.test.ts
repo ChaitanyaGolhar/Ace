@@ -91,10 +91,17 @@ describe('events in the sync protocol', () => {
   const event = { ...base, type: 'app_opened' as const, props: {} };
 
   it('push and pull carry events (defaulting to none)', () => {
-    const push = PushRequestSchema.parse({ deviceId: 'd', decks: [], cards: [], reviewLogs: [] });
+    const push = PushRequestSchema.parse({
+      protocolVersion: 2,
+      deviceId: 'd',
+      decks: [],
+      cards: [],
+      reviewLogs: [],
+    });
     expect(push.events).toEqual([]);
     expect(
       PushRequestSchema.parse({
+        protocolVersion: 2,
         deviceId: 'd',
         decks: [],
         cards: [],
@@ -116,8 +123,14 @@ describe('events in the sync protocol', () => {
   it('events count towards the 500-row push limit', () => {
     const events = Array.from({ length: 501 }, (_, i) => ({ ...event, id: uuid(i + 10) }));
     expect(
-      PushRequestSchema.safeParse({ deviceId: 'd', decks: [], cards: [], reviewLogs: [], events })
-        .success,
+      PushRequestSchema.safeParse({
+        protocolVersion: 2,
+        deviceId: 'd',
+        decks: [],
+        cards: [],
+        reviewLogs: [],
+        events,
+      }).success,
     ).toBe(false);
   });
 });

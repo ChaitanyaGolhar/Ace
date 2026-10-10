@@ -27,12 +27,23 @@ export function makeDeck(overrides: Partial<Deck> = {}): Deck {
   };
 }
 
+/**
+ * A valid card. Without `content`, it's a basic card built from `front`/`back` (so a
+ * test that overrides only the text gets a consistent card, as before M6).
+ */
 export function makeCard(overrides: Partial<Card> = {}): Card {
+  const front = overrides.front ?? 'front';
+  const back = overrides.back ?? 'back';
   return {
     id: uuid(100),
     deckId: uuid(1),
-    front: 'front',
-    back: 'back',
+    type: 'basic',
+    content: { type: 'basic', front, back },
+    front,
+    back,
+    unit: null,
+    sourceKey: null,
+    sourceHash: null,
     createdAt: T0,
     updatedAt: T0,
     deletedAt: null,
@@ -49,6 +60,7 @@ export function makeLog(overrides: Partial<ReviewLog> = {}): ReviewLog {
     durationMs: 5000,
     deviceId: 'device-a',
     voidedAt: null,
+    outcome: null,
     ...overrides,
   };
 }

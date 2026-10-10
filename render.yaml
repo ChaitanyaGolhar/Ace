@@ -8,7 +8,9 @@ services:
     plan: free
     region: singapore
     # Render's build image has a read-only /usr/bin, so `corepack enable` fails there.
-    buildCommand: npx --yes pnpm@12.6.0 install --frozen-lockfile
+    # Generate the Prisma client explicitly: with a warm build cache, pnpm installs
+    # nothing, so the `postinstall` that normally generates it never runs (DEPLOY_LOG_M6).
+    buildCommand: npx --yes pnpm@12.6.0 install --frozen-lockfile && npx --yes pnpm@12.6.0 --filter @recall/api prisma:generate
     # Apply pending migrations, then start. Migrations are idempotent (prisma migrate deploy).
     startCommand: cd apps/api && ./node_modules/.bin/prisma migrate deploy && node --import tsx src/server.ts
     healthCheckPath: /health

@@ -72,7 +72,10 @@ Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml)
 4. **Settings → Custom Domains → Add `api.ace.orizenn.com`.** Render shows a CNAME target (`recall-api.onrender.com`). Add that CNAME at your registrar and wait until Render shows it verified, with a certificate.
 5. Check: `https://api.ace.orizenn.com/health` → `{"ok":true}`.
 
-The Build Command is `npx --yes pnpm@12.6.0 install --frozen-lockfile`: Render's build image has a read-only `/usr/bin`, so `corepack enable` fails there.
+The Build Command is `npx --yes pnpm@12.6.0 install --frozen-lockfile && npx --yes pnpm@12.6.0 --filter @recall/api prisma:generate`:
+
+- `npx --yes pnpm@…` because Render's build image has a read-only `/usr/bin`, so `corepack enable` fails there.
+- The explicit `prisma:generate`, because the Prisma client (`apps/api/src/generated/`, git-ignored) is otherwise only made by `postinstall`. With a warm build cache pnpm installs nothing, `postinstall` never runs, and the API fails to start with `Cannot find module …/generated/prisma/client.ts` (see `DEPLOY_LOG_M6.md`).
 
 ## 4. Vercel (web app)
 
@@ -129,6 +132,45 @@ Neon console → **SQL Editor** → paste a query from [`apps/api/analytics.sql`
 
 ## Updating
 
-Push to `main`: Render and Vercel both redeploy automatically, and Render applies any new migrations on start.
-
 Before pushing, run `pnpm check` and `pnpm e2e` locally.
+
+- **Web:** Vercel deploys every push to `main`.
+- **API:** Render clones the public repo but isn't linked for pushes. Deploy from its dashboard (**Manual Deploy**). Changing the branch in its settings also starts a deploy. Render applies pending migrations on start. A failed deploy leaves the previous instance live.
+- **Order:** when an API change must be live before the web app (as in M6), deploy the API from the feature branch first, then merge into `main`, then point Render back at `main`. The milestone report says when this applies.
+
+### After a migration that adds a source-of-truth column
+
+Between the migration being applied and the new API taking traffic, the **old** API is still writing rows. It knows nothing about the new column, so any row it updates in that window has new values in the old columns and a stale new column. (M6: `cards.content`, the source of truth for card text, next to the old `front`/`back`.)
+
+Standard step for such migrations:
+
+1. Note the time the migration was applied (Render's log: `Applying migration …`).
+2. **Read-only check**, run in Neon's SQL editor right before the new API takes traffic and again right after. For M6:
+
+   ```sql
+   SELECT count(*) FROM cards
+   WHERE type = 'basic' AND content IS NOT NULL
+     AND (content->>'front' IS DISTINCT FROM front OR content->>'back' IS DISTINCT FROM back);
+   ```
+
+   Rows with `content IS NULL` (inserted by the old API) are fine: the new API reads them as basic cards built from `front`/`back`.
+
+3. **If the count isn't 0**, repair exactly those rows in one transaction. Take each affected user's sync lock first (the same `pg_advisory_xact_lock(hashtext(user_id))` a push takes) so `server_seq` values commit in order and no pull skips them. Bump `updated_at` and `server_seq` so devices pull the fix. Dry-run first (the same `WHERE` as a `SELECT count(*)`), then:
+
+   ```sql
+   BEGIN;
+   SELECT pg_advisory_xact_lock(hashtext(user_id))
+     FROM (SELECT DISTINCT user_id FROM cards
+           WHERE type = 'basic' AND content IS NOT NULL
+             AND (content->>'front' IS DISTINCT FROM front OR content->>'back' IS DISTINCT FROM back)
+           ORDER BY user_id) u;
+   UPDATE cards
+      SET content = jsonb_build_object('type', 'basic', 'front', front, 'back', back),
+          updated_at = GREATEST(updated_at + 1, (extract(epoch FROM clock_timestamp()) * 1000)::bigint),
+          server_seq = nextval('change_seq')
+    WHERE type = 'basic' AND content IS NOT NULL
+      AND (content->>'front' IS DISTINCT FROM front OR content->>'back' IS DISTINCT FROM back);
+   COMMIT;
+   ```
+
+4. Run the check again and expect 0. Record both counts in the deploy log.

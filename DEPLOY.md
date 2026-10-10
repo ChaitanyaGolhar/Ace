@@ -1,23 +1,37 @@
 # Deploying Recall for test users
 
-| Part           | Where         | Address                      |
-| -------------- | ------------- | ---------------------------- |
-| Web app (PWA)  | Vercel        | `https://app.YOURDOMAIN`     |
-| API            | Render (free) | `https://api.YOURDOMAIN`     |
-| Postgres       | Neon (free)   | —                            |
-| Sign-in emails | Resend (free) | sent from `login@YOURDOMAIN` |
+| Part           | Where         | Address                       |
+| -------------- | ------------- | ----------------------------- |
+| Web app (PWA)  | Vercel        | `https://ace.orizenn.com`     |
+| API            | Render (free) | `https://api.ace.orizenn.com` |
+| Postgres       | Neon (free)   | —                             |
+| Sign-in emails | Resend (free) | sent from `login@orizenn.com` |
 
-**Why two subdomains of your own domain:** the session cookie is set by the API. Browsers only send it with the app's requests when the app and the API are on the same site. `app.` and `api.` of one domain are the same site; `*.vercel.app` and `*.onrender.com` are not, and sign-in would silently fail in Safari and in Chrome with third-party cookies blocked.
+**Why `api.ace.orizenn.com` for the API:** the session cookie is set by the API. Browsers only send it with the app's requests when the app and the API are on the same site. Both are under `orizenn.com`, so they are; `*.vercel.app` and `*.onrender.com` are not, and sign-in would silently fail in Safari and in Chrome with third-party cookies blocked.
 
-Replace `YOURDOMAIN` below with your domain (for example `recall.study` or `chaitanya.dev`).
+**DNS records you'll add at the registrar for `orizenn.com`** (nothing existing on `orizenn.com` changes):
+
+| Name                        | Type     | Value                                            | For            |
+| --------------------------- | -------- | ------------------------------------------------ | -------------- |
+| `ace`                       | CNAME    | given by Vercel (e.g. `cname.vercel-dns.com`)    | the web app    |
+| `api.ace`                   | CNAME    | given by Render (e.g. `recall-api.onrender.com`) | the API        |
+| `send`, `resend._domainkey` | MX / TXT | given by Resend                                  | sign-in emails |
+
+Resend's records live on their own names (`send.orizenn.com`, `resend._domainkey.orizenn.com`), so nothing else on `orizenn.com` changes. Checked on 2026-10-10 (public DNS):
+
+- `orizenn.com` has no MX records.
+- `ace.orizenn.com` is free.
+- `orizenn.com` already has a DMARC policy (`p=quarantine`, relaxed alignment). It works with Resend's DKIM as is, so **don't add a second `_dmarc` record** if Resend suggests one.
+
+The DNS is on **Cloudflare**. Add the `ace` and `api.ace` CNAMEs as **DNS only** (grey cloud): Vercel and Render issue their own certificates and need to see the traffic directly.
 
 Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml) and [`apps/web/vercel.json`](./apps/web/vercel.json). The same setup was rehearsed locally from a fresh clone: frozen install, production web build, and Render's start command against an empty database (migrations applied, health OK, CORS only for the app origin).
 
 ## 1. Resend (do this first: DNS can take a while)
 
 1. Create an account at resend.com.
-2. **Domains → Add domain → `YOURDOMAIN`.** Region: the nearest one (e.g. `ap-northeast-1`/Tokyo, or whichever Resend offers closest to India).
-3. Add the DNS records Resend shows (MX + TXT for SPF, TXT for DKIM, optional DMARC) at your domain registrar. Wait until Resend shows **Verified**.
+2. **Domains → Add domain → `orizenn.com`.** Region: the nearest one (e.g. `ap-northeast-1`/Tokyo, or whichever Resend offers closest to India).
+3. Add the DNS records Resend shows (MX + TXT on `send`, TXT on `resend._domainkey`) in Cloudflare, as DNS only. Skip DMARC: one already exists. Wait until Resend shows **Verified**.
 4. **API Keys → Create** with _Sending access_, limited to that domain. Copy the key (`re_…`). You'll paste it into Render; don't commit it or send it in chat.
 
 ## 2. Neon (Postgres)
@@ -32,19 +46,19 @@ Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml)
 1. Create an account at render.com and connect GitHub (allow access to `ChaitanyaGolhar/Ace`).
 2. **New → Blueprint** → pick the `Ace` repo. Render reads `render.yaml` and proposes the `recall-api` service. Fill in:
 
-   | Variable         | Value                       |
-   | ---------------- | --------------------------- |
-   | `DATABASE_URL`   | the Neon string from step 2 |
-   | `WEB_ORIGIN`     | `https://app.YOURDOMAIN`    |
-   | `API_ORIGIN`     | `https://api.YOURDOMAIN`    |
-   | `RESEND_API_KEY` | the key from step 1         |
-   | `MAIL_FROM`      | `Recall <login@YOURDOMAIN>` |
+   | Variable         | Value                         |
+   | ---------------- | ----------------------------- |
+   | `DATABASE_URL`   | the Neon string from step 2   |
+   | `WEB_ORIGIN`     | `https://ace.orizenn.com`     |
+   | `API_ORIGIN`     | `https://api.ace.orizenn.com` |
+   | `RESEND_API_KEY` | the key from step 1           |
+   | `MAIL_FROM`      | `Recall <login@orizenn.com>`  |
 
    The others (`MAIL_MODE=resend`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `NODE_VERSION=24`) are already in the file.
 
 3. **Apply.** The first build takes a few minutes. The start command applies the database migrations, then starts the API. The log should end with `API listening … (mail: resend)`.
-4. **Settings → Custom Domains → Add `api.YOURDOMAIN`.** Render shows a CNAME target (`recall-api.onrender.com`). Add that CNAME at your registrar and wait until Render shows it verified, with a certificate.
-5. Check: `https://api.YOURDOMAIN/health` → `{"ok":true}`.
+4. **Settings → Custom Domains → Add `api.ace.orizenn.com`.** Render shows a CNAME target (`recall-api.onrender.com`). Add that CNAME at your registrar and wait until Render shows it verified, with a certificate.
+5. Check: `https://api.ace.orizenn.com/health` → `{"ok":true}`.
 
 If the build fails at `corepack enable`, set the Build Command to `npx --yes pnpm@12.6.0 install --frozen-lockfile` instead.
 
@@ -56,20 +70,20 @@ If the build fails at `corepack enable`, set the Build Command to `npx --yes pnp
 
    | Variable                       | Value                                   |
    | ------------------------------ | --------------------------------------- |
-   | `VITE_API_URL`                 | `https://api.YOURDOMAIN`                |
+   | `VITE_API_URL`                 | `https://api.ace.orizenn.com`           |
    | `ENABLE_EXPERIMENTAL_COREPACK` | `1` (so Vercel uses the repo's pnpm 12) |
 
    Node.js version (Settings → Build and Deployment): **24.x**.
 
 4. **Deploy.**
-5. **Settings → Domains → Add `app.YOURDOMAIN`.** Add the CNAME Vercel shows (`cname.vercel-dns.com`) at your registrar.
+5. **Settings → Domains → Add `ace.orizenn.com`.** Add the CNAME Vercel shows (`cname.vercel-dns.com`) at your registrar.
 
 `VITE_API_URL` is baked in at build time. If you change it, redeploy.
 
 ## 5. Check it end to end (5 minutes)
 
-1. Open `https://app.YOURDOMAIN` → welcome screen → **Add & start** → study a few cards.
-2. Settings → **Sign in to sync** → your email → the email arrives from `login@YOURDOMAIN` → open the link → back in Settings: "Signed in as …" and **Synced**.
+1. Open `https://ace.orizenn.com` → welcome screen → **Add & start** → study a few cards.
+2. Settings → **Sign in to sync** → your email → the email arrives from `login@orizenn.com` → open the link → back in Settings: "Signed in as …" and **Synced**.
 3. Open the app on your phone, sign in with the same email → your deck and progress appear.
 4. Install it: Chrome's "Install app", or Safari → Share → Add to Home Screen.
 
@@ -77,7 +91,7 @@ If sign-in fails, Render's **Logs** show the reason, for example `Resend returne
 
 ## 6. Inviting testers
 
-Just send them `https://app.YOURDOMAIN`.
+Just send them `https://ace.orizenn.com`.
 
 - No account is needed to study. Everything works offline on their device.
 - They sign in only if they want sync or a second device. There are no passwords: they get a link by email.

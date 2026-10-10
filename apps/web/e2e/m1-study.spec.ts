@@ -38,7 +38,7 @@ test('create a deck, add 10 cards and study them; each rating schedules what its
     const front = await page.getByTestId('card-front').innerText();
     await showAnswer.click();
     // First time a card appears: cycle through all four ratings. Learning-step repeats: Easy.
-    const label = seen.has(front) ? 'Easy' : LABELS[seen.size % 4];
+    const label = seen.has(front) ? 'Easy' : (LABELS[seen.size % 4] ?? 'Easy');
     seen.add(front);
     const button = page.getByRole('button', { name: new RegExp(`^${label} · `) });
     const previewed = (await button.innerText()).split(' · ')[1];

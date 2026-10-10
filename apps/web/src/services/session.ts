@@ -24,6 +24,7 @@ export async function startSession(
   const existing = await getSession(ctx);
   if (
     existing &&
+    existing.completedAt === undefined &&
     existing.deckId === deckId &&
     studyDayKey(existing.startedAt, tz, settings.rolloverHour) ===
       studyDayKey(now, tz, settings.rolloverHour)
@@ -33,6 +34,14 @@ export async function startSession(
   const session: Session = { startedAt: now, deckId };
   await setMeta(ctx.db, 'session', session);
   return session;
+}
+
+/** Marks the session finished (idempotent). Its summary can still be read. */
+export async function completeSession(ctx: AppContext): Promise<void> {
+  const session = await getSession(ctx);
+  if (session && session.completedAt === undefined) {
+    await setMeta(ctx.db, 'session', { ...session, completedAt: ctx.now() });
+  }
 }
 
 export async function endSession(ctx: AppContext): Promise<void> {

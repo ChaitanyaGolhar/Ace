@@ -3,7 +3,13 @@ import { initialize } from '../src/services/bootstrap';
 import { createCard } from '../src/services/cards';
 import { createDeck } from '../src/services/decks';
 import { rateCard, undoLastReview } from '../src/services/review';
-import { endSession, getSession, sessionSummary, startSession } from '../src/services/session';
+import {
+  completeSession,
+  endSession,
+  getSession,
+  sessionSummary,
+  startSession,
+} from '../src/services/session';
 import { updateSettings } from '../src/services/settings';
 import { DAY, makeTestContext, MINUTE, T0 } from './helpers';
 
@@ -35,6 +41,20 @@ describe('sessions', () => {
     });
     ctx.advance(DAY);
     expect((await startSession(ctx, deck.id, 'UTC')).startedAt).toBe(T0 + MINUTE + DAY);
+  });
+
+  it('a completed session keeps its summary but is never continued', async () => {
+    const ctx = await setup();
+    const first = await startSession(ctx, null, 'UTC');
+    ctx.advance(MINUTE);
+    await completeSession(ctx);
+    await completeSession(ctx); // idempotent: keeps the first completion time
+    expect(await getSession(ctx)).toEqual({ ...first, completedAt: T0 + MINUTE });
+    ctx.advance(MINUTE);
+    expect(await startSession(ctx, null, 'UTC')).toEqual({
+      startedAt: T0 + 2 * MINUTE,
+      deckId: null,
+    });
   });
 
   it('endSession clears it', async () => {

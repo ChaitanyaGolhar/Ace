@@ -1,4 +1,11 @@
-import { RatingSchema, ReviewLogSchema, type CardState, type Rating } from '@recall/core';
+import {
+  initialState,
+  previewIntervals,
+  RatingSchema,
+  ReviewLogSchema,
+  type CardState,
+  type Rating,
+} from '@recall/core';
 import type { LocalReviewLog } from '../db/db';
 import { getMeta } from '../db/meta';
 import type { AppContext } from './context';
@@ -83,4 +90,23 @@ export async function undoLastReview(
     if (card) await recomputeCardState(ctx, card);
     return { cardId: latest.cardId, logId: latest.id };
   });
+}
+
+export interface ReviewCard {
+  card: { id: string; front: string; back: string };
+  state: CardState;
+  /** ms until due for each rating, as of now: the labels on the rating buttons. */
+  preview: Record<Rating, number>;
+}
+
+/** The card to show in the review screen, or null if it no longer exists. */
+export async function loadReviewCard(ctx: AppContext, cardId: string): Promise<ReviewCard | null> {
+  const card = await ctx.db.cards.get(cardId);
+  if (!card || card.deletedAt !== null) return null;
+  const state = (await ctx.db.cardStates.get(cardId)) ?? initialState(card);
+  return {
+    card: { id: card.id, front: card.front, back: card.back },
+    state,
+    preview: previewIntervals(state, ctx.now()),
+  };
 }

@@ -1,1 +1,25 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/*
+ * Functional shell only: no colour palette or branding (the visual design comes later).
+ * These rules exist for usability: 44px touch targets and visible focus rings.
+ */
+@layer components {
+  .btn {
+    @apply inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded border px-4 py-2;
+  }
+  .btn:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .field {
+    @apply block min-h-11 w-full rounded border px-3 py-2;
+  }
+  .link {
+    @apply inline-flex min-h-11 items-center underline;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid;
+  outline-offset: 2px;
+}

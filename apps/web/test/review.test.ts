@@ -3,7 +3,7 @@ import { previewIntervals, replay, type Rating } from '@recall/core';
 import { initialize } from '../src/services/bootstrap';
 import { createCard } from '../src/services/cards';
 import { createDeck } from '../src/services/decks';
-import { rateCard, undoLastReview } from '../src/services/review';
+import { loadReviewCard, rateCard, undoLastReview } from '../src/services/review';
 import { getMeta } from '../src/db/meta';
 import { DAY, makeTestContext, MINUTE, T0, type TestContext } from './helpers';
 
@@ -172,5 +172,23 @@ describe('undoLastReview', () => {
     });
     ctx.advance(2 * MINUTE);
     expect(await undoLastReview(ctx, sessionStart)).toBeNull();
+  });
+});
+
+describe('loadReviewCard', () => {
+  it('returns the card, its state and the interval preview for each rating', async () => {
+    const { ctx, card } = await setup();
+    const loaded = await loadReviewCard(ctx, card.id);
+    expect(loaded?.card).toEqual({ id: card.id, front: 'front', back: 'back' });
+    const state = await stateOf(ctx, card.id);
+    if (!state) throw new Error('missing state');
+    expect(loaded?.preview).toEqual(previewIntervals(state, ctx.now()));
+  });
+
+  it('returns null for a missing or deleted card', async () => {
+    const { ctx, card } = await setup();
+    expect(await loadReviewCard(ctx, ctx.newId())).toBeNull();
+    await ctx.db.cards.update(card.id, { deletedAt: T0 });
+    expect(await loadReviewCard(ctx, card.id)).toBeNull();
   });
 });

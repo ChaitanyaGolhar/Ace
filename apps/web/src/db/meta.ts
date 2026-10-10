@@ -15,6 +15,8 @@ export interface Session {
   startedAt: number;
   /** null = all decks. */
   deckId: string | null;
+  /** Set when the session-complete screen was shown. A completed session is never continued. */
+  completedAt?: number;
 }
 
 export type StoragePersistence = 'granted' | 'denied' | 'unsupported';

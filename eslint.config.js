@@ -32,9 +32,16 @@ export default tseslint.config(
     },
   },
   {
-    // Plain JS config files are not part of any tsconfig project.
-    files: ['**/*.js'],
+    // Plain JS files (configs, scripts) are not part of any tsconfig project.
+    files: ['**/*.js', '**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // Node scripts.
+    files: ['**/scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { Buffer: 'readonly', URL: 'readonly', process: 'readonly', console: 'readonly' },
+    },
   },
   {
     // packages/core must stay deterministic: time is passed in, never read.

@@ -8,7 +8,6 @@ coverage/
 dev-dist/
 playwright-report/
 test-results/
-e2e/.tmp/
 apps/api/src/generated/
 apps/api/test-outbox/
-e2e/.tmp
+**/e2e/.tmp/

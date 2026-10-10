@@ -113,3 +113,30 @@ milestone section.
 - **What:** Playwright starts `pnpm build && pnpm preview` (port 4173), Chromium only, one worker.
 - **Why:** offline tests need the real service worker; one worker because later suites restart shared servers.
 - **Reverse:** `apps/web/playwright.config.ts`.
+
+## M2 — Backend, auth and sync (paused)
+
+### D-201 Prisma 7.10.0 (not the `latest` tag)
+
+- **What:** `prisma`, `@prisma/client` and `@prisma/adapter-pg` pinned to 7.10.0, using the `prisma-client` generator (output `apps/api/src/generated/prisma`, git-ignored, generated on `pnpm install`) and the `pg` driver adapter. Tables/columns are snake_case via `@@map`/`@map`.
+- **Why:** npm's `latest` tag for `prisma` points at an 8.0 release candidate; 7.10.0 is the newest stable. snake_case keeps the hand-written sync and analytics SQL readable.
+- **Reverse:** bump the three packages together.
+
+### D-202 express pinned to 5.2.1
+
+- **What:** `express@5.2.1`, not 5.3.0.
+- **Why:** 5.3.0 was published the day before; pnpm's minimum-release-age supply-chain check rejected it, and bypassing that check isn't worth it.
+- **Reverse:** bump once 5.3.x has aged.
+
+### D-203 New API dependencies
+
+- `cors`, `cookie-parser` (small, standard Express middleware), `@prisma/adapter-pg` + `pg` (required by Prisma 7), `tsx` (runs the TypeScript server and the TS-source `@recall/core` without a build step), `supertest` (dev, listed in §4).
+- `pnpm-workspace.yaml` `allowBuilds` lets `prisma`, `@prisma/engines` and `esbuild` run their install scripts (pnpm blocks them by default).
+
+### D-204 Auth details
+
+- Email is trimmed and lower-cased; `POST /auth/magic-link` always answers 202 (doesn't reveal whether an account exists).
+- `GET /auth/verify` redirects to `<WEB_ORIGIN>/settings?signedIn=1`, or `?signInError=invalid` for an unknown/used/expired token (a JSON error page is unhelpful when clicking an email link).
+- Rate limits count only allowed requests; limited requests get 429 `rate_limited`.
+- Magic-link delivery: `MAIL_MODE=console` (dev, prints the link), `file` (appends JSON lines; for E2E), `resend` (production, Resend HTTP API — no SDK).
+- `COOKIE_SECURE=false` exists only for plain-http setups other than localhost.

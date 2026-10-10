@@ -4,12 +4,18 @@ _Status: in progress. This file is updated after every milestone and every block
 
 ## 1. Summary
 
-| Milestone | Status                  |
-| --------- | ----------------------- |
-| M1        | ✅ done — tag `m1-done` |
-| M2        | in progress             |
-| M3        | not started             |
-| M4        | not started             |
+| Milestone | Status                                                                                        |
+| --------- | --------------------------------------------------------------------------------------------- |
+| M1        | ✅ done — tag `m1-done`                                                                       |
+| M2        | ⏸ paused — auth API done; sync push/pull, client sync engine, sync UI not started (see below) |
+| M3        | not started (paused)                                                                          |
+| M4        | not started (paused)                                                                          |
+
+**Change of plan mid-run.** While M2 was in progress, a new instruction arrived: apply
+the approved visual design to `apps/web` as a UI-only change ("don't change
+packages/core, the sync engine, or the API"). The overnight M1→M4 run was stopped at a
+clean point (the API auth cycle, committed and green) and the UI work started. The UI
+work is reported separately in `UI_REPORT.md`.
 
 ## 2. Acceptance criteria
 
@@ -32,3 +38,18 @@ web unit tests) and `pnpm e2e` (10/10, run twice to check for flakiness).
 Bug found and fixed by the E2E suite: right after a rating, the review screen could
 briefly show the card just rated (stale live-query snapshot), so it could be rated twice.
 The screen now waits for a snapshot that includes the write (DECISIONS D-107).
+
+### M2 — Backend, auth and sync (paused)
+
+Done and committed (`apps/api`, 18 Supertest tests against real Postgres, all green):
+docker-compose Postgres (port 54329, dbs `recall_dev` / `recall_test` / `recall_e2e`),
+Prisma schema + first migration (incl. the `change_seq` sequence), magic-link auth
+(`POST /auth/magic-link`, `GET /auth/verify`, `POST /auth/logout`, `GET /me`) with hashed
+tokens, 15-min links, 60-day sessions, httpOnly/Secure/SameSite=Lax cookie, rate limits
+(5/email/h, 20/IP/h), CORS for the web origin only, one error format. Core: max lengths
+(deck name 200, front/back 20,000) and shared push/pull wire schemas, enforced by the web
+services too.
+
+Not started: `/sync/push` and `/sync/pull` (advisory lock, LWW upserts, seq), the client
+sync engine, sync status UI, sign in/out in Settings, and the M2 E2E tests. No M2
+acceptance criterion is claimed yet.

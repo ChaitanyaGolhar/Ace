@@ -29,12 +29,10 @@ function describeTarget(url: string | undefined): string {
 const db: { prisma: Prisma | null } = { prisma: null };
 const code = await runDeckCli(process.argv.slice(2), {
   out: (line) => {
-    process.stdout.write(`${line}
-`);
+    process.stdout.write(`${line}\n`);
   },
   err: (line) => {
-    process.stderr.write(`${line}
-`);
+    process.stderr.write(`${line}\n`);
   },
   confirm: async (question) => {
     const rl = createInterface({ input: process.stdin, output: process.stdout });

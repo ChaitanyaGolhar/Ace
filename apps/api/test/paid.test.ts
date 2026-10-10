@@ -319,6 +319,10 @@ describe('pnpm codes / pnpm sales', () => {
     expect(r.printed).toHaveLength(3);
     expect(new Set(r.printed).size).toBe(3);
     expect(r.out.join('\n')).toMatch(/shown only this once/);
+    // Names the database, so codes made against the wrong one (dev) are noticed before selling.
+    expect(r.out[0]).toBe(
+      '3 codes for sppu-te-aids-ml (1 use each), in test database (they work only there):',
+    );
     const rows = await prisma.unlockCode.findMany();
     expect(rows.map((x) => x.codeHash).sort()).toEqual(r.printed.map(hashCode).sort());
     expect(rows.every((x) => x.note === 'UPI 11 Oct Rahul' && x.maxRedemptions === 1)).toBe(true);

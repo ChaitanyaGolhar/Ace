@@ -117,7 +117,8 @@ async function create(prisma: Prisma, o: Options, io: CliIO, now: number): Promi
   );
   io.out(
     `${String(count)} ${count === 1 ? 'code' : 'codes'} for ${slugs.join(' + ')}` +
-      ` (${String(maxUses)} ${maxUses === 1 ? 'use' : 'uses'} each${expires ? `, until ${expires}` : ''}):`,
+      ` (${String(maxUses)} ${maxUses === 1 ? 'use' : 'uses'} each${expires ? `, until ${expires}` : ''}),` +
+      ` in ${io.target} (they work only there):`,
   );
   for (const code of codes) io.out(code);
   io.out('Copy them now: they are shown only this once and stored only as hashes.');

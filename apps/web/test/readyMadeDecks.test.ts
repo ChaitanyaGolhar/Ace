@@ -65,6 +65,13 @@ describe('loadReadyMadeDecks (build-time validation)', () => {
     expect(dbms?.cards.length).toBeGreaterThanOrEqual(18);
     expect(dbms?.cards.length).toBeLessThanOrEqual(22);
   });
+
+  it('the bundled Robbins ch. 3 deck is valid: 1,014 cards in chapter order', () => {
+    const decks = loadReadyMadeDecks(DEFAULT_DECKS_DIR);
+    const robbins = decks.find((d) => d.prebuiltId === 'robbins-ch3-inflammation-repair-v1');
+    expect(robbins?.cards).toHaveLength(1014);
+    expect(robbins?.cards[0]?.front).toMatch(/^Inflammation is best defined/);
+  });
 });
 
 describe('the production build', () => {

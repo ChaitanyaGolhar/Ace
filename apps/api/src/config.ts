@@ -8,7 +8,13 @@ export interface AppConfig {
   apiOrigin: string;
   /** Mark the session cookie Secure (on everywhere except plain-http setups). */
   cookieSecure: boolean;
+  /** M8 (§8.4): "How to buy" for paid decks, plain text with line breaks. Not a secret. */
+  purchaseInstructions: string;
 }
+
+/** Shown until PURCHASE_INSTRUCTIONS is set. */
+export const PLACEHOLDER_PURCHASE_INSTRUCTIONS =
+  'Paid decks are sold by the deck author.\nPayment details will appear here soon.';
 
 const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
@@ -22,6 +28,8 @@ const EnvSchema = z.object({
   COOKIE_SECURE: z.enum(['true', 'false']).default('true'),
   /** Set when running behind a reverse proxy, so rate limiting sees the real client IP. */
   TRUST_PROXY: z.enum(['true', 'false']).default('false'),
+  /** M8: plain text with line breaks (e.g. a UPI id and a WhatsApp number). */
+  PURCHASE_INSTRUCTIONS: z.string().max(2000).optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
@@ -42,5 +50,9 @@ export function configFromEnv(env: Env): AppConfig {
     webOrigin: env.WEB_ORIGIN.replace(/\/$/, ''),
     apiOrigin: env.API_ORIGIN.replace(/\/$/, ''),
     cookieSecure: env.COOKIE_SECURE === 'true',
+    // Env files can't hold real line breaks easily: a literal "\\n" also means a new line.
+    purchaseInstructions: (env.PURCHASE_INSTRUCTIONS ?? PLACEHOLDER_PURCHASE_INSTRUCTIONS)
+      .replace(/\\n/g, '\n')
+      .trim(),
   };
 }

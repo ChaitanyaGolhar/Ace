@@ -29,6 +29,10 @@ describe('EventSchema', () => {
         'catalog_deck_viewed',
         'catalog_deck_added',
         'deck_update_applied',
+        // M8 (§8.5)
+        'purchase_info_viewed',
+        'code_redeemed',
+        'code_redeem_failed',
       ].sort(),
     );
   });
@@ -79,7 +83,11 @@ describe('EventSchema', () => {
           schema instanceof z.ZodBoolean ||
           schema instanceof z.ZodEnum ||
           // The only strings: deck slugs (pattern-restricted, so no sentence fits).
-          ((key === 'prebuiltId' || key === 'slug') && schema instanceof z.ZodString);
+          ((key === 'prebuiltId' || key === 'slug') && schema instanceof z.ZodString) ||
+          // M8: a list of deck slugs (each pattern-restricted).
+          (key === 'slugs' &&
+            schema instanceof z.ZodArray &&
+            (schema as z.ZodArray<z.ZodType>).element instanceof z.ZodString);
         expect(allowed, `${type}.${key}`).toBe(true);
       }
     }

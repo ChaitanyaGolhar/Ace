@@ -8,6 +8,7 @@ import type { Prisma } from './db';
 import { errorHandler, notFound } from './errors';
 import type { Logger } from './logger';
 import type { Mailer } from './mailer';
+import { paidRoutes } from './paid/routes';
 import { syncRoutes } from './sync/routes';
 
 export interface AppDeps {
@@ -45,6 +46,7 @@ export function createApp(deps: AppDeps) {
   app.use(authRoutes(deps));
   app.use(syncRoutes(deps));
   app.use(catalogRoutes(deps));
+  app.use(paidRoutes(deps));
 
   app.use(notFound);
   app.use(errorHandler(deps.logger));

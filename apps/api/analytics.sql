@@ -160,3 +160,48 @@ FROM slugs s
 LEFT JOIN viewed v ON v.slug = s.slug
 LEFT JOIN added a ON a.slug = s.slug
 ORDER BY s.slug;
+
+-- name: paid_deck_funnel
+-- M8 funnel, per paid catalog deck (latest version's price > 0), in distinct users: viewed
+-- its store page → viewed the purchase info → redeemed a code for it → studied it 7+
+-- days after unlocking (a non-undone review of a card in their copy, at least 7 days
+-- after the entitlement was created).
+WITH paid AS (
+  SELECT d.slug
+  FROM catalog_deck d
+  JOIN catalog_deck_version v ON v.slug = d.slug AND v.version = d.latest_version
+  WHERE (v.content->>'price')::int > 0
+),
+viewed AS (
+  SELECT props->>'slug' AS slug, COUNT(DISTINCT user_id) AS n
+  FROM events WHERE type = 'catalog_deck_viewed' GROUP BY 1
+),
+info AS (
+  SELECT props->>'slug' AS slug, COUNT(DISTINCT user_id) AS n
+  FROM events WHERE type = 'purchase_info_viewed' GROUP BY 1
+),
+redeemed AS (
+  SELECT slug, COUNT(DISTINCT user_id) AS n FROM entitlement GROUP BY 1
+),
+studied AS (
+  SELECT e.slug, COUNT(DISTINCT e.user_id) AS n
+  FROM entitlement e
+  JOIN decks d ON d.user_id = e.user_id AND d.catalog_slug = e.slug
+  JOIN cards c ON c.deck_id = d.id AND c.user_id = d.user_id
+  JOIN review_logs r ON r.card_id = c.id AND r.user_id = c.user_id
+  WHERE r.voided_at IS NULL
+    AND r.reviewed_at >= (extract(epoch FROM e.created_at) * 1000)::bigint + 7 * 86400000
+  GROUP BY 1
+)
+SELECT
+  p.slug,
+  COALESCE(v.n, 0)::int AS viewers,
+  COALESCE(i.n, 0)::int AS purchase_info_viewers,
+  COALESCE(x.n, 0)::int AS redeemers,
+  COALESCE(s.n, 0)::int AS studied_7d
+FROM paid p
+LEFT JOIN viewed v ON v.slug = p.slug
+LEFT JOIN info i ON i.slug = p.slug
+LEFT JOIN redeemed x ON x.slug = p.slug
+LEFT JOIN studied s ON s.slug = p.slug
+ORDER BY p.slug;

@@ -36,7 +36,7 @@ export async function prepareDatabase(adminUrl: string, dbName: string): Promise
   try {
     await db.query(
       'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events, ' +
-        'catalog_deck_version, catalog_deck CASCADE',
+        'catalog_deck_version, catalog_deck, unlock_redemption, entitlement, unlock_code CASCADE',
     );
   } finally {
     await db.end();
@@ -61,6 +61,7 @@ export async function startTestServer(
     webOrigin: 'http://localhost:5173',
     apiOrigin: 'http://localhost:0',
     cookieSecure: true,
+    purchaseInstructions: 'Pay ₹49 by UPI to owner@upi.\nThen message +91 90000 00000 on WhatsApp.',
   };
   const quiet: Logger = { warn: () => undefined, error: () => undefined };
   const app = createApp({ prisma, config, mailer, logger: quiet, now: options.now ?? Date.now });

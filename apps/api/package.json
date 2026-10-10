@@ -11,6 +11,8 @@
     "prisma:generate": "prisma generate",
     "migrate": "prisma migrate deploy",
     "deck": "node --import tsx scripts/deck.ts",
+    "codes": "node --import tsx scripts/codes.ts",
+    "sales": "node --import tsx scripts/sales.ts",
     "migrate:test": "DATABASE_URL=postgresql://recall:recall@localhost:54329/recall_test prisma migrate deploy",
     "postinstall": "prisma generate"
   },

@@ -104,3 +104,27 @@ describe('catalog_deck_funnel', () => {
     ]);
   });
 });
+
+describe('paid_deck_funnel (M8, §8.5)', () => {
+  it('per paid deck: viewers → purchase-info viewers → redeemers → studied 7+ days after unlocking', async () => {
+    // A paid "ml" deck (the fixture's dbms stays free).
+    await exec(`INSERT INTO catalog_deck (slug, latest_version) VALUES ('ml', 1), ('dbms', 1)`);
+    await exec(`INSERT INTO catalog_deck_version (slug, version, content, checksum, card_count, type_counts)
+                VALUES ('ml', 1, '{"price": 4900}', 'x', 0, '{}'), ('dbms', 1, '{"price": 0}', 'y', 0, '{}')`);
+    await event('u1', 'purchase_info_viewed', T, 'ml');
+    await event('u4', 'purchase_info_viewed', T, 'ml');
+    await exec(`INSERT INTO unlock_code (id, code_hash, slugs) VALUES ('C1', 'h', '{ml}')`);
+    // u4 unlocked "ml" (its copy exists from the fixture) on day 0, and studies on day 8.
+    await exec(
+      `INSERT INTO entitlement (user_id, slug, code_id, created_at) VALUES ('u4', 'ml', 'C1', to_timestamp(${String(T / 1000)}))`,
+    );
+    const [card] = await prisma.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT c.id FROM cards c JOIN decks d ON d.id = c.deck_id WHERE d.user_id = 'u4' AND d.catalog_slug = 'ml'`,
+    );
+    await review('u4', card?.id ?? '', T + 8 * DAY);
+    const rows = await prisma.$queryRawUnsafe(query('paid_deck_funnel'));
+    expect(rows).toEqual([
+      { slug: 'ml', viewers: 1, purchase_info_viewers: 2, redeemers: 1, studied_7d: 1 },
+    ]);
+  });
+});

@@ -119,6 +119,7 @@ describe('analytics.sql', () => {
     expect([...Q.keys()].sort()).toEqual([
       'catalog_deck_funnel', // M7 (BUILD_BRIEF_M6_M8 §7.8), tested in analyticsCatalog.test.ts
       'due_review_completion_rate',
+      'paid_deck_funnel', // M8 (§8.5), tested in analyticsCatalog.test.ts
       'return_rate',
       'time_to_first_review',
       'true_retention',

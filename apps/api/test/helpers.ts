@@ -31,7 +31,7 @@ export async function closeTestPrisma(): Promise<void> {
 export async function resetDb(prisma: Prisma = testPrisma()): Promise<void> {
   await prisma.$executeRawUnsafe(
     'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events, ' +
-      'catalog_deck_version, catalog_deck CASCADE',
+      'catalog_deck_version, catalog_deck, unlock_redemption, entitlement, unlock_code CASCADE',
   );
 }
 
@@ -60,6 +60,7 @@ export function makeTestApp(overrides: Partial<AppConfig> = {}): TestApp {
     webOrigin: WEB_ORIGIN,
     apiOrigin: API_ORIGIN,
     cookieSecure: true,
+    purchaseInstructions: 'Pay ₹49 by UPI to owner@upi.\nThen message +91 90000 00000 on WhatsApp.',
     ...overrides,
   };
   const app = createApp({ prisma, config, mailer, logger, now: () => now });

@@ -14,7 +14,9 @@
     "format:check": "prettier --check .",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "e2e": "pnpm --filter @recall/web e2e",
-    "deck": "pnpm --filter @recall/api deck"
+    "deck": "pnpm --filter @recall/api deck",
+    "codes": "pnpm --filter @recall/api codes",
+    "sales": "pnpm --filter @recall/api sales"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

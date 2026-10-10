@@ -14,3 +14,4 @@ export * from './hash';
 export * from './deckFile';
 export * from './deckUpdate';
 export * from './catalog';
+export * from './unlockCode';

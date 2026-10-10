@@ -11,7 +11,9 @@ import {
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import type { AppDeps } from '../app';
+import { findSessionUser } from '../auth/session';
 import { HttpError } from '../errors';
+import { hasEntitlement } from '../paid/redeem';
 import { getPublished, getVersion, listPublished } from './store';
 
 // Public, read-only catalog endpoints (BUILD_BRIEF_M6_M8 §7.3). There are no write
@@ -36,6 +38,8 @@ const VersionParamsSchema = z.object({
 const LISTING_CACHE = 'public, no-cache';
 /** A published version never changes. */
 const VERSION_CACHE = 'public, max-age=31536000, immutable';
+/** Paid content is per user: never in a shared cache. */
+const PAID_VERSION_CACHE = 'private, max-age=31536000, immutable';
 
 /** Sends JSON with a strong ETag of the body; answers 304 to a matching If-None-Match. */
 function sendWithEtag(req: Request, res: Response, body: unknown, cacheControl: string): void {
@@ -43,7 +47,10 @@ function sendWithEtag(req: Request, res: Response, body: unknown, cacheControl: 
   const etag = `"${sha1Hex(json)}"`;
   res.set('ETag', etag);
   res.set('Cache-Control', cacheControl);
-  if (req.get('If-None-Match') === etag) {
+  // A proxy that compresses (Render) weakens the ETag to W/"…": compare without that.
+  const unweak = (tag: string) => tag.trim().replace(/^W\//, '');
+  const sent = (req.get('If-None-Match') ?? '').split(',').map(unweak);
+  if (sent.includes(etag)) {
     res.status(304).end();
     return;
   }
@@ -52,7 +59,7 @@ function sendWithEtag(req: Request, res: Response, body: unknown, cacheControl: 
 
 const yearRank = (deck: DeckFile) => YEARS.indexOf(deck.catalog.year);
 
-export function catalogRoutes({ prisma }: AppDeps): Router {
+export function catalogRoutes({ prisma, now }: AppDeps): Router {
   const router = Router();
 
   router.get('/catalog', async (req, res) => {
@@ -92,8 +99,13 @@ export function catalogRoutes({ prisma }: AppDeps): Router {
     const deck = await getVersion(prisma, slug, version);
     if (!deck) throw new HttpError(404, 'not_found', 'This version doesn’t exist.');
     if (deck.price > 0) {
-      // M8 replaces this with the entitlement check (§8.2).
-      throw new HttpError(403, 'forbidden', 'This deck is paid. Unlock it to download it.');
+      // §8.2: a paid version needs a signed-in user who unlocked it (this covers updates).
+      const user = await findSessionUser(prisma, req, now());
+      if (!user || !(await hasEntitlement(prisma, user.id, slug))) {
+        throw new HttpError(403, 'forbidden', 'This deck is paid. Unlock it to download it.');
+      }
+      sendWithEtag(req, res, deck, PAID_VERSION_CACHE);
+      return;
     }
     sendWithEtag(req, res, deck, VERSION_CACHE);
   });

@@ -28,6 +28,12 @@ export const EVENT_PROPS = {
   catalog_deck_viewed: z.strictObject({ slug }),
   catalog_deck_added: z.strictObject({ slug, version: z.int().min(1) }),
   deck_update_applied: z.strictObject({ slug, from: z.int().min(1), to: z.int().min(1) }),
+  // M8 (BUILD_BRIEF_M6_M8 §8.5): paid decks. Never the code itself.
+  purchase_info_viewed: z.strictObject({ slug }),
+  code_redeemed: z.strictObject({ slugs: z.array(slug).min(1).max(20) }),
+  code_redeem_failed: z.strictObject({
+    reason: z.enum(['invalid', 'used_up', 'expired', 'rate_limited', 'network', 'other']),
+  }),
 } as const;
 
 export type EventType = keyof typeof EVENT_PROPS;
@@ -72,6 +78,17 @@ export const EventSchema = z.discriminatedUnion('type', [
     ...base,
     type: z.literal('deck_update_applied'),
     props: EVENT_PROPS.deck_update_applied,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('purchase_info_viewed'),
+    props: EVENT_PROPS.purchase_info_viewed,
+  }),
+  z.object({ ...base, type: z.literal('code_redeemed'), props: EVENT_PROPS.code_redeemed }),
+  z.object({
+    ...base,
+    type: z.literal('code_redeem_failed'),
+    props: EVENT_PROPS.code_redeem_failed,
   }),
 ]);
 

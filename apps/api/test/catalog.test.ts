@@ -116,6 +116,9 @@ describe('GET /catalog', () => {
     expect(first.headers['cache-control']).toBe('public, no-cache');
     const second = await request(t.app).get('/catalog').set('If-None-Match', etag).expect(304);
     expect(second.text).toBe('');
+    // Behind a compressing proxy (Render) the browser sends the weakened W/"…" form.
+    await request(t.app).get('/catalog').set('If-None-Match', `W/${etag}`).expect(304);
+    await request(t.app).get('/catalog').set('If-None-Match', `"other", W/${etag}`).expect(304);
     // A new version changes the ETag.
     await publishVersion(prisma, deckFile({ version: 3 }));
     const third = await request(t.app).get('/catalog').set('If-None-Match', etag).expect(200);

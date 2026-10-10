@@ -2,11 +2,9 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
-import { readyMadeDecksPlugin } from './build/readyMadeDecks';
 
 export default defineConfig({
   plugins: [
-    readyMadeDecksPlugin(),
     react(),
     tailwindcss(),
     VitePWA({

@@ -79,7 +79,7 @@ const TICK_MS = 15_000;
  * buildQueue), so a reload simply rebuilds the session; the only stored session state
  * is its start time (for "reviewed so far" and undo).
  */
-export function useReview(deckId: string | null): ReviewViewModel {
+export function useReview(deckId: string | null, unit?: number): ReviewViewModel {
   const { ctx, browserTimeZone, sync } = useServices();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
@@ -108,7 +108,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
 
   useEffect(() => {
     let cancelled = false;
-    startSession(ctx, deckId, browserTimeZone).then(
+    startSession(ctx, deckId, browserTimeZone, unit).then(
       (s) => {
         if (!cancelled) setSession(s);
       },
@@ -119,7 +119,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
     return () => {
       cancelled = true;
     };
-  }, [ctx, deckId, browserTimeZone]);
+  }, [ctx, deckId, unit, browserTimeZone]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -135,6 +135,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
     const queue = await loadQueue(ctx, {
       browserTimeZone,
       ...(deckId === null ? {} : { deckId }),
+      ...(unit === undefined ? {} : { unit }),
     });
     const summary = await sessionSummary(ctx, session);
     const logCount = await ctx.db.reviewLogs.count();
@@ -145,8 +146,8 @@ export function useReview(deckId: string | null): ReviewViewModel {
       .aboveOrEqual(session.startedAt)
       .filter((l) => l.voidedAt !== null)
       .count();
-    const deckName =
-      deckId === null ? 'All decks' : ((await ctx.db.decks.get(deckId))?.name ?? 'Deck');
+    const name = deckId === null ? 'All decks' : ((await ctx.db.decks.get(deckId))?.name ?? 'Deck');
+    const deckName = unit === undefined ? name : `${name} · Unit ${String(unit)}`;
     const lastRating = await lastSessionRating(ctx, session.startedAt);
     const nextDue = nextCard(queue) ? null : await loadNextDue(ctx, { browserTimeZone });
     return {
@@ -160,7 +161,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
       lastRating,
       nextDue,
     };
-  }, [ctx, session, deckId, browserTimeZone, tick]);
+  }, [ctx, session, deckId, unit, browserTimeZone, tick]);
 
   const queueData = queueQuery.status === 'ready' ? queueQuery.data : null;
   let currentId: string | null = null;

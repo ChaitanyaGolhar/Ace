@@ -47,6 +47,7 @@ describe('loadHome', () => {
         source: 'user',
         cardCount: 2,
         counts: { due: 0, new: 2, learning: 0 },
+        updateAvailable: false,
       },
       {
         id: b.id,
@@ -54,6 +55,7 @@ describe('loadHome', () => {
         source: 'user',
         cardCount: 4,
         counts: { due: 0, new: 3, learning: 0 },
+        updateAvailable: false,
       },
     ]);
   });

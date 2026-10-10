@@ -5,7 +5,8 @@ import { initialize } from '../src/services/bootstrap';
 import { createCard } from '../src/services/cards';
 import { createDeck } from '../src/services/decks';
 import { recordEvent } from '../src/services/events';
-import { addReadyMadeDeck } from '../src/services/readyMade';
+import { validateDeckFile } from '@recall/core';
+import { createCatalogDeck } from '../src/services/catalog';
 import { rateCard, undoLastReview } from '../src/services/review';
 import { finishSession, startSession } from '../src/services/session';
 import { SyncEngine } from '../src/sync/engine';
@@ -55,21 +56,37 @@ describe('where events are recorded', () => {
     expect(JSON.stringify(await ctx.db.events.toArray())).not.toMatch(/secret/);
   });
 
-  it('deck_added_prebuilt with the prebuiltId (and no card_created per copied card)', async () => {
+  it('catalog_deck_added with the slug and version (and no card_created per copied card)', async () => {
     const ctx = await device();
-    await addReadyMadeDeck(ctx, {
-      prebuiltId: 'sample-v1',
-      name: 'S',
+    const file = validateDeckFile({
+      format: 'ace-deck@2',
+      slug: 'sample',
+      version: 3,
+      title: 'S',
       description: 'd',
-      version: 1,
+      catalog: {
+        university: 'SPPU',
+        pattern: '2024',
+        year: 'TE',
+        semester: 5,
+        branches: ['CSE'],
+        subject: 'S',
+        subjectCodes: { CSE: null },
+        units: [{ number: 1, title: 'One' }],
+      },
+      price: 0,
+      author: 'A',
+      lastVerifiedAt: '2026-10-11',
       cards: [
-        { front: 'q1', back: 'a1' },
-        { front: 'q2', back: 'a2' },
+        { key: 'u1-001', unit: 1, type: 'basic', front: 'q1', back: 'a1' },
+        { key: 'u1-002', unit: 1, type: 'basic', front: 'q2', back: 'a2' },
       ],
     });
+    if (!file.ok) throw new Error(file.errors.join(' '));
+    await createCatalogDeck(ctx, file.deck);
     const events = await ctx.db.events.toArray();
     expect(events.map((e) => [e.type, e.props])).toEqual([
-      ['deck_added_prebuilt', { prebuiltId: 'sample-v1' }],
+      ['catalog_deck_added', { slug: 'sample', version: 3 }],
     ]);
   });
 
@@ -185,7 +202,7 @@ describe('local database upgrade', () => {
 
     const db = new RecallDB(name);
     await db.open();
-    expect(db.verno).toBe(3); // v1 → v2 (events) → v3 (M6 typed cards)
+    expect(db.verno).toBe(4); // v1 → v2 (events) → v3 (M6 typed cards) → v4 (M7 catalog)
     expect(await db.decks.get('d1')).toMatchObject({ name: 'Kept' });
     expect(await db.meta.get('deviceId')).toEqual({ key: 'deviceId', value: 'old-device' });
     expect(await db.events.count()).toBe(0);

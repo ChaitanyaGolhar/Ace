@@ -1,4 +1,5 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import type { CatalogApi } from '../services/catalog';
 import type { AppContext } from '../services/context';
 import type { PendingActions } from '../services/pendingActions';
 import type { SyncEngine } from '../sync/engine';
@@ -11,6 +12,10 @@ export interface AppServices {
   pendingDeletes: PendingActions;
   /** Background sync (only active while signed in). */
   sync: SyncEngine;
+  /** M7: the deck store's API. */
+  catalog: CatalogApi;
+  /** Whether the browser thinks it's online (adding a store deck needs the network). */
+  isOnline: () => boolean;
 }
 
 const ServicesContext = createContext<AppServices | null>(null);

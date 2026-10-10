@@ -7,7 +7,9 @@ import { RATING_LABELS, useReview, type ReviewViewModel } from './useReview';
 /** Full-screen review: no navigation, nothing top-right (§10, review-*.png). */
 export function ReviewScreen() {
   const [params] = useSearchParams();
-  const vm = useReview(params.get('deck'));
+  const unitParam = Number(params.get('unit'));
+  const unit = Number.isInteger(unitParam) && unitParam > 0 ? unitParam : undefined;
+  const vm = useReview(params.get('deck'), unit);
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-text">

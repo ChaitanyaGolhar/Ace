@@ -31,6 +31,8 @@ export function buildBigDeckBackup(now: number, cardCount = 1000, logsPerCard = 
     name: 'Big deck',
     source: 'user',
     prebuiltId: null,
+    catalogSlug: null,
+    catalogVersion: null,
     createdAt: start,
     updatedAt: start,
     deletedAt: null,

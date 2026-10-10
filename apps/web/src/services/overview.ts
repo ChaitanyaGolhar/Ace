@@ -7,6 +7,8 @@ import {
   type Queue,
 } from '@recall/core';
 import type { LocalCard, LocalDeck, LocalReviewLog } from '../db/db';
+import { getMeta } from '../db/meta';
+import { decksWithUpdates } from './catalog';
 import type { AppContext } from './context';
 import { ESTIMATE_SAMPLE_SIZE, estimateStudyMinutes } from './estimate';
 import { loadQueueInput, type LocalQueueInput } from './queue';
@@ -18,10 +20,12 @@ interface Options {
 export interface DeckSummary {
   id: string;
   name: string;
-  source: 'user' | 'prebuilt';
+  source: 'user' | 'prebuilt' | 'catalog';
   /** Live cards in the deck. */
   cardCount: number;
   counts: Queue['counts'];
+  /** M7 (§7.6): a newer catalog version is out (the "Update" tag). */
+  updateAvailable: boolean;
 }
 
 export interface HomeData {
@@ -58,9 +62,10 @@ async function latestReviews(ctx: AppContext, n: number): Promise<LocalReviewLog
 }
 
 export async function loadHome(ctx: AppContext, options: Options): Promise<HomeData> {
-  const [input, latest] = await Promise.all([
+  const [input, latest, withUpdates] = await Promise.all([
     loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' }),
     latestReviews(ctx, ESTIMATE_SAMPLE_SIZE),
+    decksWithUpdates(ctx),
   ]);
   const { now, timeZone, rolloverHour } = input;
   const counts = buildQueue(input).counts;
@@ -77,6 +82,7 @@ export async function loadHome(ctx: AppContext, options: Options): Promise<HomeD
       source: deck.source,
       cardCount: live.filter(({ card }) => card.deckId === deck.id).length,
       counts: buildQueue({ ...input, deckId: deck.id }).counts,
+      updateAvailable: withUpdates.has(deck.id),
     })),
     tomorrow: live.filter(
       ({ state }) => state.state !== 'new' && state.due >= endOfToday && state.due < endOfTomorrow,
@@ -96,6 +102,11 @@ export interface DeckViewData {
   timeZone: string;
   rolloverHour: number;
   now: number;
+  /**
+   * M7 (§7.7): the deck's syllabus units, for "Study: Unit 2". Titles come from the
+   * cached store listing when known. Empty when no card has a unit.
+   */
+  units: { number: number; title: string | null; toStudy: number }[];
 }
 
 export async function loadDeckView(
@@ -118,9 +129,25 @@ export async function loadDeckView(
     .filter((l) => l.voidedAt === null && cardIds.has(l.cardId))
     .first();
   const lastStudiedAt = latest?.reviewedAt ?? null;
+  const unitNumbers = [
+    ...new Set(cards.map((c) => c.unit).filter((u): u is number => u !== null)),
+  ].sort((a, b) => a - b);
+  const listed =
+    deck.catalogSlug === null
+      ? undefined
+      : (await getMeta(ctx.db, 'catalogCache'))?.decks.find((d) => d.slug === deck.catalogSlug);
+  const units = unitNumbers.map((number) => {
+    const c = buildQueue({ ...input, deckId, unit: number }).counts;
+    return {
+      number,
+      title: listed?.units.find((u) => u.number === number)?.title ?? null,
+      toStudy: c.due + c.learning + c.new,
+    };
+  });
   return {
     deck,
     cards,
+    units,
     counts: buildQueue({ ...input, deckId }).counts,
     lastStudiedAt,
     timeZone: input.timeZone,

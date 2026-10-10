@@ -1,5 +1,5 @@
 import { prepareDatabase, startTestServer, type TestServer } from '@recall/api/testing';
-import { replay, type CardContent } from '@recall/core';
+import { PROTOCOL_VERSION, replay, type CardContent } from '@recall/core';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { initialize } from '../../src/services/bootstrap';
 import {
@@ -183,7 +183,7 @@ describe('two clients against the real API', () => {
     const id = '01920000-0000-7000-8000-00000000abcd';
     await expect(
       t.push({
-        protocolVersion: 2,
+        protocolVersion: PROTOCOL_VERSION,
         deviceId: 'd',
         decks: [
           {
@@ -191,6 +191,8 @@ describe('two clients against the real API', () => {
             name: 'x'.repeat(201),
             source: 'user',
             prebuiltId: null,
+            catalogSlug: null,
+            catalogVersion: null,
             createdAt: T0,
             updatedAt: T0,
             deletedAt: null,

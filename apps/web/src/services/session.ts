@@ -19,6 +19,7 @@ export async function startSession(
   ctx: AppContext,
   deckId: string | null,
   browserTimeZone: string,
+  unit?: number,
 ): Promise<Session> {
   const settings = await getSettings(ctx);
   const tz = effectiveTimeZone(settings, browserTimeZone);
@@ -28,16 +29,18 @@ export async function startSession(
     existing &&
     existing.completedAt === undefined &&
     existing.deckId === deckId &&
+    existing.unit === unit &&
     studyDayKey(existing.startedAt, tz, settings.rolloverHour) ===
       studyDayKey(now, tz, settings.rolloverHour)
   ) {
     return existing;
   }
-  const session: Session = { startedAt: now, deckId };
+  const session: Session = { startedAt: now, deckId, ...(unit === undefined ? {} : { unit }) };
   await setMeta(ctx.db, 'session', session);
   const { counts } = await loadQueue(ctx, {
     browserTimeZone,
     ...(deckId === null ? {} : { deckId }),
+    ...(unit === undefined ? {} : { unit }),
   });
   await recordEvent(ctx, 'session_started', {
     scope: deckId === null ? 'all' : 'deck',

@@ -70,6 +70,21 @@ export class RecallDB extends Dexie {
           });
         await tx.table('meta').put({ key: 'syncCursor', value: '0' });
       });
+    // M7: decks remember the catalog deck they came from (BUILD_BRIEF_M6_M8 §7.5). Every
+    // existing deck is a user or ready-made deck: no catalog fields. One more re-pull, as
+    // in v3, in case an M6 copy of the app stripped those fields from rows it pulled.
+    this.version(4)
+      .stores({ decks: 'id, updatedAt, deletedAt, dirty, catalogSlug' })
+      .upgrade(async (tx) => {
+        await tx
+          .table('decks')
+          .toCollection()
+          .modify((deck: Record<string, unknown>) => {
+            if (deck.catalogSlug === undefined) deck.catalogSlug = null;
+            if (deck.catalogVersion === undefined) deck.catalogVersion = null;
+          });
+        await tx.table('meta').put({ key: 'syncCursor', value: '0' });
+      });
   }
 }
 

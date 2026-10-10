@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
 import { useToasts } from '../../app/toasts';
 import { useQuery } from '../../app/useQuery';
+import type { DeckUpdatePlan } from '@recall/core';
+import {
+  availableUpdate,
+  CatalogOfflineError,
+  planCatalogUpdate,
+  updateCatalogDeck,
+  updateToast,
+} from '../../services/catalog';
 import { deleteCard } from '../../services/cards';
 import { deleteDeck, renameDeck } from '../../services/decks';
 import { cardDueLabel, lastStudiedLabel } from '../../services/dueLabels';
@@ -37,6 +45,23 @@ export interface DeckViewModel {
   more: number;
   search: string;
   canStudy: boolean;
+  /** M7 (§7.7): "Study: All units / Unit 1 …" (empty: the deck has no units). */
+  units: { number: number; label: string; toStudy: number }[];
+  /** The chosen unit, or null for all units. */
+  unit: number | null;
+  /** Where "Study deck" goes (with the chosen unit). */
+  studyHref: string;
+  /** M7 (§7.6): a newer catalog version is out. */
+  update: {
+    from: number;
+    to: number;
+    /** "12 changed, 5 new, 2 removed"; null until known (needs the network). */
+    summary: DeckUpdatePlan['summary'] | null;
+    offline: boolean;
+    updating: boolean;
+  } | null;
+  setUnit: (unit: number | null) => void;
+  applyUpdate: () => void;
 
   renameOpen: boolean;
   renameValue: string;
@@ -61,7 +86,40 @@ function plural(n: number, word: string) {
 }
 
 export function useDeck(deckId: string): DeckViewModel {
-  const { ctx, browserTimeZone, pendingDeletes } = useServices();
+  const { ctx, browserTimeZone, pendingDeletes, catalog } = useServices();
+  const [unit, setUnit] = useState<number | null>(null);
+  const [updating, setUpdating] = useState(false);
+  const [plan, setPlan] = useState<{
+    key: string;
+    summary: DeckUpdatePlan['summary'] | null;
+    offline: boolean;
+  } | null>(null);
+  const updateQuery = useQuery(() => availableUpdate(ctx, deckId), [ctx, deckId]);
+  const available = updateQuery.status === 'ready' ? updateQuery.data : null;
+  const updateKey = available
+    ? `${deckId}:${String(available.from)}:${String(available.to)}`
+    : null;
+
+  // The banner counts come from the real plan (edited cards count as changed), which
+  // needs both versions from the server.
+  useEffect(() => {
+    if (updateKey === null) return;
+    let cancelled = false;
+    planCatalogUpdate(ctx, catalog, deckId).then(
+      (planned) => {
+        if (!cancelled)
+          setPlan({ key: updateKey, summary: planned?.plan.summary ?? null, offline: false });
+      },
+      (error: unknown) => {
+        if (!cancelled) {
+          setPlan({ key: updateKey, summary: null, offline: error instanceof CatalogOfflineError });
+        }
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [ctx, catalog, deckId, updateKey]);
   const toasts = useToasts();
   const navigate = useNavigate();
   const [search, setSearchText] = useState('');
@@ -136,6 +194,28 @@ export function useDeck(deckId: string): DeckViewModel {
     closeDelete: () => {
       setDeleteOpen(false);
     },
+    setUnit: (next: number | null) => {
+      setUnit(next);
+    },
+    applyUpdate: () => {
+      if (updating) return;
+      setUpdating(true);
+      updateCatalogDeck(ctx, catalog, deckId)
+        .then((applied) => {
+          toasts.show({ message: updateToast(applied) });
+        })
+        .catch((error: unknown) => {
+          toasts.show({
+            message:
+              error instanceof CatalogOfflineError
+                ? 'Connect to the internet to update this deck.'
+                : 'Couldn’t update the deck. Please try again.',
+          });
+        })
+        .finally(() => {
+          setUpdating(false);
+        });
+    },
     confirmDelete: () => {
       deleteDeck(ctx, deckId)
         .then(() => {
@@ -160,6 +240,10 @@ export function useDeck(deckId: string): DeckViewModel {
     more: 0,
     search,
     canStudy: false,
+    units: [],
+    unit,
+    studyHref: `/study?deck=${deckId}`,
+    update: null,
     renameOpen,
     renameValue,
     renameError,
@@ -196,6 +280,26 @@ export function useDeck(deckId: string): DeckViewModel {
     }),
     shownLabel: page.shownLabel,
     more: page.more,
-    canStudy: dueToday + counts.new > 0,
+    canStudy:
+      unit === null
+        ? dueToday + counts.new > 0
+        : (data.units.find((u) => u.number === unit)?.toStudy ?? 0) > 0,
+    units: data.units.map((u) => ({
+      number: u.number,
+      label:
+        u.title === null ? `Unit ${String(u.number)}` : `Unit ${String(u.number)} · ${u.title}`,
+      toStudy: u.toStudy,
+    })),
+    studyHref:
+      unit === null ? `/study?deck=${deckId}` : `/study?deck=${deckId}&unit=${String(unit)}`,
+    update: available
+      ? {
+          from: available.from,
+          to: available.to,
+          summary: plan?.key === updateKey ? plan.summary : null,
+          offline: plan?.key === updateKey ? plan.offline : false,
+          updating,
+        }
+      : null,
   };
 }

@@ -25,12 +25,10 @@ export function DecksScreen() {
       ) : (
         <DeckList decks={vm.decks} label="Decks" />
       )}
-      {vm.hasReadyMade && (
-        <Link to="/browse" className="link self-start px-2">
-          <Plus aria-hidden="true" className="size-5" />
-          Add a ready-made deck
-        </Link>
-      )}
+      <Link to="/store" className="link self-start px-2">
+        <Plus aria-hidden="true" className="size-5" />
+        Find decks in the store
+      </Link>
     </div>
   );
 }

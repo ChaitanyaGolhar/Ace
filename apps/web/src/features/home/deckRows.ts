@@ -8,6 +8,8 @@ export interface DeckRow {
   meta: string;
   /** Review + learning cards due today; 0 = "Up to date". */
   due: number;
+  /** M7: a store deck with a newer version out. */
+  update: boolean;
 }
 
 function plural(n: number, word: string) {
@@ -19,7 +21,10 @@ export function toDeckRows(decks: DeckSummary[]): DeckRow[] {
   return decks.map((d) => ({
     id: d.id,
     name: d.name,
-    meta: `${plural(d.cardCount, 'card')}${d.source === 'prebuilt' ? ' · Ready-made' : ''}`,
+    meta: `${plural(d.cardCount, 'card')}${
+      d.source === 'prebuilt' ? ' · Ready-made' : d.source === 'catalog' ? ' · From the store' : ''
+    }`,
     due: d.counts.due + d.counts.learning,
+    update: d.updateAvailable,
   }));
 }

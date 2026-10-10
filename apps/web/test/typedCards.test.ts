@@ -231,7 +231,7 @@ describe('local database upgrade to version 3', () => {
 
     const db = new RecallDB(name);
     await db.open();
-    expect(db.verno).toBe(3);
+    expect(db.verno).toBe(4); // through v3 (M6), then v4 (M7)
     const card = await db.cards.get(legacyCard.id);
     expect(card).toEqual({
       ...legacyCard,

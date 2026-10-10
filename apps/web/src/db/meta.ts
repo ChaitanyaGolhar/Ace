@@ -1,3 +1,4 @@
+import type { CatalogDeckSummary } from '@recall/core';
 import type { RecallDB } from './db';
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -15,6 +16,8 @@ export interface Session {
   startedAt: number;
   /** null = all decks. */
   deckId: string | null;
+  /** M7 (§7.7): only this syllabus unit of the deck. Absent = every unit. */
+  unit?: number;
   /** Set when the session-complete screen was shown. A completed session is never continued. */
   completedAt?: number;
 }
@@ -37,6 +40,20 @@ export interface MetaMap {
   auth: AuthState;
   /** Last serverSeq pulled (a bigint, as a decimal string). */
   syncCursor: string;
+  /** M7: the store list as last fetched, shown offline (§7.5). */
+  catalogCache: { decks: CatalogDeckSummary[]; fetchedAt: number };
+  /** M7: the latest published version of each catalog deck, as last seen (§7.6). */
+  catalogLatest: Record<string, number>;
+  /** M7: when the catalog was last checked for updates (epoch ms). */
+  catalogCheckedAt: number;
+  /** M7: the store's filters, remembered on this device. */
+  storeFilters: StoreFilters;
+}
+
+export interface StoreFilters {
+  year: string | null;
+  semester: number | null;
+  branch: string | null;
 }
 
 export type MetaKey = keyof MetaMap;

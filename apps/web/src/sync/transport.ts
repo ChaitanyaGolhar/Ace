@@ -1,4 +1,5 @@
 import {
+  PROTOCOL_VERSION,
   PullResponseSchema,
   PushResponseSchema,
   type PullResponse,
@@ -83,7 +84,12 @@ export function httpTransport(apiUrl: string, fetchFn: typeof fetch): SyncTransp
       return PushResponseSchema.parse(await res.json());
     },
     async pull(since, limit) {
-      const params = new URLSearchParams({ since, limit: String(limit) });
+      // Pulls declare the protocol too (M7): the server refuses old apps with 426.
+      const params = new URLSearchParams({
+        since,
+        limit: String(limit),
+        protocolVersion: String(PROTOCOL_VERSION),
+      });
       const res = await call(`/sync/pull?${params.toString()}`);
       return PullResponseSchema.parse(await res.json());
     },

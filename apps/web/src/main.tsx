@@ -7,6 +7,8 @@ import { ToastProvider } from './app/toasts';
 import { RecallDB } from './db/db';
 import './index.css';
 import { initialize } from './services/bootstrap';
+import { checkForUpdates } from './services/catalog';
+import { httpCatalogApi } from './services/catalogHttp';
 import type { AppContext } from './services/context';
 import { recordEvent } from './services/events';
 import { PendingActions } from './services/pendingActions';
@@ -38,11 +40,14 @@ async function start() {
     transport: httpTransport(API_URL, window.fetch.bind(window)),
     isOnline: () => navigator.onLine,
   });
+  const catalog = httpCatalogApi(API_URL, window.fetch.bind(window));
   const services: AppServices = {
     ctx,
     browserTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     pendingDeletes: new PendingActions(5000),
     sync,
+    catalog,
+    isOnline: () => navigator.onLine,
   };
   root.render(
     <StrictMode>
@@ -66,6 +71,13 @@ async function start() {
     void sync.start();
   }
   attachSyncTriggers(() => void sync.requestSync(), browserTriggerEnvironment());
+
+  // Catalog deck updates (M7, §7.6): checked at start, then at most every 12 hours
+  // (checkForUpdates throttles; this just gives it chances). Never blocks anything.
+  const checkUpdates = () => void checkForUpdates(ctx, catalog).catch(() => undefined);
+  checkUpdates();
+  setInterval(checkUpdates, 60 * 60 * 1000);
+  window.addEventListener('online', checkUpdates);
 }
 
 root.render(

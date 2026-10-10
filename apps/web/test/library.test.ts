@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { initialState } from '@recall/core';
 import { initialize } from '../src/services/bootstrap';
 import { createCard, deleteCard } from '../src/services/cards';
-import { createDeck, deleteDeck, renameDeck } from '../src/services/decks';
-import type { PrebuiltDeck } from '@recall/core';
-import { addReadyMadeDeck, readyMadeStatus } from '../src/services/readyMade';
+import { createDeck, renameDeck } from '../src/services/decks';
 import { exportBackup, importBackup, BackupError } from '../src/services/backup';
 import { rateCard, undoLastReview } from '../src/services/review';
 import { searchEverything } from '../src/services/search';
@@ -16,67 +13,6 @@ async function fresh(start = T0): Promise<TestContext> {
   await initialize(ctx, { requestPersist: undefined });
   return ctx;
 }
-
-const SAMPLE: PrebuiltDeck = {
-  prebuiltId: 'sample-v1',
-  name: 'Sample',
-  description: 'A test deck.',
-  version: 1,
-  cards: [
-    { front: 'Q1', back: 'A1' },
-    { front: 'Q2', back: 'A2' },
-    { front: 'Q3', back: 'A3' },
-  ],
-};
-
-describe('addReadyMadeDeck', () => {
-  it('copies the deck and its cards with new ids, source=prebuilt and prebuiltId set', async () => {
-    const ctx = await fresh();
-    const deck = await addReadyMadeDeck(ctx, SAMPLE);
-    expect(await ctx.db.decks.get(deck.id)).toMatchObject({
-      name: 'Sample',
-      source: 'prebuilt',
-      prebuiltId: 'sample-v1',
-      deletedAt: null,
-      dirty: 1,
-    });
-    const cards = await ctx.db.cards.where('deckId').equals(deck.id).sortBy('createdAt');
-    expect(cards.map((c) => [c.front, c.back])).toEqual([
-      ['Q1', 'A1'],
-      ['Q2', 'A2'],
-      ['Q3', 'A3'],
-    ]);
-    expect(new Set(cards.map((c) => c.id)).size).toBe(3);
-    for (const card of cards) {
-      expect(await ctx.db.cardStates.get(card.id)).toEqual(initialState(card));
-    }
-  });
-
-  it('keeps the deck’s card order for the new-card queue', async () => {
-    const ctx = await fresh();
-    const deck = await addReadyMadeDeck(ctx, SAMPLE);
-    const cards = await ctx.db.cards.where('deckId').equals(deck.id).toArray();
-    const ordered = [...cards].sort((a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : 1));
-    expect(ordered.map((c) => c.front)).toEqual(['Q1', 'Q2', 'Q3']);
-  });
-
-  it('adding the same deck twice makes a second, independent copy', async () => {
-    const ctx = await fresh();
-    const first = await addReadyMadeDeck(ctx, SAMPLE);
-    const second = await addReadyMadeDeck(ctx, SAMPLE);
-    expect(second.id).not.toBe(first.id);
-    expect(await ctx.db.cards.count()).toBe(6);
-  });
-
-  it('readyMadeStatus reports which catalog decks are already in your (live) decks', async () => {
-    const ctx = await fresh();
-    expect(await readyMadeStatus(ctx, [SAMPLE])).toEqual({ 'sample-v1': false });
-    const deck = await addReadyMadeDeck(ctx, SAMPLE);
-    expect(await readyMadeStatus(ctx, [SAMPLE])).toEqual({ 'sample-v1': true });
-    await deleteDeck(ctx, deck.id);
-    expect(await readyMadeStatus(ctx, [SAMPLE])).toEqual({ 'sample-v1': false });
-  });
-});
 
 describe('backup export / import', () => {
   async function populated() {

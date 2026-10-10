@@ -7,6 +7,8 @@ export interface LoadQueueOptions {
   browserTimeZone: string;
   /** Scope to one deck; all decks when omitted. */
   deckId?: string;
+  /** M7 (§7.7): only this syllabus unit (with deckId). */
+  unit?: number;
 }
 
 /** QueueInput, keeping the local row types (with dirty/localVersion) for callers that need them. */
@@ -69,7 +71,11 @@ export async function loadQueueInput(
 
 export async function loadQueue(ctx: AppContext, options: LoadQueueOptions): Promise<Queue> {
   const input = await loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' });
-  return buildQueue(options.deckId === undefined ? input : { ...input, deckId: options.deckId });
+  return buildQueue({
+    ...input,
+    ...(options.deckId === undefined ? {} : { deckId: options.deckId }),
+    ...(options.unit === undefined ? {} : { unit: options.unit }),
+  });
 }
 
 export interface NextCard {

@@ -13,6 +13,8 @@ describe('createDeck', () => {
       name: 'Biology',
       source: 'user',
       prebuiltId: null,
+      catalogSlug: null,
+      catalogVersion: null,
       createdAt: T0,
       updatedAt: T0,
       deletedAt: null,

@@ -21,7 +21,7 @@ export function HomeScreen() {
 
   if (vm.status === 'loading') return <Loading />;
   if (vm.status === 'error') return <ErrorMessage />;
-  if (welcome) return <WelcomeScreen vm={vm} />;
+  if (welcome) return <WelcomeScreen />;
 
   return (
     <div className="flex flex-col gap-10 lg:gap-14">
@@ -117,12 +117,10 @@ export function HomeScreen() {
           </div>
         </div>
         <DeckList decks={vm.decks} label="Your decks" />
-        {vm.hasReadyMade && (
-          <Link to="/browse" className="link self-start px-2">
-            <Plus aria-hidden="true" className="size-5" />
-            Add a ready-made deck
-          </Link>
-        )}
+        <Link to="/store" className="link self-start px-2">
+          <Plus aria-hidden="true" className="size-5" />
+          Find decks in the store
+        </Link>
       </section>
     </div>
   );

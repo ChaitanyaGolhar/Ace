@@ -1,5 +1,4 @@
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router';
-import { BrowseScreen } from '../features/browse/BrowseScreen';
 import { DeckScreen } from '../features/deck/DeckScreen';
 import { DecksScreen } from '../features/deck/DecksScreen';
 import { NewDeckScreen } from '../features/deck/NewDeckScreen';
@@ -13,6 +12,8 @@ import { NotFound } from '../features/shell/states';
 import { ToastRegion } from '../features/shell/ToastRegion';
 import { UpdateBanner } from '../features/shell/UpdateBanner';
 import { SignInScreen } from '../features/signin/SignInScreen';
+import { StoreDeckScreen } from '../features/store/StoreDeckScreen';
+import { StoreScreen } from '../features/store/StoreScreen';
 import { StatsScreen } from '../features/stats/StatsScreen';
 
 /** Present on every route, including the full-screen review session. */
@@ -46,7 +47,10 @@ const router = createBrowserRouter([
           { path: 'decks/:deckId', element: <DeckScreen /> },
           { path: 'decks/:deckId/cards/new', element: <CardEditorScreen />, handle: focused },
           { path: 'cards/:cardId/edit', element: <CardEditorScreen />, handle: focused },
-          { path: 'browse', element: <BrowseScreen />, handle: focused },
+          // M7: the Store replaces "Ready-made decks" (old links still work).
+          { path: 'browse', element: <Navigate to="/store" replace /> },
+          { path: 'store', element: <StoreScreen /> },
+          { path: 'store/:slug', element: <StoreDeckScreen /> },
           { path: 'stats', element: <StatsScreen /> },
           { path: 'settings', element: <SettingsScreen /> },
           { path: 'signin', element: <SignInScreen />, handle: focused },

@@ -1,11 +1,9 @@
 import { ArrowRight, Plus, Shield } from 'lucide-react';
 import { Link } from 'react-router';
-import { formatCount } from '../../services/format';
 import { Logo } from '../../ui/Logo';
-import type { HomeViewModel } from './useHome';
 
-/** First visit (zero decks): one tap to a ready-made deck, or create your own. */
-export function WelcomeScreen({ vm }: { vm: HomeViewModel }) {
+/** First visit (zero decks): find your subject in the store, or create your own deck. */
+export function WelcomeScreen() {
   return (
     <div
       data-testid="welcome"
@@ -23,51 +21,21 @@ export function WelcomeScreen({ vm }: { vm: HomeViewModel }) {
         </p>
       </header>
 
-      {vm.featured.length > 0 && (
-        <section aria-labelledby="featured-title" className="flex flex-col gap-3">
-          <h2 id="featured-title" className="text-body text-text-secondary">
-            Start with a ready-made deck
-          </h2>
-          <ul aria-labelledby="featured-title" className="flex flex-col gap-3">
-            {vm.featured.map((deck) => (
-              <li key={deck.prebuiltId} className="panel flex flex-col gap-3 p-6">
-                <h3 className="text-section font-semibold">{deck.name}</h3>
-                <p className="text-body text-text-secondary">{deck.description}</p>
-                <p className="text-body text-text-muted">
-                  <span className="font-mono">{formatCount(deck.cards.length)}</span> cards
-                </p>
-                <button
-                  type="button"
-                  className="btn-primary mt-2 min-h-14 text-section"
-                  onClick={() => {
-                    vm.addAndStart(deck.prebuiltId);
-                  }}
-                  disabled={vm.adding !== null}
-                >
-                  Add &amp; start<span className="sr-only"> with {deck.name}</span>
-                  <ArrowRight aria-hidden="true" className="size-5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          {vm.addError && (
-            <p role="alert" className="text-error">
-              {vm.addError}
-            </p>
-          )}
-          <Link to="/browse" className="link self-start">
-            See all ready-made decks
-          </Link>
-        </section>
-      )}
+      <section aria-labelledby="store-title" className="flex flex-col gap-3">
+        <h2 id="store-title" className="text-body text-text-secondary">
+          Decks for your syllabus, ready to study
+        </h2>
+        <Link to="/store" className="btn-primary min-h-14 text-section">
+          Find your subject
+          <ArrowRight aria-hidden="true" className="size-5" />
+        </Link>
+      </section>
 
-      {vm.featured.length > 0 && (
-        <div className="flex items-center gap-6 text-body text-text-muted" aria-hidden="true">
-          <span className="h-px flex-1 bg-border" />
-          or
-          <span className="h-px flex-1 bg-border" />
-        </div>
-      )}
+      <div className="flex items-center gap-6 text-body text-text-muted" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
 
       <Link to="/decks/new" className="btn-secondary min-h-14 text-section">
         <Plus aria-hidden="true" className="size-5" />

@@ -1,5 +1,5 @@
 import { MAX_DECK_NAME_LENGTH } from '@recall/core';
-import { ArrowRight, Plus, Search } from 'lucide-react';
+import { ArrowRight, ChevronDown, Plus, RefreshCw, Search } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { Dialog } from '../../ui/Dialog';
 import { Menu } from '../../ui/Menu';
@@ -55,9 +55,66 @@ export function DeckScreen() {
             ]}
           />
         </div>
+        {vm.update && (
+          <section
+            aria-label="Deck update"
+            data-testid="update-available"
+            className="panel flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between"
+          >
+            <p className="flex items-start gap-3 text-body lg:text-section lg:font-normal">
+              <RefreshCw aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-accent" />
+              <span>
+                <span className="font-semibold">Update available</span>
+                {vm.update.summary && (
+                  <>
+                    {' '}
+                    — {vm.update.summary.changed} changed, {vm.update.summary.added} new,{' '}
+                    {vm.update.summary.removed} removed
+                  </>
+                )}
+                {vm.update.offline && (
+                  <span className="block text-text-secondary">
+                    Connect to the internet to update this deck.
+                  </span>
+                )}
+              </span>
+            </p>
+            <button
+              type="button"
+              className="btn-primary shrink-0"
+              disabled={vm.update.updating || vm.update.offline}
+              onClick={vm.applyUpdate}
+            >
+              Update
+            </button>
+          </section>
+        )}
         <div className="flex flex-wrap gap-3">
+          {vm.units.length > 0 && (
+            <div className="relative">
+              <select
+                aria-label="Study"
+                className="field min-h-11 appearance-none pr-12"
+                value={vm.unit ?? ''}
+                onChange={(e) => {
+                  vm.setUnit(e.target.value === '' ? null : Number(e.target.value));
+                }}
+              >
+                <option value="">Study: All units</option>
+                {vm.units.map((u) => (
+                  <option key={u.number} value={u.number}>
+                    {u.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                aria-hidden="true"
+                className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
+              />
+            </div>
+          )}
           {vm.canStudy ? (
-            <Link to={`/study?deck=${vm.deckId}`} className="btn-primary px-6">
+            <Link to={vm.studyHref} className="btn-primary px-6">
               Study deck
               <ArrowRight aria-hidden="true" className="size-5" />
             </Link>

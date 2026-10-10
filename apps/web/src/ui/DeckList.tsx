@@ -13,7 +13,17 @@ export function DeckList({ decks, label }: { decks: DeckRow[]; label: string }) 
             className="flex min-h-[72px] items-center gap-3 rounded-md px-2 py-3 transition-colors duration-150 hover:bg-surface"
           >
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[17px] font-medium text-text">{deck.name}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-[17px] font-medium text-text">{deck.name}</span>
+                {deck.update && (
+                  <span
+                    className="shrink-0 rounded-sm border border-accent px-2 py-0.5 text-meta font-medium text-accent"
+                    data-testid="deck-update"
+                  >
+                    Update
+                  </span>
+                )}
+              </span>
               <span className="text-body text-text-secondary">{deck.meta}</span>
             </span>
             {deck.due > 0 ? (

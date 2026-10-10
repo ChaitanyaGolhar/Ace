@@ -1,38 +1,7 @@
-import type { PrebuiltDeck } from '@recall/core';
 import { describe, expect, it } from 'vitest';
 import { toDeckRows } from '../src/features/home/deckRows';
 import { formatCount } from '../src/services/format';
-import { orderForWelcome } from '../src/services/readyMade';
 import { CARD_PAGE_SIZE, pageOfCards } from '../src/services/paging';
-
-const deck = (prebuiltId: string, name: string): PrebuiltDeck => ({
-  prebuiltId,
-  name,
-  description: 'd',
-  version: 1,
-  cards: [{ front: 'q', back: 'a' }],
-});
-
-describe('orderForWelcome (first-visit screen)', () => {
-  const dbms = deck('dbms-basics-v1', 'DBMS Basics');
-  const robbins = deck('robbins-ch3-inflammation-repair-v1', 'Robbins Ch. 3');
-  const other = deck('anatomy-v1', 'Anatomy');
-
-  it('puts the prioritised decks first, in the given order, then the rest by name', () => {
-    const priority = ['robbins-ch3-inflammation-repair-v1', 'dbms-basics-v1'];
-    expect(orderForWelcome([dbms, other, robbins], priority).map((d) => d.prebuiltId)).toEqual([
-      'robbins-ch3-inflammation-repair-v1',
-      'dbms-basics-v1',
-      'anatomy-v1',
-    ]);
-  });
-
-  it('ignores priority ids that are not in the catalog, and keeps the input untouched', () => {
-    const catalog = [dbms, robbins];
-    expect(orderForWelcome(catalog, ['missing-v1', 'dbms-basics-v1'])).toEqual([dbms, robbins]);
-    expect(catalog).toEqual([dbms, robbins]);
-  });
-});
 
 describe('formatCount', () => {
   it('groups thousands', () => {
@@ -73,12 +42,19 @@ describe('deck list rows (Home and Decks)', () => {
     const counts = { due: 2, learning: 1, new: 20 };
     expect(
       toDeckRows([
-        { id: 'r', name: 'Robbins', source: 'prebuilt', cardCount: 1014, counts },
-        { id: 'o', name: 'One', source: 'user', cardCount: 1, counts },
+        {
+          id: 'r',
+          name: 'Robbins',
+          source: 'prebuilt',
+          updateAvailable: false,
+          cardCount: 1014,
+          counts,
+        },
+        { id: 'o', name: 'One', source: 'user', updateAvailable: false, cardCount: 1, counts },
       ]),
     ).toEqual([
-      { id: 'r', name: 'Robbins', meta: '1,014 cards · Ready-made', due: 3 },
-      { id: 'o', name: 'One', meta: '1 card', due: 3 },
+      { id: 'r', name: 'Robbins', meta: '1,014 cards · Ready-made', due: 3, update: false },
+      { id: 'o', name: 'One', meta: '1 card', due: 3, update: false },
     ]);
   });
 });

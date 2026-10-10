@@ -9,7 +9,12 @@ import {
   type PushResponse,
   type ReviewLog,
 } from '@recall/core';
-import { AuthError, NetworkError, type SyncTransport } from '../src/sync/transport';
+import {
+  AuthError,
+  NetworkError,
+  UpgradeRequiredError,
+  type SyncTransport,
+} from '../src/sync/transport';
 
 /**
  * An in-memory stand-in for the sync API, for fast engine tests. It applies the same
@@ -93,7 +98,8 @@ export class FakeServer {
 export interface FakeTransportOptions {
   /** Runs after the push request is built, before the server applies it (in flight). */
   duringPush?: () => Promise<void>;
-  fail?: 'network' | 'auth' | null;
+  /** 'upgrade': the server answers 426 to pushes (§6.6). */
+  fail?: 'network' | 'auth' | 'upgrade' | null;
   user?: { id: string; email: string } | null;
 }
 
@@ -110,6 +116,7 @@ export function fakeTransport(
     async push(body) {
       server.calls.push('push');
       check();
+      if (options.fail === 'upgrade') throw new UpgradeRequiredError();
       await options.duringPush?.();
       return server.push(structuredClone(body));
     },

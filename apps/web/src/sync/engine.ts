@@ -3,7 +3,7 @@ import type { AppContext } from '../services/context';
 import { recordEvent } from '../services/events';
 import type { SyncStatus } from '../services/syncStatus';
 import { syncOnce } from './syncOnce';
-import { AuthError, type SyncTransport } from './transport';
+import { AuthError, UpgradeRequiredError, type SyncTransport } from './transport';
 
 const FIRST_RETRY_MS = 5_000;
 const MAX_RETRY_MS = 5 * 60_000;
@@ -30,6 +30,8 @@ export class SyncEngine {
   private failures = 0;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryDelay: number | null = null;
+  /** Set by a 426: this app version can't sync any more, until the page is reloaded. */
+  private outdated = false;
   private readonly listeners = new Set<Listener>();
 
   constructor(private readonly deps: SyncEngineDeps) {}
@@ -91,7 +93,7 @@ export class SyncEngine {
    * more round (so changes made in the meantime are included).
    */
   requestSync(): Promise<void> {
-    if (!this.isSignedIn) return Promise.resolve();
+    if (!this.isSignedIn || this.outdated) return Promise.resolve();
     if (this.running) {
       this.again = true;
       return this.running;
@@ -118,7 +120,7 @@ export class SyncEngine {
 
   /** Read through a method: TypeScript can't see `again` change during the awaited round. */
   private shouldRunAgain(): boolean {
-    return this.again && this.isSignedIn;
+    return this.again && this.isSignedIn && !this.outdated;
   }
 
   private async signedInAs(user: { email: string }): Promise<void> {
@@ -146,6 +148,12 @@ export class SyncEngine {
     } catch (error) {
       if (error instanceof AuthError) {
         await this.markSignedOut();
+        return;
+      }
+      if (error instanceof UpgradeRequiredError) {
+        // No retries: only a newer version of the app can sync. Studying goes on offline.
+        this.outdated = true;
+        this.setStatus({ kind: 'updateRequired' });
         return;
       }
       this.failures += 1;

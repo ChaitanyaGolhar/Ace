@@ -19,7 +19,7 @@ export async function exportBackup(ctx: AppContext): Promise<Backup> {
   const { db } = ctx;
   return db.transaction('r', [db.decks, db.cards, db.reviewLogs], async () => ({
     format: 'recall-backup' as const,
-    version: 1 as const,
+    version: 2 as const,
     exportedAt: ctx.now(),
     decks: (await db.decks.toArray()).map(withoutSyncFields),
     cards: (await db.cards.toArray()).map(withoutSyncFields),

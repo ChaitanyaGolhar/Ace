@@ -1,4 +1,4 @@
-import { CardSchema, DeckSchema, initialState, type PrebuiltDeck } from '@recall/core';
+import { cardFields, CardSchema, DeckSchema, initialState, type PrebuiltDeck } from '@recall/core';
 import type { LocalCard, LocalDeck } from '../db/db';
 import type { AppContext } from './context';
 import { recordEvent } from './events';
@@ -32,8 +32,7 @@ export async function addReadyMadeDeck(ctx: AppContext, source: PrebuiltDeck): P
       ...CardSchema.parse({
         id: ctx.newId(),
         deckId: deck.id,
-        front: c.front,
-        back: c.back,
+        ...cardFields({ type: 'basic', front: c.front, back: c.back }),
         createdAt: now + i,
         updatedAt: now + i,
         deletedAt: null,

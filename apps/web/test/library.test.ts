@@ -110,7 +110,7 @@ describe('backup export / import', () => {
     const ctx = await populated();
     const backup = await exportBackup(ctx);
     expect(backup.format).toBe('recall-backup');
-    expect(backup.version).toBe(1);
+    expect(backup.version).toBe(2); // M6: typed cards and outcomes
     expect(backup.decks).toHaveLength(1);
     expect(backup.cards).toHaveLength(3); // tombstones included, so deletes carry over
     expect(backup.reviewLogs).toHaveLength(3); // undone log included (voided)

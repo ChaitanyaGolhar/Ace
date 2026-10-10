@@ -1,14 +1,19 @@
 import { prepareDatabase, startTestServer, type TestServer } from '@recall/api/testing';
-import { replay } from '@recall/core';
+import { replay, type CardContent } from '@recall/core';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { initialize } from '../../src/services/bootstrap';
-import { createCard, updateCard } from '../../src/services/cards';
+import {
+  createCard,
+  createTypedCard,
+  updateCard,
+  updateCardContent,
+} from '../../src/services/cards';
 import { createDeck } from '../../src/services/decks';
 import { recordEvent } from '../../src/services/events';
 import { rateCard } from '../../src/services/review';
 import { SyncEngine } from '../../src/sync/engine';
 import { syncOnce } from '../../src/sync/syncOnce';
-import { httpTransport, type SyncTransport } from '../../src/sync/transport';
+import { httpTransport, UpgradeRequiredError, type SyncTransport } from '../../src/sync/transport';
 import { DAY, makeTestContext, MINUTE, T0, type TestContext } from '../helpers';
 
 // The web sync engine against the REAL API and a real Postgres (brief §12, M2):
@@ -178,6 +183,7 @@ describe('two clients against the real API', () => {
     const id = '01920000-0000-7000-8000-00000000abcd';
     await expect(
       t.push({
+        protocolVersion: 2,
         deviceId: 'd',
         decks: [
           {
@@ -227,5 +233,112 @@ describe('two clients against the real API', () => {
     const c = await newDevice();
     await syncOnce(c, await transportFor(email));
     expect(await ids(c)).toEqual(await ids(a));
+  });
+
+  it('M6: every card type and review outcome syncs between two devices (studied offline on both)', async () => {
+    const a = await newDevice();
+    const b = await newDevice();
+    const ta = await transportFor(email);
+    const tb = await transportFor(email);
+    const contents: CardContent[] = [
+      { type: 'basic', front: 'Q', back: 'A' },
+      {
+        type: 'mcq',
+        question: 'Pick the primary key',
+        options: [
+          { id: 'a', text: 'name' },
+          { id: 'b', text: 'roll_no' },
+        ],
+        correct: 'b',
+        explanation: 'Unique and not null.',
+      },
+      {
+        type: 'cloze',
+        text: 'A {{view}} is a stored query.',
+        accepted: [],
+        hint: null,
+        extra: null,
+      },
+      {
+        type: 'short',
+        question: 'Define DBMS.',
+        answer: 'Software that manages databases.',
+        explanation: null,
+      },
+      {
+        type: 'long',
+        question: 'Explain 2PL.',
+        marks: 5,
+        keyPoints: ['Growing phase', 'Shrinking phase', 'Serializability'],
+        modelAnswer: null,
+      },
+    ];
+    const deck = await createDeck(a, 'Typed');
+    const ids: string[] = [];
+    for (const content of contents) ids.push((await createTypedCard(a, deck.id, content)).id);
+    await syncOnce(a, ta);
+    await syncOnce(b, tb);
+
+    // Both devices study offline, with outcomes; B also edits the cloze card.
+    a.setNow(T0 + DAY);
+    b.setNow(T0 + DAY + MINUTE);
+    await rateCard(a, {
+      cardId: ids[1] ?? '',
+      rating: 1,
+      durationMs: 1,
+      outcome: { kind: 'mcq', selected: 'a', correct: false },
+    });
+    await rateCard(b, {
+      cardId: ids[4] ?? '',
+      rating: 2,
+      durationMs: 1,
+      outcome: { kind: 'long', hit: 2, total: 3, suggested: 2 },
+    });
+    await rateCard(b, {
+      cardId: ids[2] ?? '',
+      rating: 4,
+      durationMs: 1,
+      outcome: { kind: 'cloze', mode: 'typed', correct: true },
+    });
+    await updateCardContent(b, ids[2] ?? '', {
+      type: 'cloze',
+      text: 'A {{view}} is a virtual table.',
+      accepted: ['views'],
+      hint: null,
+      extra: null,
+    });
+
+    await syncOnce(a, ta);
+    await syncOnce(b, tb);
+    await syncOnce(a, ta);
+
+    const rows = async (ctx: TestContext) => ({
+      cards: (await ctx.db.cards.toArray())
+        .map(({ dirty: _d, localVersion: _v, ...c }) => c)
+        .sort((x, y) => (x.id < y.id ? -1 : 1)),
+      logs: (await ctx.db.reviewLogs.toArray())
+        .map(({ dirty: _d, localVersion: _v, ...l }) => l)
+        .sort((x, y) => (x.id < y.id ? -1 : 1)),
+      states: (await ctx.db.cardStates.toArray()).sort((x, y) => (x.cardId < y.cardId ? -1 : 1)),
+    });
+    const onA = await rows(a);
+    expect(onA).toEqual(await rows(b));
+    expect(onA.cards.map((c) => c.type)).toEqual(['basic', 'mcq', 'cloze', 'short', 'long']);
+    expect(onA.cards.find((c) => c.type === 'cloze')?.content).toMatchObject({
+      accepted: ['views'],
+    });
+    expect(onA.logs.map((l) => l.outcome?.kind).sort()).toEqual(['cloze', 'long', 'mcq']);
+  });
+
+  it('M6: a push without the protocol version (an old app) is refused with 426', async () => {
+    const t = await transportFor(email);
+    const legacy = {
+      deviceId: 'old-phone',
+      decks: [],
+      cards: [],
+      reviewLogs: [],
+      events: [],
+    } as unknown as Parameters<SyncTransport['push']>[0];
+    await expect(t.push(legacy)).rejects.toBeInstanceOf(UpgradeRequiredError);
   });
 });

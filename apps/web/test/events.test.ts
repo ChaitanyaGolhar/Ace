@@ -169,7 +169,7 @@ describe('events sync like review logs', () => {
 });
 
 describe('local database upgrade', () => {
-  it('a version-1 database (before events) opens as version 2 with its data intact', async () => {
+  it('a version-1 database (before events) opens at the current version with its data intact', async () => {
     const name = 'upgrade-v1-to-v2';
     const v1 = new Dexie(name);
     v1.version(1).stores({
@@ -185,7 +185,7 @@ describe('local database upgrade', () => {
 
     const db = new RecallDB(name);
     await db.open();
-    expect(db.verno).toBe(2);
+    expect(db.verno).toBe(3); // v1 → v2 (events) → v3 (M6 typed cards)
     expect(await db.decks.get('d1')).toMatchObject({ name: 'Kept' });
     expect(await db.meta.get('deviceId')).toEqual({ key: 'deviceId', value: 'old-device' });
     expect(await db.events.count()).toBe(0);

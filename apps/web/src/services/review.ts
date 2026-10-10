@@ -4,6 +4,8 @@ import {
   RatingSchema,
   ReviewLogSchema,
   type CardState,
+  type CardType,
+  type Outcome,
   type Rating,
 } from '@recall/core';
 import type { LocalReviewLog } from '../db/db';
@@ -18,7 +20,18 @@ export interface RateInput {
   rating: Rating;
   /** Time from the card being shown to the rating. */
   durationMs: number;
+  /** M6 (§6.4): what happened (MCQ choice, cloze path, key points ticked). Never typed text. */
+  outcome?: Outcome | null;
 }
+
+/** Which outcome kind a card of this type records (basic and short record none). */
+const OUTCOME_KIND: Record<CardType, Outcome['kind'] | null> = {
+  basic: null,
+  short: null,
+  mcq: 'mcq',
+  cloze: 'cloze',
+  long: 'long',
+};
 
 async function requireDeviceId(ctx: AppContext): Promise<string> {
   const deviceId = await getMeta(ctx.db, 'deviceId');
@@ -47,6 +60,10 @@ export async function rateCard(
     async () => {
       const card = await db.cards.get(input.cardId);
       if (!card || card.deletedAt !== null) throw new NotFoundError('Card', input.cardId);
+      const outcome = input.outcome ?? null;
+      if (outcome !== null && outcome.kind !== OUTCOME_KIND[card.type]) {
+        throw new Error(`A ${outcome.kind} outcome doesn't belong to a ${card.type} card`);
+      }
       const log = ReviewLogSchema.parse({
         id: ctx.newId(),
         cardId: card.id,
@@ -55,6 +72,7 @@ export async function rateCard(
         durationMs: Math.round(input.durationMs),
         deviceId,
         voidedAt: null,
+        outcome,
       });
       const row: LocalReviewLog = { ...log, dirty: 1, localVersion: 1 };
       await db.reviewLogs.add(row);

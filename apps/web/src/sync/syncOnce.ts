@@ -3,6 +3,7 @@ import {
   lww,
   MAX_PULL_LIMIT,
   MAX_PUSH_ROWS,
+  PROTOCOL_VERSION,
   mergeLog,
   replay,
   sameRow,
@@ -55,6 +56,7 @@ export async function buildPushBatch(
     const events: LocalEvent[] = await take(db.events.where('dirty').equals(1).toArray());
     return {
       request: {
+        protocolVersion: PROTOCOL_VERSION,
         deviceId,
         decks: decks.map(withoutSyncFields),
         cards: cards.map(withoutSyncFields),
@@ -110,6 +112,20 @@ export async function markPushed(
 }
 
 /**
+ * Which version of a deck or card to keep when a pulled row meets a local one. A local
+ * row with unsent changes merges by last-write-wins. A clean one (nothing unsent) is just
+ * an earlier copy of what the server has, so the server's version replaces it: that also
+ * repairs rows an older version of the app stored without their M6 fields (§6.6).
+ */
+function pick<T extends { id: string; updatedAt: number; deletedAt: number | null }>(
+  dirty: 0 | 1,
+  local: T,
+  remote: T,
+): T {
+  return dirty === 1 ? lww(local, remote) : remote;
+}
+
+/**
  * Applies one pulled page in a single Dexie transaction (§8.3): decks/cards by `lww`
  * against the local copy, logs inserted or merged with `mergeLog`, every affected card
  * replayed, and the cursor saved — all or nothing.
@@ -127,7 +143,7 @@ export async function applyPullPage(ctx: AppContext, page: PullResponse): Promis
           continue;
         }
         const current = withoutSyncFields(local);
-        const winner = lww(current, remote);
+        const winner = pick(local.dirty, current, remote);
         if (!sameRow(winner, current)) {
           // The server's version won; the local one (even if dirty) is superseded.
           await db.decks.put({ ...winner, dirty: 0, localVersion: local.localVersion + 1 });
@@ -143,7 +159,7 @@ export async function applyPullPage(ctx: AppContext, page: PullResponse): Promis
           continue;
         }
         const current = withoutSyncFields(local);
-        const winner = lww(current, remote);
+        const winner = pick(local.dirty, current, remote);
         if (!sameRow(winner, current)) {
           await db.cards.put({ ...winner, dirty: 0, localVersion: local.localVersion + 1 });
           affected.add(remote.id);
@@ -157,11 +173,13 @@ export async function applyPullPage(ctx: AppContext, page: PullResponse): Promis
           affected.add(remote.cardId);
           continue;
         }
-        const merged = mergeLog(withoutSyncFields(local), remote);
-        if (merged.voidedAt !== local.voidedAt) {
+        const current = withoutSyncFields(local);
+        const merged = mergeLog(current, remote);
+        if (!sameRow(merged, current)) {
+          // voidedAt (an undo elsewhere), or an outcome this device's older app stripped.
           await db.reviewLogs.put({
-            ...local,
-            voidedAt: merged.voidedAt,
+            ...merged,
+            dirty: local.dirty,
             localVersion: local.localVersion + 1,
           });
           affected.add(remote.cardId);

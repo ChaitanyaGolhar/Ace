@@ -43,6 +43,33 @@ export class RecallDB extends Dexie {
     this.version(2).stores({
       events: 'id, type, occurredAt, dirty',
     });
+    // M6: typed cards and review outcomes (BUILD_BRIEF_M6_M8 §6.2). Existing cards become
+    // basic cards with the same text; logs get `outcome: null`. Schedules and history are
+    // untouched. The sync cursor goes back to 0, so this device pulls everything once
+    // more: an old version of the app stripped `type`/`content` from rows it pulled, and
+    // those rows wouldn't otherwise be sent again.
+    this.version(3)
+      .stores({})
+      .upgrade(async (tx) => {
+        await tx
+          .table('cards')
+          .toCollection()
+          .modify((card: Record<string, unknown>) => {
+            if (card.content !== undefined) return;
+            card.type = 'basic';
+            card.content = { type: 'basic', front: card.front, back: card.back };
+            card.unit = null;
+            card.sourceKey = null;
+            card.sourceHash = null;
+          });
+        await tx
+          .table('reviewLogs')
+          .toCollection()
+          .modify((log: Record<string, unknown>) => {
+            if (log.outcome === undefined) log.outcome = null;
+          });
+        await tx.table('meta').put({ key: 'syncCursor', value: '0' });
+      });
   }
 }
 

@@ -22,6 +22,14 @@ export class NetworkError extends Error {
   }
 }
 
+/** The server refused this version of the app (426, §6.6): it must be reloaded to sync. */
+export class UpgradeRequiredError extends Error {
+  constructor() {
+    super('This version of the app is out of date');
+    this.name = 'UpgradeRequiredError';
+  }
+}
+
 /** The server answered with an error. */
 export class ServerError extends Error {
   constructor(
@@ -52,6 +60,7 @@ export function httpTransport(apiUrl: string, fetchFn: typeof fetch): SyncTransp
       throw new NetworkError(error instanceof Error ? error.message : 'network error');
     }
     if (res.status === 401) throw new AuthError();
+    if (res.status === 426) throw new UpgradeRequiredError();
     if (!res.ok) {
       let code = 'unknown';
       try {

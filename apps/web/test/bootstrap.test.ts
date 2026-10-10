@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { replay, SCHEDULER_VERSION, type CardState } from '@recall/core';
+import { cardFields, replay, SCHEDULER_VERSION, type CardState } from '@recall/core';
 import { initialize } from '../src/services/bootstrap';
 import { getMeta, setMeta } from '../src/db/meta';
 import { makeTestContext, T0, DAY } from './helpers';
@@ -54,8 +54,10 @@ describe('initialize', () => {
       const card = {
         id: ctx.newId(),
         deckId: deck.id,
-        front: 'f',
-        back: 'b',
+        ...cardFields({ type: 'basic', front: 'f', back: 'b' }),
+        unit: null,
+        sourceKey: null,
+        sourceHash: null,
         createdAt: T0,
         updatedAt: T0,
         deletedAt: null,
@@ -70,6 +72,7 @@ describe('initialize', () => {
         durationMs: 1000,
         deviceId: 'd',
         voidedAt: null,
+        outcome: null,
         dirty: 1 as const,
         localVersion: 1,
       };

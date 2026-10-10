@@ -38,6 +38,7 @@ describe('rateCard', () => {
       durationMs: 4200,
       deviceId,
       voidedAt: null,
+      outcome: null,
       dirty: 1,
       localVersion: 1,
     });
@@ -56,6 +57,7 @@ describe('rateCard', () => {
       durationMs: 1000,
       deviceId: 'other-device',
       voidedAt: null,
+      outcome: null,
       dirty: 0 as const,
       localVersion: 1,
     };
@@ -141,6 +143,7 @@ describe('undoLastReview', () => {
     await undoLastReview(ctx, T0);
     expect(await ctx.db.reviewLogs.get(log.id)).toMatchObject({
       voidedAt: T0 + MINUTE,
+      outcome: null,
       dirty: 1,
       localVersion: 2,
     });
@@ -172,6 +175,7 @@ describe('undoLastReview', () => {
       durationMs: 1,
       deviceId: 'other-device',
       voidedAt: null,
+      outcome: null,
       dirty: 0,
       localVersion: 1,
     });

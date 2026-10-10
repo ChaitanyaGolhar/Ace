@@ -1,4 +1,11 @@
-import { applyReview, initialState, type Card, type Deck, type ReviewLog } from '@recall/core';
+import {
+  cardFields,
+  applyReview,
+  initialState,
+  type Card,
+  type Deck,
+  type ReviewLog,
+} from '@recall/core';
 
 // Builds a realistic backup for screenshots and UI tests: a few decks whose cards have
 // been studied over the past month, generated with the real scheduler so the history
@@ -118,8 +125,10 @@ export function buildSeedBackup(now: number, studiedFraction = 0.75): SeedBackup
       const card: Card = {
         id: uuid7(start + i),
         deckId: deck.id,
-        front,
-        back,
+        ...cardFields({ type: 'basic', front: front, back: back }),
+        unit: null,
+        sourceKey: null,
+        sourceHash: null,
         createdAt: start + i,
         updatedAt: start + i,
         deletedAt: null,
@@ -140,6 +149,7 @@ export function buildSeedBackup(now: number, studiedFraction = 0.75): SeedBackup
           durationMs: 4000 + Math.floor(rand() * 9000),
           deviceId: 'seed',
           voidedAt: null,
+          outcome: null,
         };
         reviewLogs.push(log);
         state = applyReview(state, log);

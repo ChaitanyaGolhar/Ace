@@ -110,6 +110,7 @@ describe('a 1,000-card deck with 5,000 review logs stays fast', () => {
           durationMs: 4000,
           deviceId: 'dev',
           voidedAt: null,
+          outcome: null,
           dirty: 0,
           localVersion: 1,
         });

@@ -3,11 +3,13 @@ export type SyncStatus =
   | { kind: 'syncing' }
   | { kind: 'offline' }
   | { kind: 'error' }
-  | { kind: 'signedOut' };
+  | { kind: 'signedOut' }
+  /** M6 (§6.6): the server refused this app version (426). Sync stops until a reload. */
+  | { kind: 'updateRequired' };
 
 export interface SyncStatusView {
   /** Which icon to draw; the words always carry the meaning too. */
-  icon: SyncStatus['kind'];
+  icon: Exclude<SyncStatus['kind'], 'updateRequired'>;
   text: string;
   /** Link text after the status, if any ("Sign in to sync"). */
   action: string | null;
@@ -33,6 +35,8 @@ export function syncStatusView(status: SyncStatus, now: number): SyncStatusView 
       return { icon: 'offline', text: 'Offline · saved on this device', action: null };
     case 'error':
       return { icon: 'error', text: 'Couldn’t sync · retrying', action: null };
+    case 'updateRequired':
+      return { icon: 'error', text: 'Update required to sync', action: null };
     case 'signedOut':
       return { icon: 'signedOut', text: 'On this device only', action: 'Sign in to sync' };
   }

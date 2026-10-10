@@ -47,6 +47,7 @@ describe('estimateStudyMinutes', () => {
     durationMs,
     deviceId: 'd',
     voidedAt: voided ? NOW : null,
+    outcome: null,
   });
 
   it('is null with fewer than 20 reviews', () => {

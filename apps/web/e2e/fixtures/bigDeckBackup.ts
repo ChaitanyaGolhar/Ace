@@ -1,4 +1,11 @@
-import { applyReview, initialState, type Card, type Deck, type ReviewLog } from '@recall/core';
+import {
+  cardFields,
+  applyReview,
+  initialState,
+  type Card,
+  type Deck,
+  type ReviewLog,
+} from '@recall/core';
 import type { SeedBackup } from './seedBackup';
 
 // A big deck for performance tests: `cardCount` cards, each with `logsPerCard` reviews
@@ -34,8 +41,14 @@ export function buildBigDeckBackup(now: number, cardCount = 1000, logsPerCard = 
     const card: Card = {
       id: uuid7(start + i),
       deckId: deck.id,
-      front: `${bigQuestion(i)}\n\nA. one\nB. two`,
-      back: `Answer ${String(i + 1)}\n\n• first point\n• second point`,
+      ...cardFields({
+        type: 'basic',
+        front: `${bigQuestion(i)}\n\nA. one\nB. two`,
+        back: `Answer ${String(i + 1)}\n\n• first point\n• second point`,
+      }),
+      unit: null,
+      sourceKey: null,
+      sourceHash: null,
       createdAt: start + i,
       updatedAt: start + i,
       deletedAt: null,
@@ -55,6 +68,7 @@ export function buildBigDeckBackup(now: number, cardCount = 1000, logsPerCard = 
         durationMs: 5000,
         deviceId: 'seed',
         voidedAt: null,
+        outcome: null,
       };
       reviewLogs.push(log);
       state = applyReview(state, log);

@@ -107,8 +107,13 @@ describe('createCard', () => {
     expect(await ctx.db.cards.get(card.id)).toEqual({
       id: card.id,
       deckId: deck.id,
+      type: 'basic',
+      content: { type: 'basic', front: 'line 1\nline 2', back: 'back' },
       front: 'line 1\nline 2',
       back: 'back',
+      unit: null,
+      sourceKey: null,
+      sourceHash: null,
       createdAt: T0,
       updatedAt: T0,
       deletedAt: null,

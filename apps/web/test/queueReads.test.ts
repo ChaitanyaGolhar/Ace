@@ -38,6 +38,7 @@ async function history(): Promise<{ ctx: TestContext; deckId: string; otherDeckI
     durationMs: 7000,
     deviceId: 'other-device',
     voidedAt,
+    outcome: null,
     dirty: 0,
     localVersion: 1,
   });

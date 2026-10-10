@@ -292,4 +292,3 @@ decisions:
   - The web `ReadyMadeDeck` interface was deleted in favour of core's `PrebuiltDeck`.
 - **Kept on purpose:** true retention has two definitions. The app's (core `computeStats`) replays each card's FSRS state. The server's (`analytics.sql`) has no card state and uses a ≥ 1-day gap. They can differ in both directions; `apps/api/test/trueRetention.test.ts` pins down how. The app's number is the brief's definition.
 - **Reverse:** move the files back; the tests move with them.
-

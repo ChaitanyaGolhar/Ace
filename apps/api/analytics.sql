@@ -120,3 +120,43 @@ FROM ordered
 WHERE prev_at IS NOT NULL AND reviewed_at - prev_at >= 86400000
 GROUP BY user_id
 ORDER BY user_id;
+
+-- name: catalog_deck_funnel
+-- M7 store funnel, per catalog deck (slug), in distinct users: viewed its store page →
+-- added it → reviewed at least one of its cards → still reviewing it 7+ days after adding
+-- it (a review at least 7 days after their copy was created, device clock). Unlisted
+-- decks are included. Undone reviews don't count.
+WITH viewed AS (
+  SELECT props->>'slug' AS slug, COUNT(DISTINCT user_id) AS n
+  FROM events WHERE type = 'catalog_deck_viewed' GROUP BY 1
+),
+added AS (
+  SELECT props->>'slug' AS slug, COUNT(DISTINCT user_id) AS n
+  FROM events WHERE type = 'catalog_deck_added' GROUP BY 1
+),
+copies AS (
+  SELECT catalog_slug AS slug, user_id, MIN(created_at) AS added_at
+  FROM decks WHERE catalog_slug IS NOT NULL GROUP BY 1, 2
+),
+reviews AS (
+  SELECT d.catalog_slug AS slug, r.user_id, r.reviewed_at
+  FROM review_logs r
+  JOIN cards c ON c.id = r.card_id AND c.user_id = r.user_id
+  JOIN decks d ON d.id = c.deck_id AND d.user_id = c.user_id
+  WHERE d.catalog_slug IS NOT NULL AND r.voided_at IS NULL
+),
+slugs AS (
+  SELECT slug FROM viewed UNION SELECT slug FROM added UNION SELECT slug FROM copies
+)
+SELECT
+  s.slug,
+  COALESCE(v.n, 0)::int AS viewers,
+  COALESCE(a.n, 0)::int AS adders,
+  (SELECT COUNT(DISTINCT r.user_id) FROM reviews r WHERE r.slug = s.slug)::int AS reviewers,
+  (SELECT COUNT(DISTINCT r.user_id)
+     FROM reviews r JOIN copies c ON c.slug = r.slug AND c.user_id = r.user_id
+     WHERE r.slug = s.slug AND r.reviewed_at >= c.added_at + 7 * 86400000)::int AS retained_7d
+FROM slugs s
+LEFT JOIN viewed v ON v.slug = s.slug
+LEFT JOIN added a ON a.slug = s.slug
+ORDER BY s.slug;

@@ -30,7 +30,8 @@ export async function closeTestPrisma(): Promise<void> {
 /** Empties every table (the sequence keeps counting; tests never depend on its value). */
 export async function resetDb(prisma: Prisma = testPrisma()): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events CASCADE',
+    'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events, ' +
+      'catalog_deck_version, catalog_deck CASCADE',
   );
 }
 

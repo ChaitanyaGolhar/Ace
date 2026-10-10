@@ -1,4 +1,4 @@
-import { cardFields, type CardContent, type PullResponse } from '@recall/core';
+import { PROTOCOL_VERSION, cardFields, type CardContent, type PullResponse } from '@recall/core';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { closeTestPrisma, makeTestApp, resetDb, signIn } from './helpers';
@@ -116,6 +116,7 @@ describe('old clients (§6.6)', () => {
   it.each([
     ['no protocolVersion', {}],
     ['protocolVersion 1', { protocolVersion: 1 }],
+    ['protocolVersion 2 (an M6 app, since M7)', { protocolVersion: 2 }],
   ])('a push with %s gets 426 and the database is unchanged', async (_label, version) => {
     const t = makeTestApp();
     const cookie = await signIn(t, 'a@example.com');
@@ -152,17 +153,45 @@ describe('old clients (§6.6)', () => {
     const res = await request(t.app)
       .post('/sync/push')
       .set('Cookie', cookie)
-      .send({ protocolVersion: 3, deviceId: 'd', decks: [], cards: [], reviewLogs: [] });
+      .send({
+        protocolVersion: PROTOCOL_VERSION + 1,
+        deviceId: 'd',
+        decks: [],
+        cards: [],
+        reviewLogs: [],
+      });
     expect(res.status).toBe(400);
   });
 
-  it('pulls still work for old clients: every field is included, old ones simply ignore the new ones', async () => {
+  it.each([
+    ['no protocolVersion (pre-M7 apps)', {}],
+    ['protocolVersion 2 (an M6 app)', { protocolVersion: '2' }],
+  ])(
+    'since M7, a pull with %s gets 426: an old app can’t parse catalog rows',
+    async (_label, version) => {
+      const t = makeTestApp();
+      const cookie = await signIn(t, 'a@example.com');
+      const d = deck();
+      await push(t, cookie, { decks: [d], cards: [card(d.id)] }).expect(200);
+      const res = await request(t.app)
+        .get('/sync/pull')
+        .set('Cookie', cookie)
+        .query({ since: '0', ...version });
+      expect(res.status).toBe(426);
+      expect(res.body).toMatchObject({ error: { code: 'upgrade_required' } });
+    },
+  );
+
+  it('a current pull includes every field', async () => {
     const t = makeTestApp();
     const cookie = await signIn(t, 'a@example.com');
     const d = deck();
     const c = card(d.id, cardFields(contents[4] as CardContent));
     await push(t, cookie, { decks: [d], cards: [c] }).expect(200);
-    const res = await request(t.app).get('/sync/pull').set('Cookie', cookie).query({ since: '0' });
+    const res = await request(t.app)
+      .get('/sync/pull')
+      .set('Cookie', cookie)
+      .query({ since: '0', protocolVersion: String(PROTOCOL_VERSION) });
     expect(res.status).toBe(200);
     const [pulled] = (res.body as PullResponse).cards;
     expect(pulled).toMatchObject({ front: 'Explain ACID.', back: c.back, type: 'long' });

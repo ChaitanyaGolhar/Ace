@@ -1,4 +1,11 @@
-import { cardFields, type AppEvent, type Card, type Deck, type ReviewLog } from '@recall/core';
+import {
+  cardFields,
+  PROTOCOL_VERSION,
+  type AppEvent,
+  type Card,
+  type Deck,
+  type ReviewLog,
+} from '@recall/core';
 import request from 'supertest';
 import { T0, type TestApp } from './helpers';
 
@@ -16,6 +23,8 @@ export function deck(overrides: Partial<Deck> = {}): Deck {
     name: 'Deck',
     source: 'user',
     prebuiltId: null,
+    catalogSlug: null,
+    catalogVersion: null,
     createdAt: T0,
     updatedAt: T0,
     deletedAt: null,
@@ -80,7 +89,7 @@ export function push(t: TestApp, cookie: string, batch: Batch) {
     .post('/sync/push')
     .set('Cookie', cookie)
     .send({
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'device-a',
       decks: batch.decks ?? [],
       cards: batch.cards ?? [],
@@ -92,7 +101,11 @@ export function push(t: TestApp, cookie: string, batch: Batch) {
 export function pull(t: TestApp, cookie: string, since = '0', limit?: number) {
   return request(t.app)
     .get('/sync/pull')
-    .query({ since, ...(limit === undefined ? {} : { limit }) })
+    .query({
+      since,
+      protocolVersion: PROTOCOL_VERSION,
+      ...(limit === undefined ? {} : { limit }),
+    })
     .set('Cookie', cookie);
 }
 

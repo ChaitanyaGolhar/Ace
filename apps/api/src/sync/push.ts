@@ -172,14 +172,16 @@ type Tx = Parameters<Parameters<Prisma['$transaction']>[0]>[0];
 
 function insertDeck(tx: Tx, userId: string, d: Deck) {
   return tx.$executeRaw`
-    INSERT INTO decks (id, user_id, name, source, prebuilt_id, created_at, updated_at, deleted_at, server_seq)
-    VALUES (${d.id}, ${userId}, ${d.name}, ${d.source}, ${d.prebuiltId}, ${d.createdAt}, ${d.updatedAt},
-            ${d.deletedAt}, nextval('change_seq'))`;
+    INSERT INTO decks (id, user_id, name, source, prebuilt_id, catalog_slug, catalog_version,
+                       created_at, updated_at, deleted_at, server_seq)
+    VALUES (${d.id}, ${userId}, ${d.name}, ${d.source}, ${d.prebuiltId}, ${d.catalogSlug},
+            ${d.catalogVersion}, ${d.createdAt}, ${d.updatedAt}, ${d.deletedAt}, nextval('change_seq'))`;
 }
 
 function updateDeck(tx: Tx, d: Deck) {
   return tx.$executeRaw`
     UPDATE decks SET name = ${d.name}, source = ${d.source}, prebuilt_id = ${d.prebuiltId},
+      catalog_slug = ${d.catalogSlug}, catalog_version = ${d.catalogVersion},
       created_at = ${d.createdAt}, updated_at = ${d.updatedAt}, deleted_at = ${d.deletedAt},
       server_seq = nextval('change_seq')
     WHERE id = ${d.id}`;

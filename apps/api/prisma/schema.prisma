@@ -48,15 +48,18 @@ model MagicLinkToken {
 }
 
 model Deck {
-  id         String  @id
-  userId     String  @map("user_id")
-  name       String
-  source     String
-  prebuiltId String? @map("prebuilt_id")
-  createdAt  BigInt  @map("created_at")
-  updatedAt  BigInt  @map("updated_at")
-  deletedAt  BigInt? @map("deleted_at")
-  serverSeq  BigInt  @map("server_seq")
+  id             String  @id
+  userId         String  @map("user_id")
+  name           String
+  source         String
+  prebuiltId     String? @map("prebuilt_id")
+  /// M7: the catalog deck a student's copy came from, and the version it is on
+  catalogSlug    String? @map("catalog_slug")
+  catalogVersion Int?    @map("catalog_version")
+  createdAt      BigInt  @map("created_at")
+  updatedAt      BigInt  @map("updated_at")
+  deletedAt      BigInt? @map("deleted_at")
+  serverSeq      BigInt  @map("server_seq")
 
   @@index([userId, serverSeq])
   @@map("decks")
@@ -114,4 +117,35 @@ model Event {
   @@index([userId, serverSeq])
   @@index([type])
   @@map("events")
+}
+
+/// M7: a catalog deck, published with the `pnpm deck` CLI (never through the API).
+/// status: 'published' | 'unlisted' (CHECK constraint in the migration).
+model CatalogDeck {
+  slug          String   @id
+  latestVersion Int      @map("latest_version")
+  status        String   @default("published")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+
+  versions CatalogDeckVersion[]
+
+  @@map("catalog_deck")
+}
+
+/// M7: one published version: the full validated ace-deck@2 file. Immutable (a trigger
+/// in the migration refuses UPDATE and DELETE).
+model CatalogDeckVersion {
+  slug        String
+  version     Int
+  content     Json
+  checksum    String
+  cardCount   Int      @map("card_count")
+  typeCounts  Json     @map("type_counts")
+  publishedAt DateTime @default(now()) @map("published_at")
+
+  deck CatalogDeck @relation(fields: [slug], references: [slug], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([slug, version])
+  @@map("catalog_deck_version")
 }

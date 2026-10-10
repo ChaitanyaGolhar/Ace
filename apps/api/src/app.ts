@@ -2,6 +2,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import { authRoutes } from './auth/routes';
+import { catalogRoutes } from './catalog/routes';
 import type { AppConfig } from './config';
 import type { Prisma } from './db';
 import { errorHandler, notFound } from './errors';
@@ -43,6 +44,7 @@ export function createApp(deps: AppDeps) {
   });
   app.use(authRoutes(deps));
   app.use(syncRoutes(deps));
+  app.use(catalogRoutes(deps));
 
   app.use(notFound);
   app.use(errorHandler(deps.logger));

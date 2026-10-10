@@ -34,6 +34,8 @@ const deck: Deck = {
   name: 'D',
   source: 'user',
   prebuiltId: null,
+  catalogSlug: null,
+  catalogVersion: null,
   createdAt: T - DAY,
   updatedAt: T - DAY,
   deletedAt: null,

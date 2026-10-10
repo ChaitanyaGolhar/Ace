@@ -18,6 +18,8 @@ export interface DeckRow {
   name: string;
   source: string;
   prebuilt_id: string | null;
+  catalog_slug: string | null;
+  catalog_version: number | null;
   created_at: bigint;
   updated_at: bigint;
   deleted_at: bigint | null;
@@ -73,6 +75,8 @@ export function toDeck(r: DeckRow): Deck {
     name: r.name,
     source: r.source as Deck['source'], // only ever written from a validated Deck
     prebuiltId: r.prebuilt_id,
+    catalogSlug: r.catalog_slug,
+    catalogVersion: r.catalog_version,
     createdAt: num(r.created_at),
     updatedAt: num(r.updated_at),
     deletedAt: numOrNull(r.deleted_at),

@@ -10,6 +10,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "prisma:generate": "prisma generate",
     "migrate": "prisma migrate deploy",
+    "deck": "node --import tsx scripts/deck.ts",
     "migrate:test": "DATABASE_URL=postgresql://recall:recall@localhost:54329/recall_test prisma migrate deploy",
     "postinstall": "prisma generate"
   },

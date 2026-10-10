@@ -35,7 +35,8 @@ export async function prepareDatabase(adminUrl: string, dbName: string): Promise
   await db.connect();
   try {
     await db.query(
-      'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events CASCADE',
+      'TRUNCATE users, sessions, magic_link_tokens, decks, cards, review_logs, events, ' +
+        'catalog_deck_version, catalog_deck CASCADE',
     );
   } finally {
     await db.end();

@@ -4,18 +4,18 @@ import { useNewDeck } from './useNewDeck';
 export function NewDeckScreen() {
   const vm = useNewDeck();
   return (
-    <section aria-labelledby="new-deck-title" className="flex flex-col gap-4">
-      <h1 id="new-deck-title" className="text-2xl font-bold">
-        Create a deck
+    <section aria-labelledby="new-deck-title" className="mx-auto flex max-w-[640px] flex-col gap-8">
+      <h1 id="new-deck-title" className="text-page font-semibold tracking-tight lg:text-[40px]">
+        New deck
       </h1>
       <form
-        className="flex flex-col gap-3"
+        className="flex flex-col gap-5"
         onSubmit={(e) => {
           e.preventDefault();
           vm.create();
         }}
       >
-        <label className="flex flex-col gap-1">
+        <label className="flex flex-col gap-2 text-body text-text-secondary">
           Deck name
           <input
             className="field"
@@ -30,11 +30,11 @@ export function NewDeckScreen() {
           />
         </label>
         {vm.error && (
-          <p id="deck-name-error" role="alert">
+          <p id="deck-name-error" role="alert" className="text-error">
             {vm.error}
           </p>
         )}
-        <button type="submit" className="btn" disabled={vm.saving}>
+        <button type="submit" className="btn-primary min-h-14 text-section" disabled={vm.saving}>
           Create deck
         </button>
       </form>

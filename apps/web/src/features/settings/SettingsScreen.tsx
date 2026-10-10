@@ -1,105 +1,257 @@
+import { Minus, Plus, Shield, ShieldCheck } from 'lucide-react';
+import { useRef, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import type { Theme } from '../../db/meta';
 import { ErrorMessage, Loading } from '../shell/states';
 import { useSettingsScreen } from './useSettingsScreen';
 
-const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const THEMES: { value: Theme; label: string }[] = [
   { value: 'system', label: 'System' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
 ];
-const PERSISTENCE_TEXT = {
-  granted: 'Persistent: the browser won’t clear your cards to free up space.',
-  denied: 'Not persistent: the browser may clear your cards if the device runs low on space.',
-  unsupported: 'This browser can’t make storage persistent.',
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="flex flex-col">
+      <h2 className="border-b border-border pb-3 text-body font-medium text-text-secondary">
+        {title}
+      </h2>
+      {children}
+    </section>
+  );
+}
+
+function Row({
+  title,
+  description,
+  control,
+  id,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  control?: ReactNode;
+  id?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 border-b border-border py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+      <div className="flex flex-col gap-1">
+        <span id={id} className="text-body font-medium text-text lg:text-[17px]">
+          {title}
+        </span>
+        {description && (
+          <span className="text-meta text-text-secondary lg:text-body">{description}</span>
+        )}
+      </div>
+      {control && <div className="shrink-0">{control}</div>}
+    </div>
+  );
+}
+
+const PERSISTENCE = {
+  granted: {
+    Icon: ShieldCheck,
+    tone: 'text-success',
+    title: 'Stored safely on this device',
+    text: 'Your browser won’t clear your cards to free up space. Everything works offline.',
+  },
+  denied: {
+    Icon: Shield,
+    tone: 'text-warning',
+    title: 'Saved on this device',
+    text: 'Your browser may clear your cards if the device runs low on space. Export a backup now and then.',
+  },
+  unsupported: {
+    Icon: Shield,
+    tone: 'text-text-secondary',
+    title: 'Saved on this device',
+    text: 'This browser can’t promise to keep your cards when space runs low. Export a backup now and then.',
+  },
 } as const;
 
 export function SettingsScreen() {
   const vm = useSettingsScreen();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (vm.status === 'loading') return <Loading />;
   if (vm.status === 'error') return <ErrorMessage />;
+  const persistence = vm.storagePersistence ? PERSISTENCE[vm.storagePersistence] : null;
 
   return (
-    <section aria-labelledby="settings-title" className="flex flex-col gap-6">
-      <h1 id="settings-title" className="text-2xl font-bold">
-        Settings
-      </h1>
+    <div className="flex flex-col gap-10">
+      <h1 className="text-page font-semibold tracking-tight lg:text-[40px]">Settings</h1>
+      {vm.error && (
+        <p role="alert" className="text-error">
+          {vm.error}
+        </p>
+      )}
 
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          vm.save();
-        }}
-      >
-        <h2 className="text-xl font-bold">Study</h2>
-        <label className="flex flex-col gap-1">
-          New cards per day
-          <input
-            className="field"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={9999}
-            step={1}
-            value={vm.newPerDay}
-            onChange={(e) => {
-              vm.setNewPerDay(e.target.value);
-            }}
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          New day starts at
-          <select
-            className="field"
-            value={vm.rolloverHour}
-            onChange={(e) => {
-              vm.setRolloverHour(Number(e.target.value));
-            }}
-          >
-            {HOURS.map((h) => (
-              <option key={h} value={h}>
-                {String(h).padStart(2, '0')}:00
-              </option>
-            ))}
-          </select>
-        </label>
-        <p>Time zone: {vm.timeZone}</p>
-
-        <fieldset className="flex flex-col gap-1">
-          <legend>Theme</legend>
-          {THEMES.map((t) => (
-            <label key={t.value} className="flex min-h-11 items-center gap-2">
+      <Section title="Study">
+        <Row
+          id="new-per-day-label"
+          title="New cards per day"
+          description="Cards you haven’t seen before. Reviews are never limited."
+          control={
+            <div className="inline-flex h-12 items-stretch overflow-hidden rounded-lg border border-border bg-surface">
+              <button
+                type="button"
+                className="inline-flex w-12 items-center justify-center text-text"
+                aria-label="Fewer new cards per day"
+                onClick={() => {
+                  vm.stepNewPerDay(-1);
+                }}
+              >
+                <Minus aria-hidden="true" className="size-5" />
+              </button>
               <input
-                type="radio"
-                name="theme"
-                value={t.value}
-                checked={vm.theme === t.value}
-                onChange={() => {
-                  vm.setTheme(t.value);
+                className="w-16 border-x border-border bg-transparent text-center font-mono text-body text-text"
+                inputMode="numeric"
+                aria-labelledby="new-per-day-label"
+                value={vm.newPerDayText}
+                onChange={(e) => {
+                  vm.setNewPerDayText(e.target.value);
+                }}
+                onBlur={vm.commitNewPerDay}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') vm.commitNewPerDay();
                 }}
               />
-              {t.label}
-            </label>
-          ))}
-        </fieldset>
+              <button
+                type="button"
+                className="inline-flex w-12 items-center justify-center text-text"
+                aria-label="More new cards per day"
+                onClick={() => {
+                  vm.stepNewPerDay(1);
+                }}
+              >
+                <Plus aria-hidden="true" className="size-5" />
+              </button>
+            </div>
+          }
+        />
+        <Row
+          id="rollover-label"
+          title="New day starts at"
+          description="Studying after midnight still counts as the same day."
+          control={
+            <select
+              className="field w-auto min-w-36 pr-8"
+              aria-labelledby="rollover-label"
+              value={vm.rolloverHour}
+              onChange={(e) => {
+                vm.setRolloverHour(Number(e.target.value));
+              }}
+            >
+              {vm.rolloverOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          }
+        />
+      </Section>
 
-        {vm.error && <p role="alert">{vm.error}</p>}
-        <button type="submit" className="btn self-start" disabled={vm.saving}>
-          Save settings
-        </button>
-        <p role="status">{vm.savedMessage ?? ''}</p>
-      </form>
+      <Section title="Appearance">
+        <Row
+          id="theme-label"
+          title="Theme"
+          control={
+            <div
+              role="radiogroup"
+              aria-labelledby="theme-label"
+              className="inline-flex rounded-lg border border-border bg-surface p-1"
+            >
+              {THEMES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={vm.theme === t.value}
+                  className={`min-h-11 rounded-md px-4 text-body transition-colors duration-150 ${
+                    vm.theme === t.value
+                      ? 'bg-surface-raised font-medium text-text'
+                      : 'text-text-secondary'
+                  }`}
+                  onClick={() => {
+                    vm.setTheme(t.value);
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          }
+        />
+      </Section>
 
-      <section aria-labelledby="storage-title" className="flex flex-col gap-2">
-        <h2 id="storage-title" className="text-xl font-bold">
-          Storage
-        </h2>
-        <p data-testid="storage-persistence">
-          {vm.storagePersistence ? PERSISTENCE_TEXT[vm.storagePersistence] : 'Unknown.'}
-        </p>
-      </section>
-    </section>
+      <Section title="Account & sync">
+        <Row
+          title="On this device only"
+          control={
+            <Link to="/signin" className="btn-secondary">
+              Sign in to sync
+            </Link>
+          }
+        />
+        {persistence && (
+          <div
+            className="flex items-start gap-3 border-b border-border py-5"
+            data-testid="storage-persistence"
+          >
+            <persistence.Icon
+              aria-hidden="true"
+              className={`mt-0.5 size-5 shrink-0 ${persistence.tone}`}
+            />
+            <div className="flex flex-col gap-1">
+              <span className="text-body font-medium lg:text-[17px]">{persistence.title}</span>
+              <span className="text-meta text-text-secondary lg:text-body">{persistence.text}</span>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Backup">
+        <Row
+          title="Your decks, cards and review history"
+          description="Importing merges with what’s here. It never deletes anything."
+          control={
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={vm.exportBackup}
+                disabled={vm.busy}
+              >
+                Export
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={vm.busy}
+                onClick={() => fileRef.current?.click()}
+              >
+                Import
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="sr-only"
+                tabIndex={-1}
+                aria-label="Backup file to import"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) vm.importBackup(file);
+                  e.target.value = '';
+                }}
+              />
+            </div>
+          }
+        />
+      </Section>
+
+      <p className="text-meta text-text-muted lg:text-body">{vm.versionLine}</p>
+    </div>
   );
 }

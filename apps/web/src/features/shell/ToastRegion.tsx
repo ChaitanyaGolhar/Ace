@@ -1,6 +1,7 @@
+import { X } from 'lucide-react';
 import { useToasts } from '../../app/toasts';
 
-/** Undo toasts and other short messages. A polite live region, so they are announced. */
+/** Undo toasts and short messages: a polite live region. Dark in both themes. */
 export function ToastRegion() {
   const { toasts, act, dismiss } = useToasts();
   return (
@@ -8,19 +9,19 @@ export function ToastRegion() {
       aria-live="polite"
       aria-label="Notifications"
       role="region"
-      className="fixed inset-x-0 bottom-0 flex flex-col items-center gap-2 p-4"
+      className="pointer-events-none fixed inset-x-0 bottom-20 z-30 flex flex-col items-center gap-2 px-4 lg:bottom-6"
     >
       {toasts.map((toast) => (
         <div
           key={toast.id}
           data-testid="toast"
-          className="flex w-full max-w-md flex-wrap items-center gap-2 rounded border bg-[Canvas] p-2"
+          className="pointer-events-auto flex min-h-14 w-full max-w-sm items-center gap-2 rounded-xl bg-toast-bg py-1 pl-5 pr-1 text-toast-text"
         >
-          <span className="flex-1">{toast.message}</span>
+          <span className="flex-1 text-body">{toast.message}</span>
           {toast.actionLabel && (
             <button
               type="button"
-              className="btn"
+              className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-toast-action"
               onClick={() => {
                 act(toast.id);
               }}
@@ -30,13 +31,13 @@ export function ToastRegion() {
           )}
           <button
             type="button"
-            className="btn"
+            className="inline-flex size-11 items-center justify-center rounded-md text-toast-text"
             aria-label="Dismiss"
             onClick={() => {
               dismiss(toast.id);
             }}
           >
-            ×
+            <X aria-hidden="true" className="size-4" />
           </button>
         </div>
       ))}

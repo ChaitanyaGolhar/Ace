@@ -5,41 +5,52 @@ import { useToasts } from '../../app/toasts';
 import { useQuery } from '../../app/useQuery';
 import { deleteCard } from '../../services/cards';
 import { deleteDeck, renameDeck } from '../../services/decks';
+import { cardDueLabel, lastStudiedLabel } from '../../services/dueLabels';
 import { UserInputError } from '../../services/errors';
 import { loadDeckView, searchCards } from '../../services/overview';
 
 export interface DeckCardRow {
   id: string;
   front: string;
-  back: string;
+  /** "Due today", "Tomorrow", "In 3 days", "New"… */
+  dueLabel: string;
+  /** Emphasise "Due today". */
+  isDue: boolean;
 }
 
 export interface DeckViewModel {
   status: 'loading' | 'error' | 'notFound' | 'ready';
   deckId: string;
   name: string;
-  counts: { due: number; new: number; learning: number };
-  /** Total live cards in the deck (before search). */
+  /** "20 cards · 6 due today · 4 new · last studied yesterday" */
+  meta: string;
+  isReadyMade: boolean;
+  /** Total live cards in the deck (before search), minus pending deletes. */
   cardCount: number;
-  /** Cards matching the search, minus cards whose delete is pending (undo toast). */
+  /** Cards matching the search, oldest first. */
   cards: DeckCardRow[];
   search: string;
   canStudy: boolean;
 
-  renaming: boolean;
+  renameOpen: boolean;
   renameValue: string;
   renameError: string | null;
-  confirmingDelete: boolean;
+  deleteOpen: boolean;
 
   setSearch: (q: string) => void;
+  editCard: (cardId: string) => void;
   deleteCard: (cardId: string) => void;
-  startRename: () => void;
+  openRename: () => void;
   setRenameValue: (v: string) => void;
   saveRename: () => void;
-  cancelRename: () => void;
-  requestDeleteDeck: () => void;
-  cancelDeleteDeck: () => void;
-  confirmDeleteDeck: () => void;
+  closeRename: () => void;
+  openDelete: () => void;
+  closeDelete: () => void;
+  confirmDelete: () => void;
+}
+
+function plural(n: number, word: string) {
+  return `${String(n)} ${word}${n === 1 ? '' : 's'}`;
 }
 
 export function useDeck(deckId: string): DeckViewModel {
@@ -48,10 +59,10 @@ export function useDeck(deckId: string): DeckViewModel {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
-  const [renaming, setRenaming] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   useEffect(() => pendingDeletes.subscribe(setPendingIds), [pendingDeletes]);
 
@@ -59,12 +70,16 @@ export function useDeck(deckId: string): DeckViewModel {
     () => loadDeckView(ctx, deckId, { browserTimeZone }),
     [ctx, deckId, browserTimeZone],
   );
+  const data = query.status === 'ready' ? query.data : null;
 
   const actions = {
     setSearch,
+    editCard: (cardId: string) => {
+      void navigate(`/cards/${cardId}/edit`);
+    },
     deleteCard: (cardId: string) => {
-      // The tombstone is written only when the toast times out or is dismissed;
-      // Undo cancels it. Tombstones themselves can never be undone (invariant 9).
+      // The tombstone is written only when the toast times out or is dismissed; Undo
+      // cancels it. Tombstones themselves can never be undone (invariant 9).
       pendingDeletes.schedule(cardId, () => deleteCard(ctx, cardId));
       toasts.show({
         message: 'Card deleted',
@@ -80,10 +95,10 @@ export function useDeck(deckId: string): DeckViewModel {
         durationMs: 5000,
       });
     },
-    startRename: () => {
-      if (query.status === 'ready' && query.data) setRenameValue(query.data.deck.name);
+    openRename: () => {
+      setRenameValue(data?.deck.name ?? '');
       setRenameError(null);
-      setRenaming(true);
+      setRenameOpen(true);
     },
     setRenameValue: (v: string) => {
       setRenameValue(v);
@@ -92,26 +107,27 @@ export function useDeck(deckId: string): DeckViewModel {
     saveRename: () => {
       renameDeck(ctx, deckId, renameValue)
         .then(() => {
-          setRenaming(false);
+          setRenameOpen(false);
         })
         .catch((e: unknown) => {
           setRenameError(e instanceof UserInputError ? e.message : 'Couldn’t rename the deck.');
         });
     },
-    cancelRename: () => {
-      setRenaming(false);
+    closeRename: () => {
+      setRenameOpen(false);
     },
-    requestDeleteDeck: () => {
-      setConfirmingDelete(true);
+    openDelete: () => {
+      setDeleteOpen(true);
     },
-    cancelDeleteDeck: () => {
-      setConfirmingDelete(false);
+    closeDelete: () => {
+      setDeleteOpen(false);
     },
-    confirmDeleteDeck: () => {
+    confirmDelete: () => {
       deleteDeck(ctx, deckId)
         .then(() => {
+          setDeleteOpen(false);
           toasts.show({ message: 'Deck deleted' });
-          return navigate('/');
+          return navigate('/decks');
         })
         .catch(() => {
           toasts.show({ message: 'Couldn’t delete the deck.' });
@@ -122,31 +138,45 @@ export function useDeck(deckId: string): DeckViewModel {
   const base = {
     deckId,
     name: '',
-    counts: { due: 0, new: 0, learning: 0 },
+    meta: '',
+    isReadyMade: false,
     cardCount: 0,
     cards: [],
     search,
     canStudy: false,
-    renaming,
+    renameOpen,
     renameValue,
     renameError,
-    confirmingDelete,
+    deleteOpen,
     ...actions,
   };
 
   if (query.status === 'loading') return { ...base, status: 'loading' };
   if (query.status === 'error') return { ...base, status: 'error' };
-  if (query.data === null) return { ...base, status: 'notFound' };
+  if (data === null) return { ...base, status: 'notFound' };
 
-  const { deck, cards, counts } = query.data;
+  const { deck, cards, counts, lastStudiedAt, now, timeZone, rolloverHour } = data;
   const visible = cards.filter((c) => !pendingIds.has(c.id));
+  const dueToday = counts.due + counts.learning;
+  const lastStudied = lastStudiedLabel(lastStudiedAt, now, timeZone, rolloverHour);
+  const meta = [
+    plural(visible.length, 'card'),
+    `${String(dueToday)} due today`,
+    `${String(counts.new)} new`,
+    ...(lastStudied ? [lastStudied] : []),
+  ].join(' · ');
+
   return {
     ...base,
     status: 'ready',
     name: deck.name,
-    counts,
+    meta,
+    isReadyMade: deck.source === 'prebuilt',
     cardCount: visible.length,
-    cards: searchCards(visible, search).map(({ id, front, back }) => ({ id, front, back })),
-    canStudy: counts.due + counts.new + counts.learning > 0,
+    cards: searchCards(visible, search).map((c) => {
+      const dueLabel = cardDueLabel(c.state, now, timeZone, rolloverHour);
+      return { id: c.id, front: c.front, dueLabel, isDue: dueLabel === 'Due today' };
+    }),
+    canStudy: dueToday + counts.new > 0,
   };
 }

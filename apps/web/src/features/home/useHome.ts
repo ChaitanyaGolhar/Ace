@@ -1,35 +1,119 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
+import { READY_MADE_DECKS } from '../../content/readyMade';
+import { greetingFor } from '../../services/greeting';
 import { loadHome, type DeckSummary } from '../../services/overview';
+import { addReadyMadeDeck, type ReadyMadeDeck } from '../../services/readyMade';
+import { isPlainShortcut } from '../shell/keyboard';
+
+export interface DeckRow {
+  id: string;
+  name: string;
+  /** "20 cards · Ready-made" */
+  meta: string;
+  /** Review + learning cards due today; 0 = "Up to date". */
+  due: number;
+}
 
 export interface HomeViewModel {
   status: 'loading' | 'error' | 'ready';
-  /** First-time user: no decks at all. */
-  isEmpty: boolean;
-  counts: { due: number; new: number; learning: number };
-  /** Anything to study right now (due, new or learning)? */
+  /** Zero decks: show the first-visit welcome instead. */
+  isFirstVisit: boolean;
+  greeting: string;
+  /** Today's study panel. */
+  total: number;
+  reviews: number;
+  newCount: number;
+  /** "about N minutes", or null with too little review history. */
+  estimateMinutes: number | null;
+  tomorrow: number;
   canStudy: boolean;
-  decks: DeckSummary[];
+  decks: DeckRow[];
+  /** First ready-made deck for the welcome card (null: no ready-made decks bundled). */
+  featured: ReadyMadeDeck | null;
+  hasReadyMade: boolean;
+  adding: boolean;
+  addError: string | null;
+  startReviewing: () => void;
+  /** Welcome: add the featured deck and go straight into the review session. */
+  addAndStart: () => void;
+}
+
+function plural(n: number, word: string) {
+  return `${String(n)} ${word}${n === 1 ? '' : 's'}`;
+}
+
+/** Deck list rows, shared by Home and the Decks page. */
+export function toDeckRows(decks: DeckSummary[]): DeckRow[] {
+  return decks.map((d) => ({
+    id: d.id,
+    name: d.name,
+    meta: `${plural(d.cardCount, 'card')}${d.source === 'prebuilt' ? ' · Ready-made' : ''}`,
+    due: d.counts.due + d.counts.learning,
+  }));
 }
 
 export function useHome(): HomeViewModel {
   const { ctx, browserTimeZone } = useServices();
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
   const query = useQuery(() => loadHome(ctx, { browserTimeZone }), [ctx, browserTimeZone]);
-  if (query.status !== 'ready') {
-    return {
-      status: query.status,
-      isEmpty: false,
-      counts: { due: 0, new: 0, learning: 0 },
-      canStudy: false,
-      decks: [],
+
+  const data = query.status === 'ready' ? query.data : null;
+  const total = data ? data.counts.due + data.counts.learning + data.counts.new : 0;
+  const canStudy = total > 0;
+
+  const startReviewing = () => {
+    void navigate('/study');
+  };
+
+  // Space starts reviewing (desktop); never while typing.
+  useEffect(() => {
+    if (!canStudy) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== ' ' || !isPlainShortcut(e)) return;
+      if (e.target instanceof HTMLButtonElement || e.target instanceof HTMLAnchorElement) return;
+      e.preventDefault();
+      void navigate('/study');
     };
-  }
-  const { counts, decks } = query.data;
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [canStudy, navigate]);
+
+  const featured = READY_MADE_DECKS[0] ?? null;
+  const addAndStart = () => {
+    if (!featured || adding) return;
+    setAdding(true);
+    setAddError(null);
+    addReadyMadeDeck(ctx, featured)
+      .then((deck) => navigate(`/study?deck=${deck.id}`))
+      .catch(() => {
+        setAddError('Couldn’t add the deck. Please try again.');
+        setAdding(false);
+      });
+  };
+
   return {
-    status: 'ready',
-    isEmpty: decks.length === 0,
-    counts,
-    canStudy: counts.due + counts.new + counts.learning > 0,
-    decks,
+    status: query.status,
+    isFirstVisit: data !== null && data.decks.length === 0,
+    greeting: greetingFor(ctx.now(), browserTimeZone),
+    total,
+    reviews: data ? data.counts.due + data.counts.learning : 0,
+    newCount: data?.counts.new ?? 0,
+    estimateMinutes: data?.estimateMinutes ?? null,
+    tomorrow: data?.tomorrow ?? 0,
+    canStudy,
+    decks: toDeckRows(data?.decks ?? []),
+    featured,
+    hasReadyMade: READY_MADE_DECKS.length > 0,
+    adding,
+    addError,
+    startReviewing,
+    addAndStart,
   };
 }

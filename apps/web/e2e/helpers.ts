@@ -54,14 +54,15 @@ export async function addCards(
 ): Promise<void> {
   await page.getByRole('link', { name: 'Add card' }).click();
   for (const [i, card] of cards.entries()) {
-    await page.getByLabel('Front').fill(card.front);
-    await page.getByLabel('Back').fill(card.back);
+    await page.getByLabel('Question').fill(card.front);
+    await page.getByLabel('Answer').fill(card.back);
     await page.getByRole('button', { name: 'Save & add another' }).click();
-    await expect(page.getByTestId('added-status')).toHaveText(
-      `Card added (${String(i + 1)} so far)`,
+    await expect(page.getByTestId('added-status')).toContainText(
+      `${String(i + 1)} ${i === 0 ? 'card' : 'cards'} added to`,
     );
   }
-  await page.getByRole('button', { name: 'Done' }).click();
+  // The form is empty again, so this just closes and returns to the deck.
+  await page.getByRole('button', { name: 'Save and close' }).click();
 }
 
 export function numberedCards(n: number, prefix = 'Q'): { front: string; back: string }[] {
@@ -97,7 +98,7 @@ export async function finishSession(
   const seen = new Set<string>();
   let ratings = 0;
   for (;;) {
-    const complete = page.getByRole('heading', { name: 'Session complete' });
+    const complete = page.getByRole('heading', { name: 'Review complete' });
     const showAnswer = page.getByRole('button', { name: 'Show answer' });
     await expect(complete.or(showAnswer)).toBeVisible();
     if (await complete.isVisible()) return ratings;

@@ -3,11 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#111315" />
+    <script>
+      // Apply the theme before first paint (no flash). The setting lives in IndexedDB,
+      // which is async, so the app mirrors it to localStorage for this script.
+      (function () {
+        var theme = 'system';
+        try {
+          theme = localStorage.getItem('recall.theme') || 'system';
+        } catch (e) {}
+        var dark =
+          theme === 'dark' ||
+          (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      })();
+    </script>
     <meta name="description" content="Spaced-repetition flashcards that work offline." />
     <link rel="icon" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <title>recall</title>
+    <title>Recall</title>
   </head>
   <body>
     <div id="root"></div>

@@ -22,7 +22,7 @@ test('the web app manifest has name, icons, theme colour and standalone display'
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   expect(href).toBeTruthy();
   const manifest = (await (await request.get(href ?? '')).json()) as Manifest;
-  expect(manifest.name).toBe('recall');
+  expect(manifest.name).toBe('Recall');
   expect(manifest.short_name).toBeTruthy();
   expect(manifest.display).toBe('standalone');
   expect(manifest.theme_color).toMatch(/^#[0-9a-f]{6}$/i);

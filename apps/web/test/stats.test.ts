@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Card, CardState, Deck, ReviewLog } from '@recall/core';
-import { computeStats, type StatsInput } from '../src/services/stats';
+import {
+  computeStats,
+  forecastReadout,
+  perDayReadout,
+  shortDate,
+  type StatsInput,
+} from '../src/services/stats';
 import { DAY, MINUTE } from './helpers';
 
 // Fixture: UTC, rollover 00:00, so study days are plain UTC dates.
@@ -164,5 +170,20 @@ describe('computeStats (fixture of known logs)', () => {
       logs: [log(c4, day(0, 2), 3)],
     });
     expect(late.perDay.find((d) => d.count > 0)?.day).toBe('2026-10-09');
+  });
+});
+
+describe('stats readouts (bar hover/focus line)', () => {
+  it('forecast readout', () => {
+    expect(forecastReadout({ day: '2026-10-10', label: 'Today', count: 24 })).toBe(
+      'Today · 24 cards due',
+    );
+    expect(forecastReadout({ day: '2026-10-11', label: 'Sun', count: 1 })).toBe('Sun · 1 card due');
+  });
+
+  it('reviews-per-day readout and axis dates', () => {
+    expect(perDayReadout({ day: '2026-10-10', count: 13 }, true)).toBe('Today · 13 reviews');
+    expect(perDayReadout({ day: '2026-09-30', count: 1 }, false)).toBe('Sep 30 · 1 review');
+    expect(shortDate('2026-09-11')).toBe('Sep 11');
   });
 });

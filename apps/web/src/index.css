@@ -1,25 +1,181 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/geist-mono/wght.css';
 
 /*
- * Functional shell only: no colour palette or branding (the visual design comes later).
- * These rules exist for usability: 44px touch targets and visible focus rings.
+ * Design tokens (Foundations.png in docs/ui-design, dark and light). Every colour is a variable here;
+ * components only use the semantic Tailwind names below (bg-surface, text-text-muted…),
+ * never hex values. Dark is the default (:root); light overrides via data-theme, which
+ * an inline script in index.html sets before first paint.
  */
-@layer components {
-  .btn {
-    @apply inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded border px-4 py-2;
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #111315;
+  --surface: #191c20;
+  --surface-raised: #202329;
+  --border: #2c3036;
+  --text: #f3f4f6;
+  --text-secondary: #a1a6af;
+  --text-muted: #858c97;
+  --accent: #7188ff;
+  --accent-emphasis: #aab6ff; /* today's bar in charts */
+  --on-accent: #0d1030;
+  --link: #a0afff;
+  --success: #65b891;
+  --warning: #e7b96c;
+  --error: #e57373;
+  --toast-bg: #202329;
+  --toast-text: #f3f4f6;
+  --toast-action: #a0afff;
+  --scrim: rgb(0 0 0 / 0.6);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-raised: #eef0f3;
+  --border: #e2e4e8;
+  --text: #16181c;
+  --text-secondary: #5c636e;
+  --text-muted: #6b727d;
+  --accent: #4a63e6;
+  --accent-emphasis: #2e42b8;
+  --on-accent: #ffffff;
+  --link: #3f55d6;
+  --success: #2f8f62;
+  --warning: #b7791f;
+  --error: #c94a4a;
+  /* The toast is dark in both themes. */
+  --toast-bg: #16181c;
+  --toast-text: #f3f4f6;
+  --toast-action: #a0afff;
+  --scrim: rgb(0 0 0 / 0.4);
+}
+
+@theme inline {
+  /* Only semantic colours exist: Tailwind's default palette is removed. */
+  --color-*: initial;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-emphasis: var(--accent-emphasis);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-toast-bg: var(--toast-bg);
+  --color-toast-text: var(--toast-text);
+  --color-toast-action: var(--toast-action);
+  --color-scrim: var(--scrim);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* Type scale: page 30/600, card 24/500, section 18/600, body 15/400, meta 13/400. */
+  --text-hero: 64px;
+  --text-hero--line-height: 1;
+  --text-page: 30px;
+  --text-page--line-height: 1.2;
+  --text-card: 24px;
+  --text-card--line-height: 1.35;
+  --text-section: 18px;
+  --text-section--line-height: 1.4;
+  --text-body: 15px;
+  --text-body--line-height: 1.5;
+  --text-meta: 13px;
+  --text-meta--line-height: 1.45;
+
+  /* Radii: 8 small controls, 10–12 buttons/inputs, 16 panels. */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
   }
-  .btn:disabled {
-    @apply cursor-not-allowed opacity-50;
+  body {
+    background: var(--bg);
+    min-height: 100dvh;
   }
-  .field {
-    @apply block min-h-11 w-full rounded border px-3 py-2;
+  /* Visible focus ring on everything (text colour, 2px gap). */
+  :focus-visible {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
   }
-  .link {
-    @apply inline-flex min-h-11 items-center underline;
+  ::placeholder {
+    color: var(--text-muted);
   }
 }
 
-:focus-visible {
-  outline: 3px solid;
-  outline-offset: 2px;
+/* Reusable control styles. Tailwind v4 needs @utility (not @layer components) for
+ * classes that are @apply-ed inside other classes. */
+@utility btn {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-body font-semibold transition-colors duration-150 select-none;
+  &:disabled {
+    @apply cursor-not-allowed border-transparent bg-surface-raised text-text-muted;
+  }
+}
+@utility btn-primary {
+  @apply btn bg-accent text-on-accent;
+}
+@utility btn-secondary {
+  @apply btn border border-border bg-surface text-text;
+}
+@utility btn-ghost {
+  @apply btn font-medium text-text-secondary;
+}
+@utility btn-danger {
+  @apply btn border border-border bg-transparent text-error;
+}
+@utility icon-btn {
+  @apply inline-flex size-11 items-center justify-center rounded-md text-text-secondary transition-colors duration-150;
+}
+@utility field {
+  @apply block min-h-11 w-full rounded-lg border border-border bg-surface px-4 py-2 text-body text-text;
+  /* Focus: the accent border plus a 1px accent ring (2px total) is the visible indicator. */
+  &:focus,
+  &:focus-visible {
+    @apply border-accent;
+    outline: none;
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+}
+@utility panel {
+  @apply rounded-xl border border-border bg-surface;
+}
+@utility link {
+  @apply inline-flex min-h-11 items-center gap-2 font-medium text-link;
+}
+@utility kbd {
+  @apply rounded-sm border border-border px-1.5 py-0.5 font-mono text-meta text-text-secondary;
+}
+@utility pill {
+  @apply inline-flex items-center rounded-full bg-surface-raised px-3 py-1 font-medium text-text;
+}
+
+/* Motion: only short fades and colour changes, and none at all if the user asks. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }

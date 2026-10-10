@@ -2,7 +2,7 @@
 
 export function Loading() {
   return (
-    <p role="status" data-testid="loading">
+    <p role="status" data-testid="loading" className="py-8 text-body text-text-secondary">
       Loading…
     </p>
   );
@@ -10,7 +10,7 @@ export function Loading() {
 
 export function ErrorMessage({ message }: { message?: string }) {
   return (
-    <p role="alert" data-testid="error">
+    <p role="alert" data-testid="error" className="py-8 text-body text-error">
       {message ?? 'Something went wrong while reading your data. Try reloading the page.'}
     </p>
   );
@@ -18,7 +18,7 @@ export function ErrorMessage({ message }: { message?: string }) {
 
 export function NotFound({ message }: { message: string }) {
   return (
-    <p role="status" data-testid="not-found">
+    <p role="status" data-testid="not-found" className="py-8 text-body text-text-secondary">
       {message}
     </p>
   );

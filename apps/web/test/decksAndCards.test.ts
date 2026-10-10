@@ -202,14 +202,14 @@ describe('max lengths (client side, same limits as the server)', () => {
     const deck = await createDeck(ctx, 'D');
     const long = 'y'.repeat(20_001);
     await expect(createCard(ctx, deck.id, long, 'b')).rejects.toThrow(
-      'Front can be at most 20,000 characters.',
+      'Question can be at most 20,000 characters.',
     );
     await expect(createCard(ctx, deck.id, 'f', long)).rejects.toThrow(
-      'Back can be at most 20,000 characters.',
+      'Answer can be at most 20,000 characters.',
     );
     const card = await createCard(ctx, deck.id, 'y'.repeat(20_000), 'b');
     await expect(updateCard(ctx, card.id, { front: 'f', back: long })).rejects.toThrow(
-      'Back can be at most 20,000 characters.',
+      'Answer can be at most 20,000 characters.',
     );
   });
 });

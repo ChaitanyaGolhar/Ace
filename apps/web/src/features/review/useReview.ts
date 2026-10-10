@@ -1,57 +1,62 @@
 import type { Rating } from '@recall/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
 import type { Session } from '../../db/meta';
+import { completionSentence, nextDueValue } from '../../services/completion';
 import { formatInterval } from '../../services/format';
+import { loadNextDue } from '../../services/overview';
 import { loadQueue, nextCard, remainingCount } from '../../services/queue';
-import { loadReviewCard, rateCard, undoLastReview } from '../../services/review';
-import { sessionSummary, startSession } from '../../services/session';
+import { lastSessionRating, loadReviewCard, rateCard, undoLastReview } from '../../services/review';
+import { completeSession, sessionSummary, startSession } from '../../services/session';
+import { isPlainShortcut } from '../shell/keyboard';
 
 export const RATING_LABELS = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' } as const;
 
 export interface RatingOption {
   rating: Rating;
   label: (typeof RATING_LABELS)[Rating];
-  /** Next interval if chosen, e.g. "10m", "3d". */
+  /** Next interval if chosen, from core previewIntervals(): "10m", "3d"… */
   interval: string;
-  /** Keyboard shortcut. */
+  /** Keyboard shortcut (shown on desktop). */
   key: '1' | '2' | '3' | '4';
 }
 
 export interface ReviewViewModel {
   status: 'loading' | 'error' | 'empty' | 'studying' | 'complete';
+  /** Deck being studied, or "All decks". */
+  deckName: string;
+  /** "3 of 12": this card's position in the session. */
+  position: { current: number; total: number };
+  /** 0–1, for the thin progress bar. */
+  progress: number;
   card: { id: string; front: string; back: string } | null;
+  /** Card type tag. */
+  kind: 'New' | 'Review';
   revealed: boolean;
-  /** One-line hint, shown only on the very first card the user ever studies. */
+  /** One-line hint, only on the very first card the user ever studies. */
   showHint: boolean;
   ratings: RatingOption[];
-  /** Cards left in this session. */
-  remaining: number;
-  /** Reviews done in this session. */
-  reviewed: number;
-  canUndo: boolean;
-  /** A rating or undo is being saved. */
+  /** Undo pill: "Undo · previous card was Good". Null when there is nothing to undo. */
+  undoLabel: string | null;
   busy: boolean;
-  /** Text for the screen-reader live region ("Answer shown"). */
+  /** Screen-reader live region: "Answer shown". */
   announcement: string;
   actionError: string | null;
-  /** Where to go when the session is complete. */
-  completeHref: string;
+  /** Completion: "You reviewed 4 cards in about 3 minutes." */
+  completionText: string;
+  /** Completion: "9 tomorrow". */
+  nextDueText: string;
   showAnswer: () => void;
   rate: (rating: Rating) => void;
   undo: () => void;
+  /** ✕ / "Back to home": finish the session and go home. */
+  finish: () => void;
 }
 
 /** How often to re-check the queue while idle, so learning cards appear when due. */
 const TICK_MS = 15_000;
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
-  );
-}
 
 /**
  * The review session. Which card comes next always comes from the queue (core
@@ -60,6 +65,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
  */
 export function useReview(deckId: string | null): ReviewViewModel {
   const { ctx, browserTimeZone } = useServices();
+  const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [sessionError, setSessionError] = useState(false);
   const [tick, setTick] = useState(0);
@@ -110,10 +116,21 @@ export function useReview(deckId: string | null): ReviewViewModel {
     const summary = await sessionSummary(ctx, session);
     const logCount = await ctx.db.reviewLogs.count();
     const voidedCount = await ctx.db.reviewLogs.filter((l) => l.voidedAt !== null).count();
-    // Changes on every rating (new log) and every undo (newly voided log). Used to tell
-    // whether this snapshot already includes our last write.
-    const logsFingerprint = `${String(logCount)}:${String(voidedCount)}`;
-    return { queue, summary, everReviewed: logCount > 0, logsFingerprint };
+    const deckName =
+      deckId === null ? 'All decks' : ((await ctx.db.decks.get(deckId))?.name ?? 'Deck');
+    const lastRating = await lastSessionRating(ctx, session.startedAt);
+    const nextDue = nextCard(queue) ? null : await loadNextDue(ctx, { browserTimeZone });
+    return {
+      queue,
+      summary,
+      everReviewed: logCount > 0,
+      // Changes on every rating (new log) and every undo (newly voided log). Used to tell
+      // whether this snapshot already includes our last write.
+      logsFingerprint: `${String(logCount)}:${String(voidedCount)}`,
+      deckName,
+      lastRating,
+      nextDue,
+    };
   }, [ctx, session, deckId, browserTimeZone, tick]);
 
   const queueData = queueQuery.status === 'ready' ? queueQuery.data : null;
@@ -203,10 +220,14 @@ export function useReview(deckId: string | null): ReviewViewModel {
       });
   }, [ctx, session, canUndo, queueData]);
 
-  // Keyboard: Space shows the answer, 1–4 rate, Z undoes.
+  const finish = useCallback(() => {
+    void completeSession(ctx).finally(() => navigate('/'));
+  }, [ctx, navigate]);
+
+  // Keyboard: Space shows the answer, 1–4 rate, Z undoes. Never while typing.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey || isTypingTarget(event.target)) return;
+      if (!isPlainShortcut(event)) return;
       // Space on a focused button already activates that button.
       if (event.key === ' ' && event.target instanceof HTMLButtonElement) return;
       if (event.key === ' ' && !revealed && reviewCard) {
@@ -226,29 +247,44 @@ export function useReview(deckId: string | null): ReviewViewModel {
     };
   }, [revealed, reviewCard, showAnswer, rate, undo]);
 
-  const completeHref = deckId === null ? '/study/complete' : `/study/complete?deck=${deckId}`;
+  const remaining = queueData ? remainingCount(queueData.queue) : 0;
+  const total = reviewed + remaining;
   const base = {
+    deckName: queueData?.deckName ?? '',
+    position: { current: Math.min(reviewed + 1, Math.max(total, 1)), total },
+    progress: total === 0 ? 0 : reviewed / total,
     card: null,
+    kind: 'New' as const,
     revealed: false,
     showHint: false,
     ratings: [],
-    remaining: 0,
-    reviewed,
-    canUndo,
+    undoLabel:
+      canUndo && queueData?.lastRating
+        ? `Undo · previous card was ${RATING_LABELS[queueData.lastRating]}`
+        : null,
     busy,
     announcement: '',
     actionError,
-    completeHref,
+    completionText: completionSentence(reviewed, queueData?.summary.timeSpentMs ?? 0),
+    nextDueText: queueData?.nextDue ? nextDueValue(queueData.nextDue) : '',
     showAnswer,
     rate,
     undo,
+    finish,
   };
 
   if (sessionError || queueQuery.status === 'error' || cardQuery.status === 'error') {
     return { ...base, status: 'error' };
   }
   if (!queueData) return { ...base, status: 'loading' };
-  if (currentId === null) return { ...base, status: reviewed > 0 ? 'complete' : 'empty' };
+  if (currentId === null) {
+    return {
+      ...base,
+      status: reviewed > 0 ? 'complete' : 'empty',
+      position: { current: total, total },
+      progress: total === 0 ? 0 : 1,
+    };
+  }
   if (!reviewCard) return { ...base, status: 'loading' };
 
   const ratings = ([1, 2, 3, 4] as const).map((r) => ({
@@ -262,10 +298,10 @@ export function useReview(deckId: string | null): ReviewViewModel {
     ...base,
     status: 'studying',
     card: reviewCard.card,
+    kind: reviewCard.state.state === 'new' ? 'New' : 'Review',
     revealed,
     showHint: !queueData.everReviewed && !revealed,
     ratings,
-    remaining: remainingCount(queueData.queue),
     announcement: revealed ? 'Answer shown' : '',
   };
 }

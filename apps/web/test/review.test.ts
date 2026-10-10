@@ -3,7 +3,12 @@ import { previewIntervals, replay, type Rating } from '@recall/core';
 import { initialize } from '../src/services/bootstrap';
 import { createCard } from '../src/services/cards';
 import { createDeck } from '../src/services/decks';
-import { loadReviewCard, rateCard, undoLastReview } from '../src/services/review';
+import {
+  lastSessionRating,
+  loadReviewCard,
+  rateCard,
+  undoLastReview,
+} from '../src/services/review';
 import { getMeta } from '../src/db/meta';
 import { DAY, makeTestContext, MINUTE, T0, type TestContext } from './helpers';
 
@@ -190,5 +195,21 @@ describe('loadReviewCard', () => {
     expect(await loadReviewCard(ctx, ctx.newId())).toBeNull();
     await ctx.db.cards.update(card.id, { deletedAt: T0 });
     expect(await loadReviewCard(ctx, card.id)).toBeNull();
+  });
+});
+
+describe('lastSessionRating (undo pill)', () => {
+  it('is the rating of this device’s latest non-undone review in the session', async () => {
+    const { ctx, deck, card } = await setup();
+    const other = await createCard(ctx, deck.id, 'f2', 'b2');
+    const start = ctx.now();
+    expect(await lastSessionRating(ctx, start)).toBeNull();
+    await rateCard(ctx, { cardId: card.id, rating: 3, durationMs: 1 });
+    ctx.advance(MINUTE);
+    await rateCard(ctx, { cardId: other.id, rating: 1, durationMs: 1 });
+    expect(await lastSessionRating(ctx, start)).toBe(1);
+    ctx.advance(MINUTE);
+    await undoLastReview(ctx, start);
+    expect(await lastSessionRating(ctx, start)).toBe(3);
   });
 });

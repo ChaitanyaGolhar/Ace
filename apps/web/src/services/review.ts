@@ -110,3 +110,18 @@ export async function loadReviewCard(ctx: AppContext, cardId: string): Promise<R
     preview: previewIntervals(state, ctx.now()),
   };
 }
+
+/** Rating of this device's latest non-undone review since the session started (undo pill). */
+export async function lastSessionRating(
+  ctx: AppContext,
+  sessionStartedAt: number,
+): Promise<Rating | null> {
+  const deviceId = await getMeta(ctx.db, 'deviceId');
+  const logs = await ctx.db.reviewLogs
+    .where('reviewedAt')
+    .aboveOrEqual(sessionStartedAt)
+    .filter((log) => log.voidedAt === null && log.deviceId === deviceId)
+    .toArray();
+  const latest = logs.sort((a, b) => b.reviewedAt - a.reviewedAt || (b.id > a.id ? 1 : -1))[0];
+  return latest?.rating ?? null;
+}

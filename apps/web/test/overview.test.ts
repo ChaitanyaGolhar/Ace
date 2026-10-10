@@ -24,6 +24,8 @@ describe('loadHome', () => {
     expect(await loadHome(ctx, opts)).toEqual({
       counts: { due: 0, new: 0, learning: 0 },
       decks: [],
+      tomorrow: 0,
+      estimateMinutes: null,
     });
   });
 
@@ -39,8 +41,20 @@ describe('loadHome', () => {
     const home = await loadHome(ctx, opts);
     expect(home.counts).toEqual({ due: 0, new: 3, learning: 0 });
     expect(home.decks).toEqual([
-      { id: a.id, name: 'A', counts: { due: 0, new: 2, learning: 0 } },
-      { id: b.id, name: 'B', counts: { due: 0, new: 3, learning: 0 } },
+      {
+        id: a.id,
+        name: 'A',
+        source: 'user',
+        cardCount: 2,
+        counts: { due: 0, new: 2, learning: 0 },
+      },
+      {
+        id: b.id,
+        name: 'B',
+        source: 'user',
+        cardCount: 4,
+        counts: { due: 0, new: 3, learning: 0 },
+      },
     ]);
   });
 
@@ -123,5 +137,62 @@ describe('loadNextDue (session complete screen)', () => {
     if (!state) throw new Error('missing');
     await ctx.db.cardStates.put({ ...state, due: AFTERNOON + 5 * DAY + MINUTE });
     expect(await loadNextDue(ctx, opts)).toEqual({ kind: 'later', day: '2026-10-15', count: 1 });
+  });
+});
+
+describe('Home data for the new design', () => {
+  it('deck rows carry card count and source; totals include tomorrow and the estimate', async () => {
+    const ctx = await setup();
+    const deck = await createDeck(ctx, 'A');
+    const cards = [];
+    for (let i = 0; i < 3; i++) cards.push(await createCard(ctx, deck.id, `q${String(i)}`, 'a'));
+    const deleted = await createCard(ctx, deck.id, 'gone', 'a');
+    await deleteCard(ctx, deleted.id);
+    // One card due tomorrow afternoon (2026-10-11 15:00 IST).
+    const first = cards[0];
+    if (!first) throw new Error('no card');
+    await rateCard(ctx, { cardId: first.id, rating: 4, durationMs: 1 });
+    const s = await ctx.db.cardStates.get(first.id);
+    if (!s) throw new Error('no state');
+    await ctx.db.cardStates.put({ ...s, due: Date.parse('2026-10-11T09:30:00Z') });
+
+    const home = await loadHome(ctx, opts);
+    expect(home.decks[0]).toMatchObject({ name: 'A', cardCount: 3, source: 'user' });
+    expect(home.tomorrow).toBe(1);
+    expect(home.estimateMinutes).toBeNull(); // fewer than 20 reviews so far
+  });
+
+  it('gives a time estimate once there are 20 reviews', async () => {
+    const ctx = await setup();
+    await updateSettings(ctx, { newPerDay: 50 });
+    const deck = await createDeck(ctx, 'A');
+    const cards = [];
+    for (let i = 0; i < 25; i++) cards.push(await createCard(ctx, deck.id, `q${String(i)}`, 'a'));
+    for (const card of cards.slice(0, 20)) {
+      await rateCard(ctx, { cardId: card.id, rating: 4, durationMs: 30_000 });
+    }
+    const home = await loadHome(ctx, opts);
+    // 5 new cards left × 30 s median = 2.5 min → 3 (rounded half away from zero).
+    expect(home.counts.new).toBe(5);
+    expect(home.estimateMinutes).toBe(3);
+  });
+});
+
+describe('Deck view data for the new design', () => {
+  it('includes each card’s scheduling state, the deck source and when it was last studied', async () => {
+    const ctx = await setup();
+    const deck = await createDeck(ctx, 'D');
+    const a = await createCard(ctx, deck.id, 'a', 'a');
+    await createCard(ctx, deck.id, 'b', 'b');
+    let view = await loadDeckView(ctx, deck.id, opts);
+    expect(view?.lastStudiedAt).toBeNull();
+    expect(view?.deck.source).toBe('user');
+    ctx.advance(MINUTE);
+    await rateCard(ctx, { cardId: a.id, rating: 4, durationMs: 1 });
+    view = await loadDeckView(ctx, deck.id, opts);
+    expect(view?.lastStudiedAt).toBe(AFTERNOON + MINUTE);
+    expect(view?.cards.map((c) => c.state.state)).toEqual(['review', 'new']);
+    expect(view?.timeZone).toBe('Asia/Kolkata');
+    expect(view?.rolloverHour).toBe(4);
   });
 });

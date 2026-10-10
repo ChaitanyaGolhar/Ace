@@ -140,3 +140,34 @@ milestone section.
 - Rate limits count only allowed requests; limited requests get 429 `rate_limited`.
 - Magic-link delivery: `MAIL_MODE=console` (dev, prints the link), `file` (appends JSON lines; for E2E), `resend` (production, Resend HTTP API — no SDK).
 - `COOKIE_SECURE=false` exists only for plain-http setups other than localhost.
+
+## UI implementation (approved design)
+
+Full details, remaining differences and missing data are in `UI_REPORT.md`. The main
+decisions:
+
+### D-301 Tokens via Tailwind 4 `@theme`, default palette removed
+
+- **What:** colours are CSS variables (`:root` = dark, `[data-theme="light"]`), mapped to semantic Tailwind names in `@theme inline`; `--color-*: initial` removes Tailwind's default palette so components can't use raw colours.
+- **Why:** Tailwind 4 has no `tailwind.config` by default; `@theme` is its equivalent.
+- **Reverse:** `apps/web/src/index.css`.
+
+### D-302 No-flash theme via a localStorage mirror
+
+- **What:** the theme setting stays in Dexie; `useShell` mirrors it to `localStorage['recall.theme']`, which an inline script in `index.html` reads before first paint.
+- **Why:** IndexedDB is async, so it can't be read before the first paint.
+
+### D-303 Stats and backup live in `apps/web/src/services`, not core
+
+- **What:** stats computations and backup export/import were written as tested web services.
+- **Why:** the UI task forbade changes to `packages/core`; the brief's M4 stats functions didn't exist yet.
+- **Reverse:** move `services/stats.ts` into core in M4 (pure already; uses only core types and functions).
+
+### D-304 Completion is part of the review screen
+
+- **What:** `/study` shows the completion state itself (so "Undo last rating" works); `/study/complete` redirects home. ✕ and "Back to home" mark the session completed.
+
+### D-305 Data router
+
+- **What:** `createBrowserRouter` instead of `<BrowserRouter>`.
+- **Why:** `useBlocker` (unsaved-changes guard in the card editor) needs a data router.

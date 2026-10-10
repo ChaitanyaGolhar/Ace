@@ -15,7 +15,8 @@ _Status: in progress. This file is updated after every milestone and every block
 the approved visual design to `apps/web` as a UI-only change ("don't change
 packages/core, the sync engine, or the API"). The overnight M1→M4 run was stopped at a
 clean point (the API auth cycle, committed and green) and the UI work started. The UI
-work is reported separately in `UI_REPORT.md`.
+work is reported separately in `UI_REPORT.md` (done: all screens implemented to the
+approved design, `pnpm check` green, 17 E2E tests incl. axe checks passing).
 
 ## 2. Acceptance criteria
 

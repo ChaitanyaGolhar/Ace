@@ -1,5 +1,13 @@
 # UI contract
 
+> **Status (after the design was applied):** this document was the input to the design
+> session and describes the pre-design functional shell. The approved design is now
+> implemented (see `UI_REPORT.md` at the repo root). The current, authoritative contract
+> is the exported view-model interface at the top of each hook in
+> `src/features/<screen>/use<Screen>.ts`; copy and selectors changed where the design
+> changed them (e.g. "Start reviewing", "Review complete", Question/Answer labels, ⋯
+> menus for card and deck actions). E2E selectors are listed in `UI_REPORT.md`.
+
 The input for the visual design session. The current UI is a deliberately plain,
 functional shell: semantic HTML, Tailwind only for layout, 44 px touch targets and
 visible focus rings. Everything below is what a redesign must keep working.

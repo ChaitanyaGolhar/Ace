@@ -69,6 +69,12 @@ export function useReview(deckId: string | null): ReviewViewModel {
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  // After a rating or undo is saved, wait for a queue snapshot that includes it before
+  // moving on. Otherwise the stale snapshot would show the card just rated again, and
+  // it could be rated twice.
+  const [awaiting, setAwaiting] = useState<{ fingerprint: string; pin: string | null } | null>(
+    null,
+  );
   const shownAt = useRef(ctx.now());
 
   useEffect(() => {
@@ -102,8 +108,12 @@ export function useReview(deckId: string | null): ReviewViewModel {
       ...(deckId === null ? {} : { deckId }),
     });
     const summary = await sessionSummary(ctx, session);
-    const everReviewed = (await ctx.db.reviewLogs.count()) > 0;
-    return { queue, summary, everReviewed };
+    const logCount = await ctx.db.reviewLogs.count();
+    const voidedCount = await ctx.db.reviewLogs.filter((l) => l.voidedAt !== null).count();
+    // Changes on every rating (new log) and every undo (newly voided log). Used to tell
+    // whether this snapshot already includes our last write.
+    const logsFingerprint = `${String(logCount)}:${String(voidedCount)}`;
+    return { queue, summary, everReviewed: logCount > 0, logsFingerprint };
   }, [ctx, session, deckId, browserTimeZone, tick]);
 
   const queueData = queueQuery.status === 'ready' ? queueQuery.data : null;
@@ -118,8 +128,11 @@ export function useReview(deckId: string | null): ReviewViewModel {
         : (nextCard(queue)?.cardId ?? null);
   }
 
+  // Pin whatever is first shown. A pin is only replaced by rating (which clears it) or
+  // undo (which pins the undone card). Never overwrite an existing pin here: right after
+  // an undo the queue snapshot may be stale and not contain the undone card yet.
   useEffect(() => {
-    if (currentId !== pinnedId) setPinnedId(currentId);
+    if (pinnedId === null && currentId !== null) setPinnedId(currentId);
   }, [currentId, pinnedId]);
 
   // A different card is on screen: hide the answer and restart its timer.
@@ -127,6 +140,16 @@ export function useReview(deckId: string | null): ReviewViewModel {
     setRevealed(false);
     shownAt.current = ctx.now();
   }, [ctx, currentId]);
+
+  useEffect(() => {
+    if (awaiting && queueData && queueData.logsFingerprint !== awaiting.fingerprint) {
+      setPinnedId(awaiting.pin);
+      setRevealed(false);
+      shownAt.current = ctx.now();
+      setAwaiting(null);
+      setBusy(false);
+    }
+  }, [ctx, awaiting, queueData]);
 
   const cardQuery = useQuery(
     () => (currentId === null ? Promise.resolve(null) : loadReviewCard(ctx, currentId)),
@@ -140,46 +163,45 @@ export function useReview(deckId: string | null): ReviewViewModel {
 
   const rate = useCallback(
     (rating: Rating) => {
-      if (!revealed || busy || currentId === null) return;
+      if (!revealed || busy || currentId === null || !queueData) return;
+      const fingerprint = queueData.logsFingerprint;
       setBusy(true);
       setActionError(null);
       rateCard(ctx, { cardId: currentId, rating, durationMs: ctx.now() - shownAt.current })
         .then(() => {
-          setPinnedId(null);
-          setRevealed(false);
-          shownAt.current = ctx.now();
+          // Busy until the queue reflects this rating; then the next card is picked.
+          setAwaiting({ fingerprint, pin: null });
         })
         .catch(() => {
           setActionError('Couldn’t save that rating. Please try again.');
-        })
-        .finally(() => {
           setBusy(false);
         });
     },
-    [ctx, revealed, busy, currentId],
+    [ctx, revealed, busy, currentId, queueData],
   );
 
   const reviewed = queueData?.summary.reviewed ?? 0;
   const canUndo = reviewed > 0 && !busy;
 
   const undo = useCallback(() => {
-    if (!session || !canUndo) return;
+    if (!session || !canUndo || !queueData) return;
+    const fingerprint = queueData.logsFingerprint;
     setBusy(true);
     setActionError(null);
     undoLastReview(ctx, session.startedAt)
       .then((undone) => {
-        // Bring the undone card back on screen, answer hidden.
-        if (undone) setPinnedId(undone.cardId);
-        setRevealed(false);
-        shownAt.current = ctx.now();
+        if (!undone) {
+          setBusy(false);
+          return;
+        }
+        // Once the queue reflects the undo, bring the undone card back, answer hidden.
+        setAwaiting({ fingerprint, pin: undone.cardId });
       })
       .catch(() => {
         setActionError('Couldn’t undo. Please try again.');
-      })
-      .finally(() => {
         setBusy(false);
       });
-  }, [ctx, session, canUndo]);
+  }, [ctx, session, canUndo, queueData]);
 
   // Keyboard: Space shows the answer, 1–4 rate, Z undoes.
   useEffect(() => {

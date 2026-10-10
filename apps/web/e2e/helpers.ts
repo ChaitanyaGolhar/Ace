@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { magicLinkFor } from './support/apiServer';
 
 /** Reads every row of an IndexedDB object store in the app's database (for assertions only). */
 export async function readStore<T>(page: Page, store: string): Promise<T[]> {
@@ -110,4 +111,30 @@ export async function finishSession(
     ratings += 1;
     await expect(page.getByRole('button', { name: /^Easy ·/ })).toHaveCount(0);
   }
+}
+
+let counter = 0;
+export function uniqueEmail(): string {
+  counter += 1;
+  return `e2e-${String(Date.now())}-${String(counter)}@example.com`;
+}
+
+/** Signs in through the UI and the real magic link (read from the API's dev outbox). */
+export async function signIn(page: Page, email: string) {
+  await page.goto('/settings');
+  await page
+    .getByRole('region', { name: 'Account & sync' })
+    .getByRole('link', { name: 'Sign in to sync' })
+    .click();
+  await page.getByLabel('Email').fill(email);
+  await page.getByRole('button', { name: 'Email me a link' }).click();
+  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+  await page.goto(await magicLinkFor(email));
+  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
+}
+
+export async function syncNow(page: Page) {
+  await page.goto('/settings');
+  await page.getByRole('button', { name: 'Sync now' }).click();
+  await expect(page.getByRole('main').getByTestId('sync-status')).toContainText('Synced');
 }

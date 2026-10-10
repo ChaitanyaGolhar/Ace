@@ -67,9 +67,9 @@ describe('toStatsViewModel', () => {
 
   it('your cards rows', () => {
     expect(vm.cards).toEqual([
-      { label: 'Learned · in regular review', count: 102 },
-      { label: 'Still learning', count: 6 },
-      { label: 'Not seen yet', count: 48 },
+      { key: 'learned', label: 'Learned · in regular review', count: 102 },
+      { key: 'learning', label: 'Still learning', count: 6 },
+      { key: 'not-seen', label: 'Not seen yet', count: 48 },
     ]);
   });
 });

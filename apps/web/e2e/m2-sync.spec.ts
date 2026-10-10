@@ -1,32 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
-import { addCards, createDeck, numberedCards } from './helpers';
-import { magicLinkFor, startApi, stopApi } from './support/apiServer';
-
-let counter = 0;
-function uniqueEmail(): string {
-  counter += 1;
-  return `e2e-${String(Date.now())}-${String(counter)}@example.com`;
-}
-
-/** Signs in through the UI and the real magic link (read from the API's dev outbox). */
-async function signIn(page: Page, email: string) {
-  await page.goto('/settings');
-  await page
-    .getByRole('region', { name: 'Account & sync' })
-    .getByRole('link', { name: 'Sign in to sync' })
-    .click();
-  await page.getByLabel('Email').fill(email);
-  await page.getByRole('button', { name: 'Email me a link' }).click();
-  await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
-  await page.goto(await magicLinkFor(email));
-  await expect(page.getByText(`Signed in as ${email}`)).toBeVisible();
-}
-
-async function syncNow(page: Page) {
-  await page.goto('/settings');
-  await page.getByRole('button', { name: 'Sync now' }).click();
-  await expect(page.getByRole('main').getByTestId('sync-status')).toContainText('Synced');
-}
+import { expect, test } from '@playwright/test';
+import { addCards, createDeck, numberedCards, signIn, syncNow, uniqueEmail } from './helpers';
+import { startApi, stopApi } from './support/apiServer';
 
 test('sign in with a magic link; Settings shows the account and "Synced"', async ({ page }) => {
   const email = uniqueEmail();

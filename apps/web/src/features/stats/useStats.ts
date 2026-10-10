@@ -24,7 +24,7 @@ export interface StatsViewModel {
   daysStudied: { value: string; of: string; caption: string };
   forecast: { bars: (Bar & { axis: string })[]; readout: string };
   perDay: { bars: Bar[]; axis: [string, string, string]; readout: string };
-  cards: { label: string; count: number }[];
+  cards: { key: 'learned' | 'learning' | 'not-seen'; label: string; count: number }[];
   focusForecast: (index: number | null) => void;
   focusPerDay: (index: number | null) => void;
 }
@@ -87,9 +87,9 @@ export function toStatsViewModel(
       readout: pEntry ? perDayReadout(pEntry, perDayIndex === lastIndex) : '',
     },
     cards: [
-      { label: 'Learned · in regular review', count: data.cardsByState.learned },
-      { label: 'Still learning', count: data.cardsByState.learning },
-      { label: 'Not seen yet', count: data.cardsByState.notSeen },
+      { key: 'learned', label: 'Learned · in regular review', count: data.cardsByState.learned },
+      { key: 'learning', label: 'Still learning', count: data.cardsByState.learning },
+      { key: 'not-seen', label: 'Not seen yet', count: data.cardsByState.notSeen },
     ],
   };
 }

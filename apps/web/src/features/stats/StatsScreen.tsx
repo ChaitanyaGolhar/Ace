@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { ErrorMessage, Loading } from '../shell/states';
 import { useStats, type Bar } from './useStats';
 
@@ -13,17 +13,23 @@ function Tile({
   suffix?: string;
   caption: string;
 }) {
+  const id = useId();
   return (
-    <div className="panel flex flex-col gap-3 p-6">
-      <h2 className="text-body text-text-secondary">{title}</h2>
+    <section aria-labelledby={id} className="panel flex flex-col gap-3 p-6">
+      <h2 id={id} className="text-body text-text-secondary">
+        {title}
+      </h2>
       <p className="flex items-baseline gap-2">
-        <span className="font-mono text-[40px] leading-none font-semibold tracking-tight">
+        <span
+          data-testid="stat-value"
+          className="font-mono text-[40px] leading-none font-semibold tracking-tight"
+        >
           {value}
         </span>
         {suffix && <span className="text-section font-normal text-text-secondary">{suffix}</span>}
       </p>
       <p className="text-meta text-text-secondary lg:text-body">{caption}</p>
-    </div>
+    </section>
   );
 }
 
@@ -179,7 +185,9 @@ export function StatsScreen() {
               className="flex min-h-16 items-center justify-between border-b border-border"
             >
               <dt className="text-body lg:text-[17px]">{row.label}</dt>
-              <dd className="font-mono text-body lg:text-[17px]">{row.count}</dd>
+              <dd data-testid={`cards-${row.key}`} className="font-mono text-body lg:text-[17px]">
+                {row.count}
+              </dd>
             </div>
           ))}
         </dl>

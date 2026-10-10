@@ -1,4 +1,4 @@
-import type { Card, Deck, ReviewLog } from '@recall/core';
+import type { AppEvent, Card, Deck, ReviewLog } from '@recall/core';
 import request from 'supertest';
 import { T0, type TestApp } from './helpers';
 
@@ -49,10 +49,22 @@ export function log(cardId: string, overrides: Partial<ReviewLog> = {}): ReviewL
   };
 }
 
+export function event(overrides: Partial<AppEvent> = {}): AppEvent {
+  return {
+    id: uuid(),
+    type: 'app_opened',
+    props: {},
+    occurredAt: T0,
+    deviceId: 'device-a',
+    ...overrides,
+  } as AppEvent;
+}
+
 export interface Batch {
   decks?: Deck[];
   cards?: Card[];
   reviewLogs?: ReviewLog[];
+  events?: AppEvent[];
 }
 
 export function push(t: TestApp, cookie: string, batch: Batch) {
@@ -64,6 +76,7 @@ export function push(t: TestApp, cookie: string, batch: Batch) {
       decks: batch.decks ?? [],
       cards: batch.cards ?? [],
       reviewLogs: batch.reviewLogs ?? [],
+      events: batch.events ?? [],
     });
 }
 
@@ -76,10 +89,11 @@ export function pull(t: TestApp, cookie: string, since = '0', limit?: number) {
 
 /** Every synced row in the database, for exact before/after comparisons. */
 export async function dump(t: TestApp) {
-  const [decks, cards, logs] = await Promise.all([
+  const [decks, cards, logs, events] = await Promise.all([
     t.prisma.$queryRawUnsafe('SELECT * FROM decks ORDER BY id'),
     t.prisma.$queryRawUnsafe('SELECT * FROM cards ORDER BY id'),
     t.prisma.$queryRawUnsafe('SELECT * FROM review_logs ORDER BY id'),
+    t.prisma.$queryRawUnsafe('SELECT * FROM events ORDER BY id'),
   ]);
-  return { decks, cards, logs };
+  return { decks, cards, logs, events };
 }

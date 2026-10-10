@@ -36,7 +36,7 @@ describe('POST /sync/push', () => {
     const res = await push(t, cookie, { decks: [d], cards: [c], reviewLogs: [l] });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      accepted: { decks: [d.id], cards: [c.id], reviewLogs: [l.id] },
+      accepted: { decks: [d.id], cards: [c.id], reviewLogs: [l.id], events: [] },
     });
     const pulled = body(await pull(t, cookie));
     expect(pulled.decks).toEqual([d]);
@@ -235,7 +235,14 @@ describe('GET /sync/pull', () => {
     const bob = await signIn(t, 'bob@example.com');
     await push(t, alice, { decks: [deck()] }).expect(200);
     const res = body(await pull(t, bob));
-    expect(res).toEqual({ decks: [], cards: [], reviewLogs: [], nextCursor: '0', hasMore: false });
+    expect(res).toEqual({
+      decks: [],
+      cards: [],
+      reviewLogs: [],
+      events: [],
+      nextCursor: '0',
+      hasMore: false,
+    });
   });
 
   it('pages in serverSeq order with nextCursor and hasMore, without gaps or repeats', async () => {

@@ -1,6 +1,15 @@
 import type { PullQuery, PullResponse } from '@recall/core';
 import type { Prisma } from '../db';
-import { toCard, toDeck, toLog, type CardRow, type DeckRow, type LogRow } from './rows';
+import {
+  toCard,
+  toDeck,
+  toEvent,
+  toLog,
+  type CardRow,
+  type DeckRow,
+  type EventRow,
+  type LogRow,
+} from './rows';
 
 /**
  * One page of this user's changes after `since`, in serverSeq order (§8.3). Each table
@@ -19,7 +28,7 @@ export async function pullPage(
 ): Promise<PullResponse> {
   const since = BigInt(query.since);
   const take = query.limit + 1;
-  const [decks, cards, logs] = await prisma.$transaction(
+  const [decks, cards, logs, events] = await prisma.$transaction(
     async (tx) =>
       [
         await tx.$queryRaw<DeckRow[]>`
@@ -31,6 +40,9 @@ export async function pullPage(
         await tx.$queryRaw<LogRow[]>`
         SELECT * FROM review_logs WHERE user_id = ${userId} AND server_seq > ${since}
         ORDER BY server_seq LIMIT ${take}`,
+        await tx.$queryRaw<EventRow[]>`
+        SELECT * FROM events WHERE user_id = ${userId} AND server_seq > ${since}
+        ORDER BY server_seq LIMIT ${take}`,
       ] as const,
     { isolationLevel: 'RepeatableRead' },
   );
@@ -39,6 +51,7 @@ export async function pullPage(
     ...decks.map((r) => ({ seq: r.server_seq, kind: 'deck' as const, r })),
     ...cards.map((r) => ({ seq: r.server_seq, kind: 'card' as const, r })),
     ...logs.map((r) => ({ seq: r.server_seq, kind: 'log' as const, r })),
+    ...events.map((r) => ({ seq: r.server_seq, kind: 'event' as const, r })),
   ].sort((a, b) => (a.seq < b.seq ? -1 : a.seq > b.seq ? 1 : 0));
 
   const page = merged.slice(0, query.limit);
@@ -46,13 +59,15 @@ export async function pullPage(
     decks: [],
     cards: [],
     reviewLogs: [],
+    events: [],
     nextCursor: page.length === 0 ? query.since : String(page[page.length - 1]?.seq),
     hasMore: merged.length > query.limit,
   };
   for (const item of page) {
     if (item.kind === 'deck') response.decks.push(toDeck(item.r));
     else if (item.kind === 'card') response.cards.push(toCard(item.r));
-    else response.reviewLogs.push(toLog(item.r));
+    else if (item.kind === 'log') response.reviewLogs.push(toLog(item.r));
+    else response.events.push(toEvent(item.r));
   }
   return response;
 }

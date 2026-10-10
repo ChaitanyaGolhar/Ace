@@ -10,7 +10,16 @@ import {
 import type { Prisma } from '../db';
 import { HttpError } from '../errors';
 import type { Logger } from '../logger';
-import { sameRow, toCard, toDeck, toLog, type CardRow, type DeckRow, type LogRow } from './rows';
+import {
+  sameRow,
+  toCard,
+  toDeck,
+  toLog,
+  type CardRow,
+  type DeckRow,
+  type EventRow,
+  type LogRow,
+} from './rows';
 
 const DAY = 86_400_000;
 
@@ -49,6 +58,10 @@ export async function applyPush(
     reviewedAt: clamp(l.reviewedAt, 'review log', l.id),
     voidedAt: l.voidedAt === null ? null : clamp(l.voidedAt, 'review log', l.id),
   }));
+  const events = batch.events.map((e) => ({
+    ...e,
+    occurredAt: clamp(e.occurredAt, 'event', e.id),
+  }));
 
   await prisma.$transaction(
     async (tx) => {
@@ -61,8 +74,15 @@ export async function applyPush(
       const storedLogs = await tx.$queryRaw<LogRow[]>`
         SELECT * FROM review_logs WHERE id = ANY(${logs.map((l) => l.id)}::text[]) FOR UPDATE`;
 
+      const storedEvents = await tx.$queryRaw<Pick<EventRow, 'id' | 'user_id'>[]>`
+        SELECT id, user_id FROM events WHERE id = ANY(${events.map((e) => e.id)}::text[])`;
+
       // Ownership: any id that already belongs to someone else rejects the whole batch.
-      if ([...storedDecks, ...storedCards, ...storedLogs].some((r) => r.user_id !== userId)) {
+      if (
+        [...storedDecks, ...storedCards, ...storedLogs, ...storedEvents].some(
+          (r) => r.user_id !== userId,
+        )
+      ) {
         throw new HttpError(403, 'forbidden', 'A row in this batch belongs to another account');
       }
 
@@ -125,6 +145,15 @@ export async function applyPush(
           }
         }
       }
+
+      // Events are append-only: insert if absent, never changed.
+      for (const e of events) {
+        await tx.$executeRaw`
+          INSERT INTO events (id, user_id, type, occurred_at, device_id, props, server_seq)
+          VALUES (${e.id}, ${userId}, ${e.type}, ${e.occurredAt}, ${e.deviceId},
+                  ${JSON.stringify(e.props)}::jsonb, nextval('change_seq'))
+          ON CONFLICT (id) DO NOTHING`;
+      }
     },
     { maxWait: 10_000, timeout: 60_000 },
   );
@@ -134,6 +163,7 @@ export async function applyPush(
       decks: batch.decks.map((d) => d.id),
       cards: batch.cards.map((c) => c.id),
       reviewLogs: batch.reviewLogs.map((l) => l.id),
+      events: batch.events.map((e) => e.id),
     },
   };
 }

@@ -92,3 +92,17 @@ model ReviewLog {
   @@index([cardId])
   @@map("review_logs")
 }
+
+model Event {
+  id         String @id
+  userId     String @map("user_id")
+  type       String
+  occurredAt BigInt @map("occurred_at")
+  deviceId   String @map("device_id")
+  props      Json
+  serverSeq  BigInt @map("server_seq")
+
+  @@index([userId, serverSeq])
+  @@index([type])
+  @@map("events")
+}

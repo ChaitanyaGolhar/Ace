@@ -1,4 +1,4 @@
-import type { Card, Deck, ReviewLog } from '@recall/core';
+import { EventSchema, type AppEvent, type Card, type Deck, type ReviewLog } from '@recall/core';
 
 // Raw rows as Postgres returns them (BIGINT → bigint), and conversion to the domain
 // shape (epoch-ms numbers). Every synced timestamp is a safe integer, so Number() is exact.
@@ -39,6 +39,16 @@ export interface LogRow {
   server_seq: bigint;
 }
 
+export interface EventRow {
+  id: string;
+  user_id: string;
+  type: string;
+  occurred_at: bigint;
+  device_id: string;
+  props: unknown;
+  server_seq: bigint;
+}
+
 const num = (v: bigint) => Number(v);
 const numOrNull = (v: bigint | null) => (v === null ? null : Number(v));
 
@@ -76,6 +86,17 @@ export function toLog(r: LogRow): ReviewLog {
     deviceId: r.device_id,
     voidedAt: numOrNull(r.voided_at),
   };
+}
+
+export function toEvent(r: EventRow): AppEvent {
+  // Stored only from validated events; parsing again restores the precise union type.
+  return EventSchema.parse({
+    id: r.id,
+    type: r.type,
+    props: r.props,
+    occurredAt: num(r.occurred_at),
+    deviceId: r.device_id,
+  });
 }
 
 /** Key-order-independent equality of two flat domain rows. */

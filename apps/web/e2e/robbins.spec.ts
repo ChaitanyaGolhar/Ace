@@ -60,7 +60,9 @@ for (const theme of ['dark', 'light'] as const) {
     await expect(page.getByTestId('position')).toContainText('13 of');
     await page.getByRole('button', { name: 'Show answer' }).click();
     const back = await page.getByTestId('card-back').innerText();
-    expect(back).toContain('Key points:\n• Vascularized tissue response\n• Recruitment from circulation');
+    expect(back).toContain(
+      'Key points:\n• Vascularized tissue response\n• Recruitment from circulation',
+    );
   });
 }
 

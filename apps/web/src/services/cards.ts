@@ -1,4 +1,4 @@
-import { CardSchema, initialState } from '@recall/core';
+import { CardSchema, initialState, MAX_CARD_TEXT_LENGTH } from '@recall/core';
 import type { LocalCard } from '../db/db';
 import type { AppContext } from './context';
 import { NotFoundError, UserInputError } from './errors';
@@ -13,6 +13,13 @@ function cleanText({ front, back }: CardText): CardText {
   const clean = { front: front.trim(), back: back.trim() };
   if (clean.front === '') throw new UserInputError('front', 'Front can’t be empty.');
   if (clean.back === '') throw new UserInputError('back', 'Back can’t be empty.');
+  const limit = `${MAX_CARD_TEXT_LENGTH.toLocaleString('en-US')} characters`;
+  if (clean.front.length > MAX_CARD_TEXT_LENGTH) {
+    throw new UserInputError('front', `Front can be at most ${limit}.`);
+  }
+  if (clean.back.length > MAX_CARD_TEXT_LENGTH) {
+    throw new UserInputError('back', `Back can be at most ${limit}.`);
+  }
   return clean;
 }
 

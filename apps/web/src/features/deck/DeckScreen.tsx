@@ -1,3 +1,4 @@
+import { MAX_DECK_NAME_LENGTH } from '@recall/core';
 import { Link, useParams } from 'react-router';
 import { ErrorMessage, Loading, NotFound } from '../shell/states';
 import { useDeck } from './useDeck';
@@ -26,7 +27,7 @@ export function DeckScreen() {
             <input
               className="field"
               value={vm.renameValue}
-              maxLength={200}
+              maxLength={MAX_DECK_NAME_LENGTH}
               autoFocus
               onChange={(e) => {
                 vm.setRenameValue(e.target.value);

@@ -187,3 +187,29 @@ describe('deleteCard', () => {
     });
   });
 });
+
+describe('max lengths (client side, same limits as the server)', () => {
+  it('rejects a deck name over 200 characters with a readable error', async () => {
+    const ctx = makeTestContext();
+    await expect(createDeck(ctx, 'x'.repeat(201))).rejects.toThrow(
+      'Deck name can be at most 200 characters.',
+    );
+    await expect(createDeck(ctx, 'x'.repeat(200))).resolves.toBeDefined();
+  });
+
+  it('rejects card text over 20,000 characters on either side', async () => {
+    const ctx = makeTestContext();
+    const deck = await createDeck(ctx, 'D');
+    const long = 'y'.repeat(20_001);
+    await expect(createCard(ctx, deck.id, long, 'b')).rejects.toThrow(
+      'Front can be at most 20,000 characters.',
+    );
+    await expect(createCard(ctx, deck.id, 'f', long)).rejects.toThrow(
+      'Back can be at most 20,000 characters.',
+    );
+    const card = await createCard(ctx, deck.id, 'y'.repeat(20_000), 'b');
+    await expect(updateCard(ctx, card.id, { front: 'f', back: long })).rejects.toThrow(
+      'Back can be at most 20,000 characters.',
+    );
+  });
+});

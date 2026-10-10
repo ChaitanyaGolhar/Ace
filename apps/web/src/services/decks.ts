@@ -1,4 +1,4 @@
-import { DeckSchema } from '@recall/core';
+import { DeckSchema, MAX_DECK_NAME_LENGTH } from '@recall/core';
 import type { LocalDeck } from '../db/db';
 import type { AppContext } from './context';
 import { NotFoundError, UserInputError } from './errors';
@@ -6,6 +6,12 @@ import { NotFoundError, UserInputError } from './errors';
 function cleanName(name: string): string {
   const trimmed = name.trim();
   if (trimmed === '') throw new UserInputError('name', 'Deck name can’t be empty.');
+  if (trimmed.length > MAX_DECK_NAME_LENGTH) {
+    throw new UserInputError(
+      'name',
+      `Deck name can be at most ${String(MAX_DECK_NAME_LENGTH)} characters.`,
+    );
+  }
   return trimmed;
 }
 

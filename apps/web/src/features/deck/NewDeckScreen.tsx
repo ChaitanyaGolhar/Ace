@@ -1,3 +1,4 @@
+import { MAX_DECK_NAME_LENGTH } from '@recall/core';
 import { useNewDeck } from './useNewDeck';
 
 export function NewDeckScreen() {
@@ -19,7 +20,7 @@ export function NewDeckScreen() {
           <input
             className="field"
             value={vm.name}
-            maxLength={200}
+            maxLength={MAX_DECK_NAME_LENGTH}
             onChange={(e) => {
               vm.setName(e.target.value);
             }}

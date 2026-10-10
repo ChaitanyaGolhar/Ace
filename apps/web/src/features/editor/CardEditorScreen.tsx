@@ -1,3 +1,4 @@
+import { MAX_CARD_TEXT_LENGTH } from '@recall/core';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { useParams } from 'react-router';
 import { ErrorMessage, Loading, NotFound } from '../shell/states';
@@ -46,7 +47,7 @@ export function CardEditorScreen() {
             ref={frontRef}
             className="field min-h-24"
             value={vm.front}
-            maxLength={20000}
+            maxLength={MAX_CARD_TEXT_LENGTH}
             autoFocus
             aria-invalid={vm.frontError !== null}
             aria-describedby={vm.frontError ? 'front-error' : undefined}
@@ -65,7 +66,7 @@ export function CardEditorScreen() {
           <textarea
             className="field min-h-24"
             value={vm.back}
-            maxLength={20000}
+            maxLength={MAX_CARD_TEXT_LENGTH}
             aria-invalid={vm.backError !== null}
             aria-describedby={vm.backError ? 'back-error' : undefined}
             onChange={(e) => {

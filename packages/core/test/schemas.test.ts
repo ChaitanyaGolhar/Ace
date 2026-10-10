@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CardSchema, DeckSchema, ReviewLogSchema } from '../src';
+import {
+  CardSchema,
+  DeckSchema,
+  MAX_CARD_TEXT_LENGTH,
+  MAX_DECK_NAME_LENGTH,
+  ReviewLogSchema,
+} from '../src';
 import { makeCard, makeDeck, makeLog, T0 } from './helpers/fixtures';
 
 describe('DeckSchema', () => {
@@ -75,5 +81,25 @@ describe('ReviewLogSchema', () => {
   it('rejects a negative duration and an empty deviceId', () => {
     expect(ReviewLogSchema.safeParse(makeLog({ durationMs: -1 })).success).toBe(false);
     expect(ReviewLogSchema.safeParse(makeLog({ deviceId: '' })).success).toBe(false);
+  });
+});
+
+describe('max lengths (shared by client and server)', () => {
+  it('deck name: 200 characters allowed, 201 rejected', () => {
+    expect(DeckSchema.safeParse(makeDeck({ name: 'x'.repeat(200) })).success).toBe(true);
+    expect(DeckSchema.safeParse(makeDeck({ name: 'x'.repeat(201) })).success).toBe(false);
+  });
+
+  it('card front and back: 20,000 characters allowed, 20,001 rejected', () => {
+    const ok = 'y'.repeat(20_000);
+    const tooLong = 'y'.repeat(20_001);
+    expect(CardSchema.safeParse(makeCard({ front: ok, back: ok })).success).toBe(true);
+    expect(CardSchema.safeParse(makeCard({ front: tooLong })).success).toBe(false);
+    expect(CardSchema.safeParse(makeCard({ back: tooLong })).success).toBe(false);
+  });
+
+  it('exports the limits for UIs', () => {
+    expect(MAX_DECK_NAME_LENGTH).toBe(200);
+    expect(MAX_CARD_TEXT_LENGTH).toBe(20_000);
   });
 });

@@ -6,14 +6,17 @@ import { z } from 'zod';
 // Unknown keys are stripped (zod's default), so local-only fields such as `dirty`
 // and `localVersion` can never reach the server through a parsed row.
 
-const Uuid = z.uuid({ version: 'v7' });
+export const MAX_DECK_NAME_LENGTH = 200;
+export const MAX_CARD_TEXT_LENGTH = 20_000;
+
+export const Uuid = z.uuid({ version: 'v7' });
 /** Epoch milliseconds. `z.int()` also restricts to safe integers. */
 const EpochMs = z.int().nonnegative();
 
 export const DeckSchema = z
   .object({
     id: Uuid,
-    name: z.string().min(1),
+    name: z.string().min(1).max(MAX_DECK_NAME_LENGTH),
     source: z.enum(['user', 'prebuilt']),
     prebuiltId: z.string().min(1).nullable(),
     createdAt: EpochMs,
@@ -28,8 +31,8 @@ export const DeckSchema = z
 export const CardSchema = z.object({
   id: Uuid,
   deckId: Uuid,
-  front: z.string().min(1),
-  back: z.string().min(1),
+  front: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
+  back: z.string().min(1).max(MAX_CARD_TEXT_LENGTH),
   createdAt: EpochMs,
   updatedAt: EpochMs,
   deletedAt: EpochMs.nullable(),
@@ -43,7 +46,7 @@ export const ReviewLogSchema = z.object({
   rating: RatingSchema,
   reviewedAt: EpochMs,
   durationMs: z.int().nonnegative(),
-  deviceId: z.string().min(1),
+  deviceId: z.string().min(1).max(100),
   voidedAt: EpochMs.nullable(),
 });
 

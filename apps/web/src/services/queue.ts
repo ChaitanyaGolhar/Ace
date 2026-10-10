@@ -1,5 +1,5 @@
 import { buildQueue, type Queue, type QueueInput } from '@recall/core';
-import type { LocalCard, LocalDeck, LocalReviewLog } from '../db/db';
+import type { LocalCard, LocalDeck, LocalReviewLog, RecallDB } from '../db/db';
 import type { AppContext } from './context';
 import { effectiveTimeZone, getSettings } from './settings';
 
@@ -16,26 +16,50 @@ export interface LocalQueueInput extends QueueInput {
   logs: LocalReviewLog[];
 }
 
+export interface LoadQueueInputOptions {
+  /**
+   * `all` (default): the whole review log (Stats needs it).
+   * `newLimit`: only what `buildQueue` needs — the full history of cards reviewed in
+   * the last 48 hours. Core counts a card as introduced today only if its first review
+   * is within 48 h of now, so the queue is identical, and a big collection's log isn't
+   * read on every screen (DECISIONS D-317).
+   */
+  logs?: 'all' | 'newLimit';
+}
+
+const NEW_LIMIT_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+async function logsForNewLimit(db: RecallDB, now: number): Promise<LocalReviewLog[]> {
+  const recent = await db.reviewLogs
+    .where('reviewedAt')
+    .aboveOrEqual(now - NEW_LIMIT_WINDOW_MS)
+    .toArray();
+  const cardIds = [...new Set(recent.map((l) => l.cardId))];
+  return cardIds.length === 0 ? [] : db.reviewLogs.where('cardId').anyOf(cardIds).toArray();
+}
+
 /** Reads everything buildQueue needs from IndexedDB, in one read transaction. */
 export async function loadQueueInput(
   ctx: AppContext,
   browserTimeZone: string,
+  options: LoadQueueInputOptions = {},
 ): Promise<LocalQueueInput> {
   const { db } = ctx;
   const settings = await getSettings(ctx);
+  const now = ctx.now();
   return db.transaction('r', [db.decks, db.cards, db.cardStates, db.reviewLogs], async () => {
     const [decks, cards, states, logs] = await Promise.all([
       db.decks.toArray(),
       db.cards.toArray(),
       db.cardStates.toArray(),
-      db.reviewLogs.toArray(),
+      options.logs === 'newLimit' ? logsForNewLimit(db, now) : db.reviewLogs.toArray(),
     ]);
     return {
       decks,
       cards,
       states: new Map(states.map((s) => [s.cardId, s])),
       logs,
-      now: ctx.now(),
+      now,
       timeZone: effectiveTimeZone(settings, browserTimeZone),
       rolloverHour: settings.rolloverHour,
       newPerDay: settings.newPerDay,
@@ -44,7 +68,7 @@ export async function loadQueueInput(
 }
 
 export async function loadQueue(ctx: AppContext, options: LoadQueueOptions): Promise<Queue> {
-  const input = await loadQueueInput(ctx, options.browserTimeZone);
+  const input = await loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' });
   return buildQueue(options.deckId === undefined ? input : { ...input, deckId: options.deckId });
 }
 

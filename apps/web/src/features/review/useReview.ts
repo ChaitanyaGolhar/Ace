@@ -115,7 +115,13 @@ export function useReview(deckId: string | null): ReviewViewModel {
     });
     const summary = await sessionSummary(ctx, session);
     const logCount = await ctx.db.reviewLogs.count();
-    const voidedCount = await ctx.db.reviewLogs.filter((l) => l.voidedAt !== null).count();
+    // Undo only voids this session's logs, so counting voided logs since the session
+    // started is enough, and it doesn't scan a big collection's whole history.
+    const voidedCount = await ctx.db.reviewLogs
+      .where('reviewedAt')
+      .aboveOrEqual(session.startedAt)
+      .filter((l) => l.voidedAt !== null)
+      .count();
     const deckName =
       deckId === null ? 'All decks' : ((await ctx.db.decks.get(deckId))?.name ?? 'Deck');
     const lastRating = await lastSessionRating(ctx, session.startedAt);

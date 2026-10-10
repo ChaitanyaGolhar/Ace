@@ -7,7 +7,9 @@ import { deleteCard } from '../../services/cards';
 import { deleteDeck, renameDeck } from '../../services/decks';
 import { cardDueLabel, lastStudiedLabel } from '../../services/dueLabels';
 import { UserInputError } from '../../services/errors';
+import { formatCount } from '../../services/format';
 import { loadDeckView, searchCards } from '../../services/overview';
+import { CARD_PAGE_SIZE, pageOfCards } from '../../services/paging';
 
 export interface DeckCardRow {
   id: string;
@@ -27,8 +29,12 @@ export interface DeckViewModel {
   isReadyMade: boolean;
   /** Total live cards in the deck (before search), minus pending deletes. */
   cardCount: number;
-  /** Cards matching the search, oldest first. */
+  /** Cards matching the search, oldest first: the shown page only (D-317). */
   cards: DeckCardRow[];
+  /** "Showing 100 of 1,014 cards" while not every match is shown. */
+  shownLabel: string | null;
+  /** How many cards "Show more" adds (0: no button). */
+  more: number;
   search: string;
   canStudy: boolean;
 
@@ -38,6 +44,7 @@ export interface DeckViewModel {
   deleteOpen: boolean;
 
   setSearch: (q: string) => void;
+  showMore: () => void;
   editCard: (cardId: string) => void;
   deleteCard: (cardId: string) => void;
   openRename: () => void;
@@ -50,14 +57,15 @@ export interface DeckViewModel {
 }
 
 function plural(n: number, word: string) {
-  return `${String(n)} ${word}${n === 1 ? '' : 's'}`;
+  return `${formatCount(n)} ${word}${n === 1 ? '' : 's'}`;
 }
 
 export function useDeck(deckId: string): DeckViewModel {
   const { ctx, browserTimeZone, pendingDeletes } = useServices();
   const toasts = useToasts();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
+  const [search, setSearchText] = useState('');
+  const [limit, setLimit] = useState(CARD_PAGE_SIZE);
   const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -73,7 +81,13 @@ export function useDeck(deckId: string): DeckViewModel {
   const data = query.status === 'ready' ? query.data : null;
 
   const actions = {
-    setSearch,
+    setSearch: (q: string) => {
+      setSearchText(q);
+      setLimit(CARD_PAGE_SIZE);
+    },
+    showMore: () => {
+      setLimit((n) => n + CARD_PAGE_SIZE);
+    },
     editCard: (cardId: string) => {
       void navigate(`/cards/${cardId}/edit`);
     },
@@ -142,6 +156,8 @@ export function useDeck(deckId: string): DeckViewModel {
     isReadyMade: false,
     cardCount: 0,
     cards: [],
+    shownLabel: null,
+    more: 0,
     search,
     canStudy: false,
     renameOpen,
@@ -157,6 +173,7 @@ export function useDeck(deckId: string): DeckViewModel {
 
   const { deck, cards, counts, lastStudiedAt, now, timeZone, rolloverHour } = data;
   const visible = cards.filter((c) => !pendingIds.has(c.id));
+  const page = pageOfCards(searchCards(visible, search), limit);
   const dueToday = counts.due + counts.learning;
   const lastStudied = lastStudiedLabel(lastStudiedAt, now, timeZone, rolloverHour);
   const meta = [
@@ -173,10 +190,12 @@ export function useDeck(deckId: string): DeckViewModel {
     meta,
     isReadyMade: deck.source === 'prebuilt',
     cardCount: visible.length,
-    cards: searchCards(visible, search).map((c) => {
+    cards: page.visible.map((c) => {
       const dueLabel = cardDueLabel(c.state, now, timeZone, rolloverHour);
       return { id: c.id, front: c.front, dueLabel, isDue: dueLabel === 'Due today' };
     }),
+    shownLabel: page.shownLabel,
+    more: page.more,
     canStudy: dueToday + counts.new > 0,
   };
 }

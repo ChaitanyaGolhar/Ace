@@ -15,7 +15,9 @@ test('first visit: the first card is shown within 3 taps, with no forms', async 
   ]);
   await expect(offered.getByRole('listitem').first()).toContainText('1,014 cards');
   await expect(offered.getByRole('listitem').last()).toContainText('20 cards');
-  await page.getByRole('button', { name: 'Add & start with Robbins Ch. 3 — Inflammation and Repair' }).click();
+  await page
+    .getByRole('button', { name: 'Add & start with Robbins Ch. 3 — Inflammation and Repair' })
+    .click();
   taps += 1;
 
   await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');

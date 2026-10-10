@@ -6,9 +6,9 @@ import {
   type CardState,
   type Queue,
 } from '@recall/core';
-import type { LocalCard, LocalDeck } from '../db/db';
+import type { LocalCard, LocalDeck, LocalReviewLog } from '../db/db';
 import type { AppContext } from './context';
-import { estimateStudyMinutes } from './estimate';
+import { ESTIMATE_SAMPLE_SIZE, estimateStudyMinutes } from './estimate';
 import { loadQueueInput, type LocalQueueInput } from './queue';
 
 interface Options {
@@ -47,8 +47,21 @@ function liveStates(input: LocalQueueInput): { card: LocalCard; state: CardState
     .map((card) => ({ card, state: input.states.get(card.id) ?? initialState(card) }));
 }
 
+/** The latest non-undone reviews, newest first (enough for the Home estimate). */
+async function latestReviews(ctx: AppContext, n: number): Promise<LocalReviewLog[]> {
+  return ctx.db.reviewLogs
+    .orderBy('reviewedAt')
+    .reverse()
+    .filter((l) => l.voidedAt === null)
+    .limit(n)
+    .toArray();
+}
+
 export async function loadHome(ctx: AppContext, options: Options): Promise<HomeData> {
-  const input = await loadQueueInput(ctx, options.browserTimeZone);
+  const [input, latest] = await Promise.all([
+    loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' }),
+    latestReviews(ctx, ESTIMATE_SAMPLE_SIZE),
+  ]);
   const { now, timeZone, rolloverHour } = input;
   const counts = buildQueue(input).counts;
   const live = liveStates(input);
@@ -68,7 +81,7 @@ export async function loadHome(ctx: AppContext, options: Options): Promise<HomeD
     tomorrow: live.filter(
       ({ state }) => state.state !== 'new' && state.due >= endOfToday && state.due < endOfTomorrow,
     ).length,
-    estimateMinutes: estimateStudyMinutes(input.logs, counts.due + counts.learning + counts.new),
+    estimateMinutes: estimateStudyMinutes(latest, counts.due + counts.learning + counts.new),
   };
 }
 
@@ -90,7 +103,7 @@ export async function loadDeckView(
   deckId: string,
   options: Options,
 ): Promise<DeckViewData | null> {
-  const input = await loadQueueInput(ctx, options.browserTimeZone);
+  const input = await loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' });
   const deck = input.decks.find((d) => d.id === deckId);
   if (!deck || deck.deletedAt !== null) return null;
   const cards = input.cards
@@ -98,12 +111,13 @@ export async function loadDeckView(
     .sort((a, b) => a.createdAt - b.createdAt || (a.id < b.id ? -1 : 1))
     .map((card) => ({ ...card, state: input.states.get(card.id) ?? initialState(card) }));
   const cardIds = new Set(cards.map((c) => c.id));
-  let lastStudiedAt: number | null = null;
-  for (const log of input.logs) {
-    if (log.voidedAt === null && cardIds.has(log.cardId)) {
-      lastStudiedAt = Math.max(lastStudiedAt ?? 0, log.reviewedAt);
-    }
-  }
+  // Newest first through the reviewedAt index; stops at the deck's latest review.
+  const latest = await ctx.db.reviewLogs
+    .orderBy('reviewedAt')
+    .reverse()
+    .filter((l) => l.voidedAt === null && cardIds.has(l.cardId))
+    .first();
+  const lastStudiedAt = latest?.reviewedAt ?? null;
   return {
     deck,
     cards,
@@ -133,7 +147,7 @@ export type NextDue =
 
 /** "When are the next cards due?" for the session-complete screen. */
 export async function loadNextDue(ctx: AppContext, options: Options): Promise<NextDue> {
-  const input = await loadQueueInput(ctx, options.browserTimeZone);
+  const input = await loadQueueInput(ctx, options.browserTimeZone, { logs: 'newLimit' });
   const { now, timeZone, rolloverHour } = input;
   const liveDeckIds = new Set(liveDecks(input).map((d) => d.id));
   const dues = input.cards

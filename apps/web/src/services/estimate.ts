@@ -1,6 +1,7 @@
 import type { ReviewLog } from '@recall/core';
 
-const SAMPLE_SIZE = 200;
+export const ESTIMATE_SAMPLE_SIZE = 200;
+const SAMPLE_SIZE = ESTIMATE_SAMPLE_SIZE;
 const MIN_REVIEWS = 20;
 
 /**

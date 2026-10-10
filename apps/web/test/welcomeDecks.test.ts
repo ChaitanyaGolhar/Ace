@@ -2,6 +2,7 @@ import type { PrebuiltDeck } from '@recall/core';
 import { describe, expect, it } from 'vitest';
 import { formatCount } from '../src/services/format';
 import { orderForWelcome } from '../src/services/readyMade';
+import { CARD_PAGE_SIZE, pageOfCards } from '../src/services/paging';
 
 const deck = (prebuiltId: string, name: string): PrebuiltDeck => ({
   prebuiltId,
@@ -38,4 +39,30 @@ describe('formatCount', () => {
     expect(formatCount(1014)).toBe('1,014');
     expect(formatCount(1234567)).toBe('1,234,567');
   });
+});
+
+describe('pageOfCards (deck page list)', () => {
+  const rows = Array.from({ length: 1000 }, (_, i) => i);
+
+  it('shows the first page, says how many are shown, and how many more the button adds', () => {
+    expect(pageOfCards(rows, 100)).toEqual({
+      visible: rows.slice(0, 100),
+      shownLabel: 'Showing 100 of 1,000 cards',
+      more: 100,
+    });
+    expect(pageOfCards(rows, 950).more).toBe(50);
+  });
+
+  it('needs no label or button when everything fits', () => {
+    expect(pageOfCards(rows.slice(0, 40), 100)).toEqual({
+      visible: rows.slice(0, 40),
+      shownLabel: null,
+      more: 0,
+    });
+    expect(pageOfCards(rows, 1000).more).toBe(0);
+  });
+});
+
+it('pages are 100 cards', () => {
+  expect(CARD_PAGE_SIZE).toBe(100);
 });

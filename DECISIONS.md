@@ -300,3 +300,14 @@ decisions:
 - **What:** the welcome screen lists every bundled deck, each with its own "Add & start", in `WELCOME_ORDER` (`apps/web/src/content/readyMade.ts`): Robbins ch. 3 first, then DBMS Basics. Decks not in that list follow by name. Browse keeps listing every deck by name. Each button's accessible name includes the deck ("Add & start with DBMS Basics"), so screen-reader users can tell them apart; the visible text stays "Add & start". Card counts are grouped ("1,014 cards").
 - **Why:** asked for explicitly. A fixed list keeps the order deliberate, not alphabetical by accident.
 - **Reverse:** edit `WELCOME_ORDER`, or show `WELCOME_DECKS.slice(0, 1)` to go back to a single featured deck.
+
+### D-317 Big decks: the deck page shows 100 cards at a time; screens read only the logs they need
+
+- **What:**
+  - The deck page lists matching cards 100 at a time, with "Showing 100 of 1,014 cards" and a **Show 100 more cards** button. Search still covers every card and starts again from the first page.
+  - The queue, Home, the deck page and the sidebar count no longer read the whole review log. The queue reads the full history of cards reviewed in the last 48 hours: core counts a card as "introduced today" only if its first review is within 48 h, so the queue is identical. Home's time estimate reads the latest 200 reviews through the `reviewedAt` index. The deck page's "last studied" walks that index newest-first. Stats still reads everything.
+  - The review screen's "has my write landed?" check counts voided logs since the session started (undo can only void this session's logs), instead of scanning every log after each rating.
+  - Tests prove every number is the same as with a full read (`apps/web/test/queueReads.test.ts`).
+- **Why:** with 1,000 cards and 5,000 reviews (Chrome, production build), rendering all 1,000 rows took 1.9 s in-app (3.8 s cold load), and Start reviewing → first card took 0.9–2.9 s, mostly waiting on repeated full IndexedDB reads. Afterwards, the deck page renders in about 0.2–0.7 s and the first card appears in about 0.4–0.6 s (timings in the report and `e2e/big-deck.spec.ts`).
+- **Pagination, not virtualisation:** 100 rows render quickly, and plain pages need no dependency. Find-in-page, screen readers and keyboard focus work as normal, and row heights don't have to be fixed.
+- **Reverse:** raise `CARD_PAGE_SIZE` (`apps/web/src/services/paging.ts`); pass `{ logs: 'all' }` to `loadQueueInput`.

@@ -149,6 +149,16 @@ export function DeckScreen() {
             ))}
           </ul>
         )}
+        {vm.shownLabel && (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p data-testid="cards-shown" className="text-meta text-text-secondary lg:text-body">
+              {vm.shownLabel}
+            </p>
+            <button type="button" className="btn-secondary" onClick={vm.showMore}>
+              Show {vm.more} more cards
+            </button>
+          </div>
+        )}
         {vm.isReadyMade && (
           <p className="text-meta text-text-muted lg:text-body">
             Ready-made deck. These are your copies — edit any card freely.

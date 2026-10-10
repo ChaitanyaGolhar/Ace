@@ -20,6 +20,8 @@ export function makeDeck(overrides: Partial<Deck> = {}): Deck {
     name: 'Deck',
     source: 'user',
     prebuiltId: null,
+    catalogSlug: null,
+    catalogVersion: null,
     createdAt: T0,
     updatedAt: T0,
     deletedAt: null,

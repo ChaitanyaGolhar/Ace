@@ -206,14 +206,18 @@ describe('nested values merge and compare by content, not key order', () => {
   });
 });
 
-describe('sync protocol v2', () => {
+describe('sync protocol (v2 since M6, v3 since M7)', () => {
   const body = { deviceId: 'd', decks: [], cards: [], reviewLogs: [], events: [] };
 
-  it('pushes carry protocolVersion 2', () => {
-    expect(PROTOCOL_VERSION).toBe(2);
-    expect(PushRequestSchema.safeParse({ ...body, protocolVersion: 2 }).success).toBe(true);
+  it('pushes carry the current protocol version; older or missing versions are refused', () => {
+    expect(PROTOCOL_VERSION).toBeGreaterThanOrEqual(2);
+    expect(
+      PushRequestSchema.safeParse({ ...body, protocolVersion: PROTOCOL_VERSION }).success,
+    ).toBe(true);
     expect(PushRequestSchema.safeParse(body).success).toBe(false);
-    expect(PushRequestSchema.safeParse({ ...body, protocolVersion: 1 }).success).toBe(false);
+    for (let v = 1; v < PROTOCOL_VERSION; v++) {
+      expect(PushRequestSchema.safeParse({ ...body, protocolVersion: v }).success).toBe(false);
+    }
   });
 });
 

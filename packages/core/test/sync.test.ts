@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  PROTOCOL_VERSION,
   MAX_PUSH_ROWS,
   PullQuerySchema,
   PullResponseSchema,
@@ -11,7 +12,7 @@ import { makeCard, makeDeck, makeLog, uuid } from './helpers/fixtures';
 describe('PushRequestSchema', () => {
   it('accepts a batch of decks, cards and logs', () => {
     const body = {
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'device-a',
       decks: [makeDeck()],
       cards: [makeCard()],
@@ -23,7 +24,7 @@ describe('PushRequestSchema', () => {
   it('allows at most 500 rows in total', () => {
     const logs = (n: number) => Array.from({ length: n }, (_, i) => makeLog({ id: uuid(i + 1) }));
     const at = (n: number) => ({
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'd',
       decks: [makeDeck()],
       cards: [],
@@ -36,7 +37,7 @@ describe('PushRequestSchema', () => {
 
   it('rejects an invalid row anywhere in the batch', () => {
     const body = {
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'd',
       decks: [],
       cards: [makeCard({ front: '' })],
@@ -47,7 +48,7 @@ describe('PushRequestSchema', () => {
 
   it('never accepts a userId from the client (unknown keys are stripped)', () => {
     const parsed = PushRequestSchema.parse({
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'd',
       userId: 'someone-else',
       decks: [{ ...makeDeck(), userId: 'someone-else' }],
@@ -68,18 +69,23 @@ describe('PushResponseSchema', () => {
 
 describe('PullQuerySchema', () => {
   it('defaults to since=0 and limit=500', () => {
-    expect(PullQuerySchema.parse({})).toEqual({ since: '0', limit: 500 });
+    expect(PullQuerySchema.parse({ protocolVersion: '3' })).toEqual({
+      since: '0',
+      limit: 500,
+      protocolVersion: 3,
+    });
   });
 
   it('parses query-string values', () => {
-    expect(PullQuerySchema.parse({ since: '12345', limit: '20' })).toEqual({
+    expect(PullQuerySchema.parse({ since: '12345', limit: '20', protocolVersion: '3' })).toEqual({
       since: '12345',
       limit: 20,
+      protocolVersion: 3,
     });
   });
 
   it('rejects a non-numeric cursor and limits outside 1–500', () => {
-    expect(PullQuerySchema.safeParse({ since: 'abc' }).success).toBe(false);
+    expect(PullQuerySchema.safeParse({ since: 'abc', protocolVersion: '3' }).success).toBe(false);
     expect(PullQuerySchema.safeParse({ since: '-1' }).success).toBe(false);
     expect(PullQuerySchema.safeParse({ limit: '0' }).success).toBe(false);
     expect(PullQuerySchema.safeParse({ limit: '501' }).success).toBe(false);

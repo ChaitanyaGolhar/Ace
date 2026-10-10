@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   EVENT_PROPS,
+  PROTOCOL_VERSION,
   EVENT_TYPES,
   EventSchema,
   PullResponseSchema,
@@ -23,6 +24,11 @@ describe('EventSchema', () => {
         'session_completed',
         'session_started',
         'signed_in',
+        // M7 (BUILD_BRIEF_M6_M8 §7.8)
+        'store_opened',
+        'catalog_deck_viewed',
+        'catalog_deck_added',
+        'deck_update_applied',
       ].sort(),
     );
   });
@@ -72,8 +78,8 @@ describe('EventSchema', () => {
           schema instanceof z.ZodNumber ||
           schema instanceof z.ZodBoolean ||
           schema instanceof z.ZodEnum ||
-          // The only string: a deck slug (pattern-restricted, so no sentence fits).
-          (key === 'prebuiltId' && schema instanceof z.ZodString);
+          // The only strings: deck slugs (pattern-restricted, so no sentence fits).
+          ((key === 'prebuiltId' || key === 'slug') && schema instanceof z.ZodString);
         expect(allowed, `${type}.${key}`).toBe(true);
       }
     }
@@ -84,6 +90,13 @@ describe('EventSchema', () => {
         props: { prebuiltId: 'What does ACID stand for?' },
       }).success,
     ).toBe(false);
+    expect(
+      EventSchema.safeParse({
+        ...base,
+        type: 'catalog_deck_viewed',
+        props: { slug: 'What does ACID stand for?' },
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -92,7 +105,7 @@ describe('events in the sync protocol', () => {
 
   it('push and pull carry events (defaulting to none)', () => {
     const push = PushRequestSchema.parse({
-      protocolVersion: 2,
+      protocolVersion: PROTOCOL_VERSION,
       deviceId: 'd',
       decks: [],
       cards: [],
@@ -101,7 +114,7 @@ describe('events in the sync protocol', () => {
     expect(push.events).toEqual([]);
     expect(
       PushRequestSchema.parse({
-        protocolVersion: 2,
+        protocolVersion: PROTOCOL_VERSION,
         deviceId: 'd',
         decks: [],
         cards: [],
@@ -124,7 +137,7 @@ describe('events in the sync protocol', () => {
     const events = Array.from({ length: 501 }, (_, i) => ({ ...event, id: uuid(i + 10) }));
     expect(
       PushRequestSchema.safeParse({
-        protocolVersion: 2,
+        protocolVersion: PROTOCOL_VERSION,
         deviceId: 'd',
         decks: [],
         cards: [],

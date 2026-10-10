@@ -30,7 +30,7 @@ export function lww<T extends Versioned>(a: T, b: T): T {
   if (aDeleted !== bDeleted) return aDeleted ? a : b;
   if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? a : b;
   if (a.id !== b.id) return a.id > b.id ? a : b;
-  return canonical(a) >= canonical(b) ? a : b;
+  return canonicalJson(a) >= canonicalJson(b) ? a : b;
 }
 
 /**
@@ -44,7 +44,7 @@ export function mergeLog(a: ReviewLog, b: ReviewLog): ReviewLog {
   }
   // The other fields should be identical. If a bug ever made them differ, pick a
   // base deterministically so every device still ends up with the same log.
-  const neutral = (l: ReviewLog) => canonical({ ...l, voidedAt: null, outcome: null });
+  const neutral = (l: ReviewLog) => canonicalJson({ ...l, voidedAt: null, outcome: null });
   const base = neutral(a) <= neutral(b) ? a : b;
   return {
     ...base,
@@ -66,7 +66,8 @@ function earliest(x: number | null, y: number | null): number | null {
  * Postgres `jsonb` and different clients may order object keys differently. Arrays keep
  * their order, which is meaningful (MCQ options, key points).
  */
-function canonical(value: unknown): string {
+/** JSON with object keys sorted at every level (arrays keep their order). */
+export function canonicalJson(value: unknown): string {
   return JSON.stringify(sortKeys(value));
 }
 
@@ -85,5 +86,5 @@ function sortKeys(value: unknown): unknown {
  * Used by the server push, the client pull and backup import alike.
  */
 export function sameRow(a: object, b: object): boolean {
-  return canonical(a) === canonical(b);
+  return canonicalJson(a) === canonicalJson(b);
 }

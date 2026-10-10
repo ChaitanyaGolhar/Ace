@@ -10,3 +10,7 @@ export * from './events';
 export * from './stats';
 export * from './backup';
 export * from './content';
+export * from './hash';
+export * from './deckFile';
+export * from './deckUpdate';
+export * from './catalog';

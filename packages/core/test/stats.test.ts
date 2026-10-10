@@ -25,6 +25,8 @@ const deck: Deck = {
   name: 'D',
   source: 'user',
   prebuiltId: null,
+  catalogSlug: null,
+  catalogVersion: null,
   createdAt: day(-60),
   updatedAt: day(-60),
   deletedAt: null,

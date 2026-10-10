@@ -23,6 +23,11 @@ export const EVENT_PROPS = {
   deck_added_prebuilt: z.strictObject({ prebuiltId: slug }),
   card_created: z.strictObject({}),
   signed_in: z.strictObject({}),
+  // M7 (BUILD_BRIEF_M6_M8 §7.8): the store.
+  store_opened: z.strictObject({}),
+  catalog_deck_viewed: z.strictObject({ slug }),
+  catalog_deck_added: z.strictObject({ slug, version: z.int().min(1) }),
+  deck_update_applied: z.strictObject({ slug, from: z.int().min(1), to: z.int().min(1) }),
 } as const;
 
 export type EventType = keyof typeof EVENT_PROPS;
@@ -52,6 +57,22 @@ export const EventSchema = z.discriminatedUnion('type', [
   }),
   z.object({ ...base, type: z.literal('card_created'), props: EVENT_PROPS.card_created }),
   z.object({ ...base, type: z.literal('signed_in'), props: EVENT_PROPS.signed_in }),
+  z.object({ ...base, type: z.literal('store_opened'), props: EVENT_PROPS.store_opened }),
+  z.object({
+    ...base,
+    type: z.literal('catalog_deck_viewed'),
+    props: EVENT_PROPS.catalog_deck_viewed,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('catalog_deck_added'),
+    props: EVENT_PROPS.catalog_deck_added,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('deck_update_applied'),
+    props: EVENT_PROPS.deck_update_applied,
+  }),
 ]);
 
 export type AppEvent = z.infer<typeof EventSchema>;

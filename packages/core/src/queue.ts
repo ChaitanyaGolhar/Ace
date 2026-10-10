@@ -25,6 +25,8 @@ export interface QueueInput {
   newPerDay: number;
   /** Optional filter: only this deck's cards. */
   deckId?: UUID;
+  /** Optional filter (M7, §7.7): only cards of this syllabus unit, e.g. for in-sem revision. */
+  unit?: number;
 }
 
 export interface Queue {
@@ -63,7 +65,8 @@ export function buildQueue(input: QueueInput): Queue {
     (card) =>
       card.deletedAt === null &&
       liveDeckIds.has(card.deckId) &&
-      (input.deckId === undefined || card.deckId === input.deckId),
+      (input.deckId === undefined || card.deckId === input.deckId) &&
+      (input.unit === undefined || card.unit === input.unit),
   );
   const stateOf = (card: Card) => input.states.get(card.id) ?? initialState(card);
 

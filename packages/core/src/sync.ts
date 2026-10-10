@@ -1,16 +1,20 @@
 import { z } from 'zod';
 import { EventSchema } from './events';
-import { CardSchema, DeckSchema, ReviewLogSchema, Uuid } from './schemas';
+import { CardIdSchema, CardSchema, DeckSchema, ReviewLogSchema, Uuid } from './schemas';
 
 // Wire format of the sync protocol (brief §8), shared by the web client and the API so
 // both sides validate exactly the same thing.
 
 export const MAX_PUSH_ROWS = 500;
 /**
- * Sync protocol version (M6, §6.6). Pushes from clients that predate typed cards would
- * overwrite `type`/`content` through last-write-wins, so the server rejects them (426).
+ * Sync protocol version. The server answers 426 to clients that don't send it.
+ * - 2 (M6, §6.6): pushes from clients that predate typed cards would overwrite
+ *   `type`/`content` through last-write-wins.
+ * - 3 (M7): catalog decks, catalog card ids (v5) and new event types. An M6 app can't
+ *   parse those rows, and would push catalog decks back without their catalog fields, so
+ *   pulls carry the version too.
  */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 export const MAX_PULL_LIMIT = 500;
 
 export const PushRequestSchema = z
@@ -33,7 +37,7 @@ export const PushRequestSchema = z
 export const PushResponseSchema = z.object({
   accepted: z.object({
     decks: z.array(Uuid),
-    cards: z.array(Uuid),
+    cards: z.array(CardIdSchema),
     reviewLogs: z.array(Uuid),
     events: z.array(Uuid).default([]),
   }),
@@ -46,6 +50,7 @@ export const PullQuerySchema = z.object({
     .regex(/^\d{1,19}$/, 'since must be a non-negative integer')
     .default('0'),
   limit: z.coerce.number().int().min(1).max(MAX_PULL_LIMIT).default(MAX_PULL_LIMIT),
+  protocolVersion: z.coerce.number().pipe(z.literal(PROTOCOL_VERSION)),
 });
 
 export const PullResponseSchema = z.object({

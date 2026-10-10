@@ -18,15 +18,30 @@ export const MAX_DECK_NAME_LENGTH = 200;
 export const MAX_CARD_TEXT_LENGTH = 20_000;
 
 export const Uuid = z.uuid({ version: 'v7' });
+/**
+ * A card id: a v7 UUID, or (M7, §7.5) the v5 UUID of a catalog card, derived from its
+ * deck and key (`catalogCardId`).
+ */
+export const CardIdSchema = z.union([Uuid, z.uuid({ version: 'v5' })]);
 /** Epoch milliseconds. `z.int()` also restricts to safe integers. */
 const EpochMs = z.int().nonnegative();
+
+/** A catalog deck's slug (M7, §7.2): lower-case a–z, 0–9 and single dashes. */
+export const SlugSchema = z
+  .string()
+  .min(1)
+  .max(100)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'must be lower-case letters, digits and dashes');
 
 export const DeckSchema = z
   .object({
     id: Uuid,
     name: z.string().min(1).max(MAX_DECK_NAME_LENGTH),
-    source: z.enum(['user', 'prebuilt']),
+    source: z.enum(['user', 'prebuilt', 'catalog']),
     prebuiltId: z.string().min(1).nullable(),
+    /** M7 (§7.5): the catalog deck this copy came from, and the version it is on. */
+    catalogSlug: SlugSchema.nullable().default(null),
+    catalogVersion: z.int().min(1).nullable().default(null),
     createdAt: EpochMs,
     updatedAt: EpochMs,
     deletedAt: EpochMs.nullable(),
@@ -34,7 +49,17 @@ export const DeckSchema = z
   .refine((deck) => (deck.source === 'prebuilt') === (deck.prebuiltId !== null), {
     message: 'prebuiltId must be set exactly when source is "prebuilt"',
     path: ['prebuiltId'],
-  });
+  })
+  .refine(
+    (deck) =>
+      deck.source === 'catalog'
+        ? deck.catalogSlug !== null && deck.catalogVersion !== null
+        : deck.catalogSlug === null && deck.catalogVersion === null,
+    {
+      message: 'catalogSlug and catalogVersion must be set exactly when source is "catalog"',
+      path: ['catalogSlug'],
+    },
+  );
 
 /**
  * A card (M6, BUILD_BRIEF_M6_M8 §6.2). `content` is the source of truth; `front` and
@@ -43,7 +68,7 @@ export const DeckSchema = z
  */
 export const CardSchema = z
   .object({
-    id: Uuid,
+    id: CardIdSchema,
     deckId: Uuid,
     type: z.enum(CARD_TYPES),
     content: CardContentSchema,
@@ -88,7 +113,7 @@ export const RatingSchema = z.literal([1, 2, 3, 4]);
 export const ReviewLogSchema = z
   .object({
     id: Uuid,
-    cardId: Uuid,
+    cardId: CardIdSchema,
     rating: RatingSchema,
     reviewedAt: EpochMs,
     durationMs: z.int().nonnegative(),

@@ -2,6 +2,7 @@ import { CardSchema, DeckSchema, lww, mergeLog, replay, ReviewLogSchema } from '
 import { z } from 'zod';
 import { withoutSyncFields, type LocalCard, type LocalDeck, type LocalReviewLog } from '../db/db';
 import type { AppContext } from './context';
+import { sameRow } from './rows';
 
 // Export/import backup (brief §10 screen 8, M3). Import merges with exactly the rules
 // sync uses: decks/cards by `lww` (tombstones are sticky), logs by `mergeLog` (undos
@@ -35,13 +36,6 @@ export async function exportBackup(ctx: AppContext): Promise<Backup> {
     cards: (await db.cards.toArray()).map(withoutSyncFields),
     reviewLogs: (await db.reviewLogs.toArray()).map(withoutSyncFields),
   }));
-}
-
-/** Key-order-independent comparison of two plain rows. */
-function sameRow(a: object, b: object): boolean {
-  const canonical = (row: object) =>
-    JSON.stringify(Object.entries(row).sort(([x], [y]) => (x < y ? -1 : 1)));
-  return canonical(a) === canonical(b);
 }
 
 export interface ImportResult {

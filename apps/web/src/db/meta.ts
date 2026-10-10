@@ -21,6 +21,12 @@ export interface Session {
 
 export type StoragePersistence = 'granted' | 'denied' | 'unsupported';
 
+/** Cached account state, so the app knows offline whether it is signed in (§9.1). */
+export interface AuthState {
+  signedIn: boolean;
+  email: string | null;
+}
+
 /** Every key stored in the `meta` table, with the type of its value. */
 export interface MetaMap {
   deviceId: string;
@@ -28,6 +34,9 @@ export interface MetaMap {
   storagePersistence: StoragePersistence;
   settings: Settings;
   session: Session | null;
+  auth: AuthState;
+  /** Last serverSeq pulled (a bigint, as a decimal string). */
+  syncCursor: string;
 }
 
 export type MetaKey = keyof MetaMap;

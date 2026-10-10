@@ -204,6 +204,8 @@ An old cached client knows nothing about `type`/`content`. If it pushes a card, 
 
 ## 7.2 Deck file format `ace-deck@2`
 
+_Amended 2026-10-11, before M7: `subjectCode` became `subjectCodes` (one per branch), `pattern` is the year only, and §7.4 gained warnings._
+
 This exact format is also what ChatGPT generates, so validate it strictly and give helpful error messages (card key + field + problem).
 
 ```jsonc
@@ -215,12 +217,12 @@ This exact format is also what ChatGPT generates, so validate it strictly and gi
   "description": "Unit-wise revision for SPPU TE …",
   "catalog": {
     "university": "SPPU",
-    "pattern": "2019", // syllabus pattern as printed on the syllabus
+    "pattern": "2024", // syllabus pattern: the year only, exactly 4 digits
     "year": "TE", // FE | SE | TE | BE
     "semester": 5, // 1–8
     "branches": ["CSE", "CSE-DS", "AIDS"],
     "subject": "Database Management Systems",
-    "subjectCode": "310241", // or null
+    "subjectCodes": { "CSE": "PCC301COM", "CSE-DS": "PCC301CDS", "AIDS": null }, // one entry per branch; code or null
     "units": [{ "number": 1, "title": "Introduction to DBMS" }],
   },
   "price": 0, // in paise; 0 = free
@@ -277,6 +279,8 @@ Rules:
 
 - `key` is unique within the deck and **never reused** for a different question across versions. That's what lets updates work. Pattern: `u<unit>-<3 digits>`.
 - Every card's `unit` exists in `catalog.units`.
+- `catalog.subjectCodes` maps each branch to its subject code or `null`. Its keys must be **exactly** the entries of `catalog.branches`: a missing branch or an extra key is an error naming it.
+- `catalog.pattern` is the syllabus year only, exactly 4 digits (`"2024"`). Anything else (`"2024 Pattern"`, `"2019-20"`, `"Rev-2019"`) is rejected with a message giving the expected form.
 - Card fields follow the M6 content rules exactly. Missing optional fields default to null or [].
 - Unknown top-level or card fields: reject, with the field name (catches typos in generated files).
 
@@ -305,9 +309,12 @@ There are **no write endpoints for the catalog.** Publishing happens only throug
 Warnings (they don't block publishing):
 
 - near-duplicate questions (same normalised text);
-- mcq options where the correct option is much longer than the others;
+- **deck-level:** the correct option is the longest option (strictly; ties don't count) in **more than 40%** of the deck's MCQs (it replaces the old per-card "correct option much longer" warning);
 - long answers with fewer than 3 key points;
-- units with no long-answer cards.
+- units with no long-answer cards;
+- long-answer question text containing a marks note such as `[6 marks]` (any number, any case; marks belong in `marks`);
+- key points starting with "Gives", "Uses", "Notes", "Mentions" or "Explains that" (any case): they describe an answer instead of stating the point;
+- a basic card and a cloze card testing the same term: the cloze's blank answer, normalised as by the cloze matcher, equals a basic card's back, or appears as whole words in a basic card's front.
 
 `pnpm deck publish <file> [--unlisted]`:
 
@@ -355,6 +362,7 @@ Replaces "Browse ready-made decks". No mock exists, so put a UI plan in the repo
 **Deck detail:**
 
 - description, syllabus info (university, pattern, year, semester, subject code), unit list with card counts;
+  - subject code: if the student filtered the store by a branch, the code for that branch; otherwise every branch's code ("CSE: PCC301COM · CSE-DS: PCC301CDS"); branches with a `null` code are left out;
 - types breakdown, "Last checked {date}", author;
 - **sample cards rendered with the real review components** in preview mode: tappable, but nothing is recorded;
 - an Add button (free) or the M8 purchase section (paid).

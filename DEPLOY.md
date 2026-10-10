@@ -1,5 +1,17 @@
 # Deploying Recall for test users
 
+**Live since 2026-10-10:**
+
+- **App:** https://ace.orizenn.com, on Vercel (project `ace`). It redeploys on every push to `main`.
+- **API:** https://api.ace.orizenn.com, on Render (service `recall-api`; also `recall-api-4oyb.onrender.com`).
+- **Database:** Neon project `ace-recall`, in Singapore.
+- **Email:** sent from `Recall <login@contact.orizenn.com>`, using the Resend domain `contact.orizenn.com` that was already verified.
+- **DNS:** CNAMEs `ace` and `api.ace` in Cloudflare, DNS only.
+
+Render was created from the public repo URL without a GitHub link, so it doesn't redeploy on push. Use **Manual Deploy** in the Render dashboard, or connect GitHub there.
+
+The rest of this file is the original step-by-step guide.
+
 | Part           | Where         | Address                       |
 | -------------- | ------------- | ----------------------------- |
 | Web app (PWA)  | Vercel        | `https://ace.orizenn.com`     |
@@ -60,7 +72,7 @@ Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml)
 4. **Settings → Custom Domains → Add `api.ace.orizenn.com`.** Render shows a CNAME target (`recall-api.onrender.com`). Add that CNAME at your registrar and wait until Render shows it verified, with a certificate.
 5. Check: `https://api.ace.orizenn.com/health` → `{"ok":true}`.
 
-If the build fails at `corepack enable`, set the Build Command to `npx --yes pnpm@12.6.0 install --frozen-lockfile` instead.
+The Build Command is `npx --yes pnpm@12.6.0 install --frozen-lockfile`: Render's build image has a read-only `/usr/bin`, so `corepack enable` fails there.
 
 ## 4. Vercel (web app)
 

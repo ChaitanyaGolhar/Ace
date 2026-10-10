@@ -7,7 +7,8 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    # Render's build image has a read-only /usr/bin, so `corepack enable` fails there.
+    buildCommand: npx --yes pnpm@12.6.0 install --frozen-lockfile
     # Apply pending migrations, then start. Migrations are idempotent (prisma migrate deploy).
     startCommand: cd apps/api && ./node_modules/.bin/prisma migrate deploy && node --import tsx src/server.ts
     healthCheckPath: /health

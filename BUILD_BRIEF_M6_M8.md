@@ -314,7 +314,7 @@ Warnings (they don't block publishing):
 - units with no long-answer cards;
 - long-answer question text containing a marks note such as `[6 marks]` (any number, any case; marks belong in `marks`);
 - key points starting with "Gives", "Uses", "Notes", "Mentions" or "Explains that" (any case): they describe an answer instead of stating the point;
-- a basic card and a cloze card testing the same term: the cloze's blank answer, normalised as by the cloze matcher, equals a basic card's back, or appears as whole words in a basic card's front.
+- a basic card and a cloze card testing the same term: a basic card's back, normalised as by the cloze matcher, equals the cloze's primary answer or any of its accepted spellings (normalised the same way). Only the back is compared; a basic card whose front merely contains the term doesn't warn.
 
 `pnpm deck publish <file> [--unlisted]`:
 
@@ -382,6 +382,7 @@ Existing users' copies of the old decks are untouched.
   - a valid fixture passes;
   - each rule has a failing fixture with a readable error;
   - unknown fields are rejected.
+  - each §7.4 warning has a fixture that triggers it and one that doesn't; for the same-term warning, the PCA case (basic back "Principal Component Analysis." and a cloze whose answer is "PCA" with "Principal Component Analysis" accepted) warns, and a basic card whose front merely contains "label" next to a cloze answering "label" does not.
 - [ ] CLI tests (against the test DB):
   - publish v1, then a v2 with changes, prints the correct diff;
   - version-skip and duplicate-version are refused;

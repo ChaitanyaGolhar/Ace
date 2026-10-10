@@ -40,6 +40,15 @@ export class PendingActions {
     return this.pending.has(key);
   }
 
+  /** Runs one pending action now (e.g. its toast was dismissed). */
+  async flush(key: string): Promise<void> {
+    const entry = this.pending.get(key);
+    if (!entry) return;
+    this.clear(key);
+    this.notify();
+    await entry.action().catch(this.onError);
+  }
+
   /** Runs every pending action now. */
   async flushAll(): Promise<void> {
     const actions = [...this.pending.values()].map((p) => p.action);

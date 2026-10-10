@@ -46,6 +46,22 @@ describe('PendingActions', () => {
     expect(a).toHaveBeenCalledTimes(1);
   });
 
+  it('flush runs one pending action now (toast dismissed) and leaves the others', async () => {
+    const pending = new PendingActions(5000);
+    const a = vi.fn(() => Promise.resolve());
+    const b = vi.fn(() => Promise.resolve());
+    pending.schedule('a', a);
+    pending.schedule('b', b);
+    await pending.flush('a');
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).not.toHaveBeenCalled();
+    expect(pending.has('b')).toBe(true);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+    await pending.flush('missing');
+  });
+
   it('notifies subscribers with the pending keys', () => {
     const pending = new PendingActions(5000);
     const seen: string[][] = [];

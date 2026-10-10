@@ -32,7 +32,10 @@ export interface CardEditorViewModel {
   decks: { id: string; name: string }[];
   deckId: string | null;
   draft: Draft;
-  /** Field → message, for fields the user has touched (or all, after a save attempt). */
+  /**
+   * Field → message, for fields the user edited and then left (or all, after a save
+   * attempt). A group's error (e.g. duplicate options) shows once any of its items has.
+   */
   errors: Record<string, string>;
   /** The whole card is valid: Save is enabled. */
   valid: boolean;
@@ -53,7 +56,7 @@ export interface CardEditorViewModel {
   confirmTypeChange: () => void;
   cancelTypeChange: () => void;
   update: (patch: Partial<Draft>) => void;
-  /** Marks a field as touched (on blur), so its error shows. */
+  /** On blur: an edited field's error shows from now on. Leaving an untouched field shows nothing. */
   touch: (field: string) => void;
   addOption: () => void;
   removeOption: (index: number) => void;
@@ -91,6 +94,8 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
   const [deckId, setDeckId] = useState<string | null>(target.mode === 'new' ? target.deckId : null);
   const [original, setOriginal] = useState<Draft>(emptyDraft());
   const [draft, setDraft] = useState<Draft>(emptyDraft());
+  // Fields typed in, and fields whose errors are shown (edited, then left).
+  const [edited, setEdited] = useState<Set<string>>(new Set());
   const [touched, setTouched] = useState<Set<string>>(new Set());
   const [showAll, setShowAll] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -142,7 +147,10 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
 
   const validation = validateDraft(draft);
   const errors = Object.fromEntries(
-    Object.entries(validation.errors).filter(([field]) => showAll || touched.has(field)),
+    Object.entries(validation.errors).filter(
+      ([field]) =>
+        showAll || touched.has(field) || [...touched].some((t) => t.startsWith(`${field}.`)),
+    ),
   );
   const dirty =
     target.mode === 'new' ? !same(draft, emptyDraft(draft.type)) : !same(draft, original);
@@ -172,7 +180,7 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
 
   const update = (patch: Partial<Draft>) => {
     setDraft((d) => ({ ...d, ...patch }));
-    setTouched((t) => new Set([...t, ...fieldsOf(patch)]));
+    setEdited((e) => new Set([...e, ...fieldsOf(patch)]));
     setFormError(null);
   };
 
@@ -202,6 +210,7 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
             }
             // Ready for the next card of the same type.
             setDraft(emptyDraft(draft.type));
+            setEdited(new Set());
             setTouched(new Set());
             setShowAll(false);
             setAdded((a) => ({ deckId, count: a.deckId === deckId ? a.count + 1 : 1 }));
@@ -217,6 +226,7 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
 
   const applyType = (to: CardType) => {
     setDraft((d) => changeType(d, to));
+    setEdited(new Set());
     setTouched(new Set());
     setShowAll(false);
     setTypeChange(null);
@@ -277,7 +287,7 @@ export function useCardEditor(target: CardEditorTarget): CardEditorViewModel {
     },
     update,
     touch: (field) => {
-      setTouched((t) => new Set([...t, field]));
+      if (edited.has(field)) setTouched((t) => new Set([...t, field]));
     },
     addOption: () => {
       if (draft.options.length < 6) update({ options: [...draft.options, ''] });

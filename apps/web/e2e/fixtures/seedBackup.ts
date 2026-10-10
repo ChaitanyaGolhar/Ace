@@ -3,6 +3,7 @@ import {
   applyReview,
   initialState,
   type Card,
+  type CardContent,
   type Deck,
   type ReviewLog,
 } from '@recall/core';
@@ -32,6 +33,48 @@ function uuid7(at: number): string {
   const tail = idCounter.toString(16).padStart(12, '0');
   return `${ms.slice(0, 8)}-${ms.slice(8, 12)}-7000-8000-${tail}`;
 }
+
+/** One card of each M6 type (BUILD_BRIEF_M6_M8 §6.1), in the order they're studied. */
+export const TYPED_CARDS: CardContent[] = [
+  {
+    type: 'mcq',
+    question: 'Which normal form removes partial dependencies on a composite key?',
+    options: [
+      { id: 'a', text: 'First normal form (1NF)' },
+      { id: 'b', text: 'Second normal form (2NF)' },
+      { id: 'c', text: 'Third normal form (3NF)' },
+      { id: 'd', text: 'Boyce–Codd normal form (BCNF)' },
+    ],
+    correct: 'b',
+    explanation: '2NF requires every non-key attribute to depend on the whole candidate key.',
+  },
+  {
+    type: 'cloze',
+    text: 'In SQL, the {{GROUP BY}} clause collects rows that share a value so aggregates can be computed per group.',
+    accepted: ['group-by'],
+    hint: 'Two words',
+    extra: 'HAVING then filters the groups, as WHERE filters rows.',
+  },
+  {
+    type: 'short',
+    question: 'What is a view in SQL?',
+    answer: 'A virtual table defined by a stored query; it holds no data of its own.',
+    explanation: 'Querying a view runs its defining query against the base tables.',
+  },
+  {
+    type: 'long',
+    question: 'Explain the ACID properties of a transaction.',
+    marks: 6,
+    keyPoints: [
+      'Atomicity: all of the transaction happens, or none of it',
+      'Consistency: it takes the database from one valid state to another',
+      'Isolation: concurrent transactions don’t see each other’s partial work',
+      'Durability: once committed, changes survive crashes',
+    ],
+    modelAnswer:
+      'A transaction is a unit of work. Atomicity is ensured by undo logging, durability by the write-ahead log and isolation by concurrency control such as locking.',
+  },
+];
 
 const DECKS: { name: string; cards: [string, string][] }[] = [
   {
@@ -92,7 +135,7 @@ const DECKS: { name: string; cards: [string, string][] }[] = [
 
 export interface SeedBackup {
   format: 'recall-backup';
-  version: 1;
+  version: 2;
   exportedAt: number;
   decks: Deck[];
   cards: Card[];
@@ -158,5 +201,29 @@ export function buildSeedBackup(now: number, studiedFraction = 0.75): SeedBackup
       }
     });
   }
-  return { format: 'recall-backup', version: 1, exportedAt: now, decks, cards, reviewLogs };
+  // M6: one never-studied card of each new type, for the review screens.
+  const typedDeck: Deck = {
+    id: uuid7(start),
+    name: 'Question types',
+    source: 'user',
+    prebuiltId: null,
+    createdAt: start,
+    updatedAt: start,
+    deletedAt: null,
+  };
+  decks.push(typedDeck);
+  TYPED_CARDS.forEach((content, i) => {
+    cards.push({
+      id: uuid7(start + i),
+      deckId: typedDeck.id,
+      ...cardFields(content),
+      unit: null,
+      sourceKey: null,
+      sourceHash: null,
+      createdAt: start + i,
+      updatedAt: start + i,
+      deletedAt: null,
+    });
+  });
+  return { format: 'recall-backup', version: 2, exportedAt: now, decks, cards, reviewLogs };
 }

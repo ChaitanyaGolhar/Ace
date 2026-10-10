@@ -95,12 +95,14 @@ test('keyboard-only review: Space starts and shows the answer, 1–4 rate, Z und
 
   await page.keyboard.press('z');
   await expect(front).toHaveText('K1 front');
-  await expect(page.getByTestId('card-back')).toHaveCount(0);
+  // M6 (§6.3): undo brings the card back as it was answered, ready to be rated again.
+  await expect(page.getByTestId('card-back')).toHaveText('K1 back');
   const logs = await readStore<StoredLog>(page, 'reviewLogs');
   expect(logs).toHaveLength(1);
   expect(logs[0]?.voidedAt).not.toBeNull();
+  await page.keyboard.press('4');
 
-  for (const expected of ['K1', 'K2', 'K3']) {
+  for (const expected of ['K2', 'K3']) {
     await expect(front).toHaveText(`${expected} front`);
     await page.keyboard.press('Space');
     await expect(page.getByTestId('card-back')).toBeVisible();
@@ -144,9 +146,10 @@ test('undo restores the previous due date exactly, also from the completion scre
   await page.getByTestId('undo-pill').click();
   await expect(front).toHaveText('A');
   await expect.poll(stateOf(aId)).toEqual(beforeA);
+  // M6 (§6.3): A is back as it was answered, so it can be rated again straight away.
+  await expect(page.getByTestId('card-back')).toBeVisible();
 
   // Finish, then undo the last rating from the completion screen.
-  await page.getByRole('button', { name: 'Show answer' }).click();
   await page.getByRole('button', { name: /^Easy · / }).click();
   await expect(front).toHaveText('B');
   const beforeB = await stateOf(bId)();
@@ -156,6 +159,7 @@ test('undo restores the previous due date exactly, also from the completion scre
   await page.getByRole('button', { name: 'Undo last rating' }).click();
   await expect(front).toHaveText('B');
   await expect.poll(stateOf(bId)).toEqual(beforeB);
+  await expect(page.getByTestId('card-back')).toHaveText('b');
 });
 
 test('deleting a card shows an undo toast; Undo keeps it, letting it time out deletes it', async ({

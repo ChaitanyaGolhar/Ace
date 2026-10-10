@@ -44,9 +44,9 @@
   --accent-emphasis: #2e42b8;
   --on-accent: #ffffff;
   --link: #3f55d6;
-  --success: #2f8f62;
+  --success: #237a52; /* ≥ 4.5:1 as text on bg, surface and surface-raised (D-325) */
   --warning: #b7791f;
-  --error: #c94a4a;
+  --error: #b23c3c; /* ≥ 4.5:1 as text on every surface (D-325) */
   /* The toast is dark in both themes. */
   --toast-bg: #16181c;
   --toast-text: #f3f4f6;

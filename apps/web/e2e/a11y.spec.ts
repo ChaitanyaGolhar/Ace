@@ -52,6 +52,78 @@ for (const theme of ['dark', 'light'] as const) {
       await expectNoViolations(page);
     });
 
+    test('Review: every question type (M6), before and after answering', async ({ page }) => {
+      await page.goto('/decks');
+      await page
+        .getByRole('list', { name: 'Decks' })
+        .getByRole('link', { name: /Question types/ })
+        .click();
+      await page.getByRole('link', { name: 'Study deck' }).click();
+      const type = page.getByTestId('card-type');
+      const rate = (label: string) =>
+        page
+          .getByRole('group', { name: 'Rate your recall' })
+          .getByRole('button', { name: new RegExp(`^${label}`) })
+          .click();
+
+      await expect(type).toHaveText('Multiple choice');
+      await expectNoViolations(page);
+      await page.getByRole('radio', { name: /^B\./ }).click();
+      await expectNoViolations(page); // an option chosen
+      await page.getByRole('button', { name: 'Check' }).click();
+      await expectNoViolations(page); // ✓ / ✗ shown
+      await rate('Good');
+
+      await expect(type).toHaveText('Fill in the blank');
+      await page.getByRole('button', { name: 'Show hint' }).click();
+      await expectNoViolations(page);
+      await page.getByLabel('Your answer').fill('group by');
+      await page.getByRole('button', { name: 'Check' }).click();
+      await expect(page.getByTestId('cloze-result')).toContainText('Correct');
+      await expectNoViolations(page);
+      await rate('Good');
+
+      await expect(type).toHaveText('Short answer');
+      await page.getByRole('button', { name: 'Type your answer (optional)' }).click();
+      await expectNoViolations(page);
+      await page.getByRole('button', { name: 'Show answer' }).click();
+      await expectNoViolations(page);
+      await rate('Good');
+
+      await expect(type).toHaveText('Long answer');
+      await expectNoViolations(page);
+      await page.getByRole('button', { name: 'Show key points' }).click();
+      await page.getByTestId('key-points').getByRole('checkbox').first().check();
+      await page.getByText('Model answer').click();
+      await expectNoViolations(page); // checklist, suggestion, model answer open
+    });
+
+    test('Card editor: every type (M6)', async ({ page }) => {
+      await page.goto('/decks');
+      await page
+        .getByRole('list', { name: 'Decks' })
+        .getByRole('link', { name: /Question types/ })
+        .click();
+      await page.getByRole('link', { name: 'Add card' }).click();
+      for (const label of [
+        'Basic',
+        'Multiple choice',
+        'Fill in the blank',
+        'Short answer',
+        'Long answer',
+      ]) {
+        await page
+          .getByRole('radiogroup', { name: 'Card type' })
+          .getByRole('radio', { name: label })
+          .click();
+        await expect(page.getByRole('radio', { name: label })).toHaveAttribute(
+          'aria-checked',
+          'true',
+        );
+        await expectNoViolations(page);
+      }
+    });
+
     test('Settings', async ({ page }) => {
       await page.goto('/settings');
       await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();

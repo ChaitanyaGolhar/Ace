@@ -53,10 +53,14 @@ export function CardEditorScreen() {
           vm.saveAndAddAnother();
         }}
       >
-        <label className="flex flex-col gap-2 text-body font-medium text-text-secondary">
-          Deck
+        {/* An explicit label: wrapping the select would put every deck name in its label. */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="deck-select" className="text-body font-medium text-text-secondary">
+            Deck
+          </label>
           <span className="relative">
             <select
+              id="deck-select"
               className="field appearance-none pr-12 font-normal"
               value={vm.deckId ?? ''}
               disabled={!isNew}
@@ -76,7 +80,7 @@ export function CardEditorScreen() {
               className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
             />
           </span>
-        </label>
+        </div>
 
         <TypePicker vm={vm} />
 
@@ -167,10 +171,14 @@ export function CardEditorScreen() {
 function TypePicker({ vm }: { vm: CardEditorViewModel }) {
   return (
     <>
-      <label className="flex flex-col gap-2 text-body font-medium text-text-secondary lg:hidden">
-        Card type
+      {/* An explicit label: wrapping the select would put every option's text in its name. */}
+      <div className="flex flex-col gap-2 lg:hidden">
+        <label htmlFor="card-type-select" className="text-body font-medium text-text-secondary">
+          Card type
+        </label>
         <span className="relative">
           <select
+            id="card-type-select"
             className="field appearance-none pr-12 font-normal"
             value={vm.draft.type}
             onChange={(e) => {
@@ -188,7 +196,7 @@ function TypePicker({ vm }: { vm: CardEditorViewModel }) {
             className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
           />
         </span>
-      </label>
+      </div>
       <div className="hidden flex-col gap-2 lg:flex">
         <span id="card-type-label" className="text-body font-medium text-text-secondary">
           Card type
@@ -462,7 +470,7 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
         return (
           <div key={i} className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-meta text-text-secondary">
+              <label className="flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center">
                 <input
                   type="radio"
                   name="correct"
@@ -473,9 +481,6 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
                     vm.update({ correct: i });
                   }}
                 />
-                <span aria-hidden="true" className="w-14">
-                  {d.correct === i ? 'Correct' : ''}
-                </span>
               </label>
               <label className="sr-only" htmlFor={`option-${String(i)}`}>
                 Option {letter}
@@ -511,6 +516,12 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
                 <X aria-hidden="true" className="size-5" />
               </button>
             </div>
+            {d.correct === i && (
+              <p className="ml-13 inline-flex items-center gap-1 text-meta font-medium text-success">
+                <Check aria-hidden="true" className="size-4" />
+                Correct answer
+              </p>
+            )}
             <FieldError id={`${field}-error`} message={error} />
           </div>
         );

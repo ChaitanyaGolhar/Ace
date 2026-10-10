@@ -1,10 +1,4 @@
-import {
-  CardContentSchema,
-  OptionIdSchema,
-  type CardContent,
-  type CardType,
-  type OptionId,
-} from '@recall/core';
+import { CardContentSchema, OptionIdSchema, type CardContent, type CardType } from '@recall/core';
 import { normalizeContent } from '../../services/cards';
 
 // The card editor's form state (BUILD_BRIEF_M6_M8 §6.5). One flat draft covers every
@@ -158,7 +152,7 @@ export function validateDraft(d: Draft): {
   const parsed = CardContentSchema.safeParse(normalizeContent(draftToContent(d)));
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
-      const key = fieldKey(d.type, issue.path);
+      const key = fieldKey(issue.path);
       errors[key] ??= messageFor(d, key, issue);
     }
   }
@@ -166,7 +160,7 @@ export function validateDraft(d: Draft): {
   return { content: valid ? parsed.data : null, errors };
 }
 
-function fieldKey(type: CardType, path: readonly PropertyKey[]): string {
+function fieldKey(path: readonly PropertyKey[]): string {
   const [head, index] = path;
   switch (head) {
     case 'front':
@@ -174,9 +168,8 @@ function fieldKey(type: CardType, path: readonly PropertyKey[]): string {
     case 'text':
       return 'prompt';
     case 'back':
-      return 'answer';
     case 'answer':
-      return type === 'short' ? 'answer' : 'answer';
+      return 'answer';
     case 'options':
       return typeof index === 'number' ? `options.${String(index)}` : 'options';
     case 'keyPoints':
@@ -286,5 +279,3 @@ export function changeType(d: Draft, to: CardType): Draft {
   }
   return next;
 }
-
-export type { OptionId };

@@ -48,7 +48,11 @@ describe('basic and short answer', () => {
   it('basic: question first, then all four ratings, no outcome', () => {
     expect(ratingStage(basic, initialAnswer(basic))).toEqual({ buttons: 'none' });
     const s = run(basic, { kind: 'reveal' });
-    expect(ratingStage(basic, s)).toEqual({ buttons: 'ratings', ratings: [1, 2, 3, 4], suggested: null });
+    expect(ratingStage(basic, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [1, 2, 3, 4],
+      suggested: null,
+    });
     expect(outcomeOf(basic, s)).toBeNull();
   });
 
@@ -56,7 +60,11 @@ describe('basic and short answer', () => {
     let s = run(short, { kind: 'toggleTyping' }, { kind: 'type', text: 'my answer' });
     expect(s).toMatchObject({ typing: true, typed: 'my answer', revealed: false });
     s = answerReducer(short, s, { kind: 'reveal' });
-    expect(ratingStage(short, s)).toEqual({ buttons: 'ratings', ratings: [1, 2, 3, 4], suggested: null });
+    expect(ratingStage(short, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [1, 2, 3, 4],
+      suggested: null,
+    });
     expect(outcomeOf(short, s)).toBeNull();
   });
 });
@@ -76,14 +84,23 @@ describe('multiple choice', () => {
 
   it('right → Hard, Good, Easy only (no Again)', () => {
     const s = run(mcq, { kind: 'select', option: 'b' }, { kind: 'check' });
-    expect(ratingStage(mcq, s)).toEqual({ buttons: 'ratings', ratings: [2, 3, 4], suggested: null });
+    expect(ratingStage(mcq, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [2, 3, 4],
+      suggested: null,
+    });
     expect(outcomeOf(mcq, s)).toEqual({ kind: 'mcq', selected: 'b', correct: true });
   });
 
   it('the choice can change before Check, not after', () => {
     let s = run(mcq, { kind: 'select', option: 'a' }, { kind: 'select', option: 'b' });
     expect(s).toMatchObject({ selected: 'b' });
-    s = run(mcq, { kind: 'select', option: 'a' }, { kind: 'check' }, { kind: 'select', option: 'b' });
+    s = run(
+      mcq,
+      { kind: 'select', option: 'a' },
+      { kind: 'check' },
+      { kind: 'select', option: 'b' },
+    );
     expect(s).toMatchObject({ selected: 'a', checked: true });
   });
 
@@ -96,7 +113,11 @@ describe('fill in the blank', () => {
   it('typed and right (case and punctuation ignored) → Hard, Good, Easy', () => {
     const s = run(cloze, { kind: 'type', text: 'Primary Key.' }, { kind: 'check' });
     expect(s).toMatchObject({ result: { mode: 'typed', correct: true } });
-    expect(ratingStage(cloze, s)).toEqual({ buttons: 'ratings', ratings: [2, 3, 4], suggested: null });
+    expect(ratingStage(cloze, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [2, 3, 4],
+      suggested: null,
+    });
     expect(outcomeOf(cloze, s)).toEqual({ kind: 'cloze', mode: 'typed', correct: true });
   });
 
@@ -114,17 +135,29 @@ describe('fill in the blank', () => {
   });
 
   it('Check with nothing typed does nothing', () => {
-    expect(run(cloze, { kind: 'type', text: '  ' }, { kind: 'check' })).toMatchObject({ result: null });
+    expect(run(cloze, { kind: 'type', text: '  ' }, { kind: 'check' })).toMatchObject({
+      result: null,
+    });
   });
 
   it('Show answer without typing → all four ratings', () => {
     const s = run(cloze, { kind: 'reveal' });
-    expect(ratingStage(cloze, s)).toEqual({ buttons: 'ratings', ratings: [1, 2, 3, 4], suggested: null });
+    expect(ratingStage(cloze, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [1, 2, 3, 4],
+      suggested: null,
+    });
     expect(outcomeOf(cloze, s)).toEqual({ kind: 'cloze', mode: 'revealed', correct: null });
   });
 
   it('once answered, typing, checking or revealing again changes nothing', () => {
-    const s = run(cloze, { kind: 'type', text: 'pk' }, { kind: 'check' }, { kind: 'type', text: 'x' }, { kind: 'reveal' });
+    const s = run(
+      cloze,
+      { kind: 'type', text: 'pk' },
+      { kind: 'check' },
+      { kind: 'type', text: 'x' },
+      { kind: 'reveal' },
+    );
     expect(s).toMatchObject({ typed: 'pk', result: { mode: 'typed', correct: true } });
   });
 
@@ -140,7 +173,11 @@ describe('long answer', () => {
 
   it('suggests a rating from the ticks and updates it as ticks change; all four buttons stay', () => {
     let s = run(long, { kind: 'reveal' });
-    expect(ratingStage(long, s)).toEqual({ buttons: 'ratings', ratings: [1, 2, 3, 4], suggested: 1 });
+    expect(ratingStage(long, s)).toEqual({
+      buttons: 'ratings',
+      ratings: [1, 2, 3, 4],
+      suggested: 1,
+    });
     s = run(long, { kind: 'reveal' }, { kind: 'tick', index: 0 }, { kind: 'tick', index: 1 });
     expect(ratingStage(long, s)).toMatchObject({ suggested: 2 }); // 50%
     s = answerReducer(long, s, { kind: 'tick', index: 2 });
@@ -153,7 +190,13 @@ describe('long answer', () => {
   });
 
   it('the outcome counts hits, the total and the suggestion', () => {
-    const s = run(long, { kind: 'reveal' }, { kind: 'tick', index: 3 }, { kind: 'tick', index: 1 }, { kind: 'tick', index: 0 });
+    const s = run(
+      long,
+      { kind: 'reveal' },
+      { kind: 'tick', index: 3 },
+      { kind: 'tick', index: 1 },
+      { kind: 'tick', index: 0 },
+    );
     expect(outcomeOf(long, s)).toEqual({ kind: 'long', hit: 3, total: 4, suggested: 3 });
   });
 
@@ -162,7 +205,12 @@ describe('long answer', () => {
   });
 
   it('the optional written answer is kept on screen but never reaches the outcome', () => {
-    const s = run(long, { kind: 'toggleTyping' }, { kind: 'type', text: 'My essay' }, { kind: 'reveal' });
+    const s = run(
+      long,
+      { kind: 'toggleTyping' },
+      { kind: 'type', text: 'My essay' },
+      { kind: 'reveal' },
+    );
     expect(s).toMatchObject({ typed: 'My essay' });
     expect(JSON.stringify(outcomeOf(long, s))).not.toContain('essay');
   });
@@ -176,9 +224,13 @@ describe('keyboard shortcuts (§6.3)', () => {
   });
 
   it('mcq: 1–6 select, Enter checks; after a wrong check Enter or 1 continue; after a right one 2–4 rate', () => {
-    expect(shortcut(mcq, initialAnswer(mcq), '2')).toEqual({ action: { kind: 'select', option: 'b' } });
+    expect(shortcut(mcq, initialAnswer(mcq), '2')).toEqual({
+      action: { kind: 'select', option: 'b' },
+    });
     expect(shortcut(mcq, initialAnswer(mcq), '6')).toBeNull(); // no 6th option
-    expect(shortcut(mcq, run(mcq, { kind: 'select', option: 'a' }), 'Enter')).toEqual({ action: { kind: 'check' } });
+    expect(shortcut(mcq, run(mcq, { kind: 'select', option: 'a' }), 'Enter')).toEqual({
+      action: { kind: 'check' },
+    });
     const wrong = run(mcq, { kind: 'select', option: 'a' }, { kind: 'check' });
     expect(shortcut(mcq, wrong, 'Enter')).toEqual({ rate: 1 });
     expect(shortcut(mcq, wrong, '1')).toEqual({ rate: 1 });
@@ -189,7 +241,9 @@ describe('keyboard shortcuts (§6.3)', () => {
   });
 
   it('cloze: Enter checks; afterwards the allowed ratings', () => {
-    expect(shortcut(cloze, run(cloze, { kind: 'type', text: 'pk' }), 'Enter')).toEqual({ action: { kind: 'check' } });
+    expect(shortcut(cloze, run(cloze, { kind: 'type', text: 'pk' }), 'Enter')).toEqual({
+      action: { kind: 'check' },
+    });
     const wrong = run(cloze, { kind: 'type', text: 'x' }, { kind: 'check' });
     expect(shortcut(cloze, wrong, 'Enter')).toEqual({ rate: 1 });
     expect(shortcut(cloze, run(cloze, { kind: 'reveal' }), '2')).toEqual({ rate: 2 });
@@ -197,7 +251,12 @@ describe('keyboard shortcuts (§6.3)', () => {
 
   it('long: Space shows key points; then 1–9 toggle them and Enter rates with the suggestion', () => {
     expect(shortcut(long, initialAnswer(long), ' ')).toEqual({ action: { kind: 'reveal' } });
-    const shown = run(long, { kind: 'reveal' }, { kind: 'tick', index: 0 }, { kind: 'tick', index: 1 });
+    const shown = run(
+      long,
+      { kind: 'reveal' },
+      { kind: 'tick', index: 0 },
+      { kind: 'tick', index: 1 },
+    );
     expect(shortcut(long, shown, '3')).toEqual({ action: { kind: 'tick', index: 2 } });
     expect(shortcut(long, shown, '9')).toBeNull(); // only 4 key points
     expect(shortcut(long, shown, 'Enter')).toEqual({ rate: 2 });

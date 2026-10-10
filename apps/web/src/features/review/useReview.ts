@@ -97,9 +97,13 @@ export function useReview(deckId: string | null): ReviewViewModel {
   // After a rating or undo is saved, wait for a queue snapshot that includes it before
   // moving on. Otherwise the stale snapshot would show the card just rated again, and
   // it could be rated twice.
-  const [awaiting, setAwaiting] = useState<{ fingerprint: string; pin: string | null } | null>(
-    null,
-  );
+  // `clear`: the card just rated. Its answer stays on screen (disabled) until the queue
+  // has moved on, then it is cleared so the card starts fresh next time it comes up.
+  const [awaiting, setAwaiting] = useState<{
+    fingerprint: string;
+    pin: string | null;
+    clear: string | null;
+  } | null>(null);
   const shownAt = useRef(ctx.now());
 
   useEffect(() => {
@@ -184,6 +188,13 @@ export function useReview(deckId: string | null): ReviewViewModel {
 
   useEffect(() => {
     if (awaiting && queueData && queueData.logsFingerprint !== awaiting.fingerprint) {
+      const { clear } = awaiting;
+      if (clear !== null) {
+        setAnswers((all) => {
+          const { [clear]: _done, ...rest } = all;
+          return rest;
+        });
+      }
       setPinnedId(awaiting.pin);
       shownAt.current = ctx.now();
       setAwaiting(null);
@@ -235,12 +246,8 @@ export function useReview(deckId: string | null): ReviewViewModel {
         .then(() => {
           // Remember how it was answered (for undo); next time it's shown it starts fresh.
           rated.current[currentId] = answer;
-          setAnswers((all) => {
-            const { [currentId]: _done, ...rest } = all;
-            return rest;
-          });
           // Busy until the queue reflects this rating; then the next card is picked.
-          setAwaiting({ fingerprint, pin: null });
+          setAwaiting({ fingerprint, pin: null, clear: currentId });
         })
         .catch(() => {
           setActionError('Couldn’t save that rating. Please try again.');
@@ -268,7 +275,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
         // so it can be rated again (§6.3).
         const before = rated.current[undone.cardId];
         if (before) setAnswers((all) => ({ ...all, [undone.cardId]: before }));
-        setAwaiting({ fingerprint, pin: undone.cardId });
+        setAwaiting({ fingerprint, pin: undone.cardId, clear: null });
       })
       .catch(() => {
         setActionError('Couldn’t undo. Please try again.');

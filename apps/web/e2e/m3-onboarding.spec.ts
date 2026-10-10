@@ -86,7 +86,8 @@ test('backup: export, import into a fresh browser (identical states), import aga
   const download = await downloading;
   const file = await download.path();
   const backup = readFileSync(file, 'utf8');
-  expect(JSON.parse(backup)).toMatchObject({ format: 'recall-backup', version: 1 });
+  // M6 (D-323): exports are backup version 2 (typed cards, outcomes); version 1 still imports.
+  expect(JSON.parse(backup)).toMatchObject({ format: 'recall-backup', version: 2 });
 
   const fresh = await browser.newContext();
   const page2 = await fresh.newPage();

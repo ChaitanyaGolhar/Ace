@@ -242,8 +242,9 @@ function FooterActions({ vm }: { vm: ReviewViewModel }) {
               }`}
             >
               <span className="text-section font-semibold">{option.label}</span>
+              {suggested && <span className="text-meta font-medium text-accent">Suggested</span>}
               <span className="font-mono text-meta text-text-secondary">
-                {suggested ? 'Suggested' : option.interval}
+                {option.interval}
                 {answer.type !== 'long' && (
                   <span className="hidden lg:inline"> · {option.key}</span>
                 )}

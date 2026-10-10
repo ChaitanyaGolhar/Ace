@@ -311,3 +311,49 @@ decisions:
 - **Why:** with 1,000 cards and 5,000 reviews (Chrome, production build), rendering all 1,000 rows took 1.9 s in-app (3.8 s cold load), and Start reviewing → first card took 0.9–2.9 s, mostly waiting on repeated full IndexedDB reads. Afterwards, the deck page renders in about 0.2–0.7 s and the first card appears in about 0.4–0.6 s (timings in the report and `e2e/big-deck.spec.ts`).
 - **Pagination, not virtualisation:** 100 rows render quickly, and plain pages need no dependency. Find-in-page, screen readers and keyboard focus work as normal, and row heights don't have to be fixed.
 - **Reverse:** raise `CARD_PAGE_SIZE` (`apps/web/src/services/paging.ts`); pass `{ logs: 'all' }` to `loadQueueInput`.
+
+## M6: Question types
+
+### D-319 Card content is a typed object; `front`/`back` are derived from it
+
+- **What:** cards gain `type` (`basic`, `mcq`, `cloze`, `short`, `long`) and `content`, validated by `CardContentSchema` in `packages/core/src/content.ts`. `front`/`back` stay on every card, but they must equal `deriveDisplay(content)`: search, the deck list, old clients and exports keep working without knowing the types. `cardFields(content)` is the only way to build them.
+- **Limits:** basic cards keep the old 20,000-per-side limit so no existing card becomes invalid. New types: 5,000 per field, 20,000 in total, and the derived front/back must fit 20,000.
+- **Comparisons are key-order independent** (`canonical`/`sameRow` sort keys deeply), because Postgres `jsonb` reorders object keys. Without it, every pull would look like an edit.
+- **Reverse:** typed cards can be shown as basic cards using their stored `front`/`back`.
+
+### D-320 Ratings follow from the answer; the outcome is stored on the review log
+
+- **What:** `review_logs.outcome` (nullable) stores what happened: `mcq {selected, correct}`, `cloze {mode, correct}`, `long {hit, total, suggested}`. Basic and short answer store `null`. The allowed ratings come from the outcome (`allowedRatings`): wrong MCQ or wrong typed cloze → Again only (shown as **Continue**); right → Hard/Good/Easy; revealed cloze or long → all four. Both the client and the server reject a rating the outcome doesn't allow.
+- **Long answer:** the suggestion is integer maths on ticked key points: under 50% → Again, under 75% → Hard, otherwise Good. It is highlighted, never forced; any rating can be chosen.
+- **Typed text is never stored** (cloze attempts, the short-answer box). Only whether it matched.
+- **Scheduling is unchanged:** FSRS only sees the rating. `SCHEDULER_VERSION` and the golden test are untouched; replay with outcomes gives identical states.
+- **Merge:** `mergeLog` keeps a non-null outcome if either side has one.
+
+### D-321 Cloze matching is forgiving but exact
+
+- **What:** an answer matches if, after normalising both (Unicode NFC, trim, lowercase, whitespace collapsed, trailing `.,;:!?` stripped), it equals the blank or one of the accepted answers. No fuzzy matching: "near misses" are wrong, and the user sees both answers and can undo.
+- **Why:** predictable. Fuzzy matching would mark wrong answers right, which is worse for learning than the reverse.
+
+### D-322 Protocol v2: old clients get 426 instead of silently dropping fields
+
+- **What:** pushes carry `protocolVersion: 2`. The server answers **426 `upgrade_required`** to a push with no version or version 1, and changes nothing. The app then shows "Update required to sync" (banner with Reload, and in the sync status), stops retrying, and studying keeps working offline. Pull is unchanged and safe for old clients: they ignore the new fields.
+- **Why:** an old client would read a typed card, then push it back without `content`/`type`, and the server would turn it into a basic card. Refusing old pushes is the only safe option.
+
+### D-323 Database changes are additive and old servers keep working
+
+- **Server (migration 0003):** adds `cards.type` (default `'basic'`), `cards.content` (nullable, backfilled to basic content for existing rows), `unit`, `source_key`, `source_hash`, and `review_logs.outcome` (nullable). The backfill doesn't bump `server_seq`, so clients don't re-download everything. `content` stays nullable and `type` keeps its default so the previous API build can still insert rows if we roll back; the new API reads a row without `content` as a basic card built from `front`/`back`.
+- **App (Dexie v3):** existing cards become basic, existing logs get `outcome: null`, and the sync cursor resets to 0 for **one** full re-pull. This repairs any rows an old client stripped before the update.
+- **Pull merge:** a clean local row takes the server's version; a dirty one uses last-writer-wins as before.
+- **Backups:** export is version 2. Version 1 files still import, as basic cards.
+
+### D-324 Review and editor interaction for typed cards
+
+- **Undo** brings a card back as it was answered (choice, typed text, ticks), ready to be re-rated, for every type including basic. Before M6 it came back unanswered. The two undo E2E tests were updated for this as a spec change.
+- **Keys:** 1–6 choose an MCQ option, Enter checks, then 1–4 rate as usual. On a long answer, digits toggle key points and **Enter rates the suggestion**, since digits can't mean both. This differs from "1–4 rate" elsewhere.
+- **Editor:** type picker (segmented control on desktop, a select on phones). Errors appear beside a field once it has been touched, and all at once on a save attempt. Save stays disabled until the card is valid. Changing type asks first if it would clear filled fields ("Keep …" is the default). The question, answer and explanation carry over.
+
+### D-325 Light theme: darker success and error colours, readable as text
+
+- **What:** light `--success` #2f8f62 → **#237a52** and `--error` #c94a4a → **#b23c3c**. Contrast as text is now 4.9 / 5.4 on the page background, 5.3 / 5.8 on surface and 4.6 / 5.1 on raised surface. The old values gave 3.5–4.6. Dark theme is unchanged (5.3–7.8 already).
+- **Why:** M6 shows "Correct" / "Not quite" / "Correct answer" as coloured text (always with an icon and words). axe flagged the light green on the review screen. The old red was also under 4.5:1 on the page background for the existing form errors; no axe test had shown one before.
+- **Reverse:** restore the two values in `apps/web/src/index.css`.

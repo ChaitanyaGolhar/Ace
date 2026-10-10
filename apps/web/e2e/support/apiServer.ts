@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,6 +14,8 @@ export const API_URL = `http://localhost:${String(API_PORT)}`;
 export const WEB_ORIGIN = 'http://localhost:4173';
 export const OUTBOX = join(TMP, 'outbox.jsonl');
 const PID_FILE = join(TMP, 'api.pid');
+/** The API's output, for diagnosing a failed run (e2e/.tmp is git-ignored). */
+export const API_LOG = join(TMP, 'api.log');
 export const E2E_DB_NAME = 'recall_e2e';
 export const ADMIN_URL =
   process.env.E2E_ADMIN_DATABASE_URL ?? 'postgresql://recall:recall@localhost:54329/postgres';
@@ -41,6 +43,7 @@ async function waitForHealth(timeoutMs: number): Promise<boolean> {
 export async function startApi(): Promise<void> {
   mkdirSync(TMP, { recursive: true });
   if (!existsSync(OUTBOX)) writeFileSync(OUTBOX, '');
+  const log = openSync(API_LOG, 'w');
   const child = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
     cwd: API_DIR,
     env: {
@@ -53,7 +56,7 @@ export async function startApi(): Promise<void> {
       MAIL_OUTBOX_FILE: OUTBOX,
       COOKIE_SECURE: 'true',
     },
-    stdio: 'ignore',
+    stdio: ['ignore', log, log],
     detached: false,
   });
   if (child.pid === undefined) throw new Error('could not start the API');

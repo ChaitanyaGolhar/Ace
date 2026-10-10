@@ -249,8 +249,9 @@ function Sentence({ text, filled }: { text: string; filled: boolean }) {
           {match[1]}
         </strong>
       ) : (
-        <span aria-label="blank" className="inline-block min-w-24 border-b-2 border-text-secondary">
-          &nbsp;
+        // aria-label isn't allowed on a plain span; screen readers read the hidden word.
+        <span className="inline-block min-w-24 border-b-2 border-text-secondary">
+          <span className="sr-only">blank</span>&nbsp;
         </span>
       )}
       {after}

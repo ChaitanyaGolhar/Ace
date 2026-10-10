@@ -168,3 +168,91 @@ for (const viewport of VIEWPORTS) {
     });
   }
 }
+
+// M6: every question type on the review screen (before and after answering) and in the
+// editor, at both sizes and in both themes.
+for (const viewport of VIEWPORTS) {
+  for (const theme of THEMES) {
+    test(`question types · ${viewport.name} · ${theme}`, async ({ page }) => {
+      test.setTimeout(180_000);
+      mkdirSync(OUT, { recursive: true });
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+      await page.clock.setFixedTime(NOW);
+      const shot = async (name: string) => {
+        await page.waitForTimeout(150);
+        await page.screenshot({
+          path: join(OUT, `${name}-${viewport.name}-${theme}.png`),
+          fullPage: viewport.name === 'desktop',
+        });
+      };
+      await seed(page);
+      await page.goto('/decks');
+      await page
+        .getByRole('list', { name: 'Decks' })
+        .getByRole('link', { name: /Question types/ })
+        .click();
+      const deckUrl = page.url();
+      await page.getByRole('link', { name: 'Study deck' }).click();
+      const type = page.getByTestId('card-type');
+      const rate = (label: string) =>
+        page
+          .getByRole('group', { name: 'Rate your recall' })
+          .getByRole('button', { name: new RegExp(`^${label}`) })
+          .click();
+
+      await expect(type).toHaveText('Multiple choice');
+      await shot('type-mcq-front');
+      await page.getByRole('radio', { name: /^A\./ }).click();
+      await page.getByRole('button', { name: 'Check' }).click();
+      await shot('type-mcq-wrong');
+      await page.getByRole('button', { name: 'Continue' }).click();
+
+      await expect(type).toHaveText('Fill in the blank');
+      await page.getByLabel('Your answer').fill('group by');
+      await shot('type-cloze-front');
+      await page.getByRole('button', { name: 'Check' }).click();
+      await shot('type-cloze-correct');
+      await rate('Good');
+
+      await expect(type).toHaveText('Short answer');
+      await page.getByRole('button', { name: 'Type your answer (optional)' }).click();
+      await shot('type-short-front');
+      await page.getByRole('button', { name: 'Show answer' }).click();
+      await shot('type-short-revealed');
+      await rate('Good');
+
+      await expect(type).toHaveText('Long answer');
+      await shot('type-long-front');
+      await page.getByRole('button', { name: 'Show key points' }).click();
+      const points = page.getByTestId('key-points').getByRole('checkbox');
+      await points.nth(0).check();
+      await points.nth(1).check();
+      await points.nth(2).check();
+      await shot('type-long-checked');
+
+      // The editor, one screenshot per type.
+      await page.getByRole('button', { name: 'End session' }).click();
+      await page.goto(deckUrl);
+      await page.getByRole('link', { name: 'Add card' }).click();
+      for (const [key, label] of [
+        ['basic', 'Basic'],
+        ['mcq', 'Multiple choice'],
+        ['cloze', 'Fill in the blank'],
+        ['short', 'Short answer'],
+        ['long', 'Long answer'],
+      ] as const) {
+        if (viewport.name === 'mobile') {
+          await page.getByRole('combobox', { name: 'Card type' }).selectOption({ label });
+        } else {
+          await page
+            .getByRole('radiogroup', { name: 'Card type' })
+            .getByRole('radio', { name: label })
+            .click();
+        }
+        await expect(page.getByRole('button', { name: 'Save & add another' })).toBeVisible();
+        await shot(`editor-${key}`);
+      }
+    });
+  }
+}

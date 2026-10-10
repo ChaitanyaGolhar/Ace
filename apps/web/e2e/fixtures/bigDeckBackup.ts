@@ -76,5 +76,5 @@ export function buildBigDeckBackup(now: number, cardCount = 1000, logsPerCard = 
       if (at >= now) break;
     }
   }
-  return { format: 'recall-backup', version: 1, exportedAt: now, decks: [deck], cards, reviewLogs };
+  return { format: 'recall-backup', version: 2, exportedAt: now, decks: [deck], cards, reviewLogs };
 }

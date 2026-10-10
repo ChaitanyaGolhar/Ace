@@ -1,7 +1,8 @@
 import { Check, Undo2, X } from 'lucide-react';
 import { useSearchParams } from 'react-router';
 import { ErrorMessage, Loading } from '../shell/states';
-import { useReview, type ReviewViewModel } from './useReview';
+import { CardFace, TYPE_TAGS } from './CardFace';
+import { RATING_LABELS, useReview, type ReviewViewModel } from './useReview';
 
 /** Full-screen review: no navigation, nothing top-right (§10, review-*.png). */
 export function ReviewScreen() {
@@ -56,37 +57,35 @@ export function ReviewScreen() {
 }
 
 function Studying({ vm }: { vm: ReviewViewModel }) {
+  const type = vm.card?.content.type ?? 'basic';
+  const typeTag = TYPE_TAGS[type];
   return (
     <>
       <main className="mx-auto flex w-full max-w-[720px] flex-1 flex-col gap-6 px-6 pt-8 lg:pt-16">
-        <span
-          className="self-start rounded-sm border border-border px-3 py-1 text-meta text-text-secondary"
-          data-testid="card-kind"
-        >
-          {vm.kind}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className="rounded-sm border border-border px-3 py-1 text-meta text-text-secondary"
+            data-testid="card-kind"
+          >
+            {vm.kind}
+          </span>
+          {typeTag && (
+            <span
+              className="rounded-sm border border-border px-3 py-1 text-meta text-text-secondary"
+              data-testid="card-type"
+            >
+              {typeTag}
+            </span>
+          )}
+        </div>
         <h1 className="sr-only">Review</h1>
-        <p
-          data-testid="card-front"
-          className="text-card font-medium whitespace-pre-wrap lg:text-[30px]"
-        >
-          {vm.card?.front}
-        </p>
+        {vm.card && vm.answer && (
+          <CardFace content={vm.card.content} answer={vm.answer} act={vm.act} disabled={vm.busy} />
+        )}
         {vm.showHint && (
           <p data-testid="first-card-hint" className="text-body text-text-secondary">
             Try to recall the answer, then tap Show answer.
           </p>
-        )}
-        {vm.revealed && (
-          <>
-            <hr className="border-border" />
-            <p
-              data-testid="card-back"
-              className="text-[20px] leading-[1.5] whitespace-pre-wrap text-text lg:text-[22px]"
-            >
-              {vm.card?.back}
-            </p>
-          </>
         )}
       </main>
 
@@ -113,52 +112,147 @@ function Studying({ vm }: { vm: ReviewViewModel }) {
             {vm.actionError}
           </p>
         )}
-        {vm.revealed ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-center text-body text-text-secondary">How well did you remember?</p>
-            <div
-              role="group"
-              aria-label="Rate your recall"
-              className="grid grid-cols-4 gap-2 lg:gap-3"
-            >
-              {vm.ratings.map((option) => (
-                <button
-                  key={option.rating}
-                  type="button"
-                  aria-label={`${option.label} · ${option.interval}`}
-                  aria-keyshortcuts={option.key}
-                  disabled={vm.busy}
-                  onClick={() => {
-                    vm.rate(option.rating);
-                  }}
-                  className={`flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-lg border bg-surface transition-colors duration-150 disabled:opacity-60 ${
-                    option.rating === 3 ? 'border-accent' : 'border-border'
-                  }`}
-                >
-                  <span className="text-section font-semibold">{option.label}</span>
-                  <span className="font-mono text-meta text-text-secondary">
-                    {option.interval}
-                    <span className="hidden lg:inline"> · {option.key}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
+        <FooterActions vm={vm} />
+      </footer>
+    </>
+  );
+}
+
+const kbd = 'hidden rounded-sm border border-on-accent/30 px-1.5 font-mono text-meta lg:inline';
+
+/** The footer, per answer stage (§6.3): the type's primary action, Continue, or ratings. */
+function FooterActions({ vm }: { vm: ReviewViewModel }) {
+  const { stage, answer } = vm;
+  const content = vm.card?.content;
+  if (!content || !answer) return null;
+
+  if (stage.buttons === 'none') {
+    if (answer.type === 'mcq') {
+      return (
+        <button
+          type="button"
+          className="btn-primary min-h-14 text-section"
+          disabled={answer.selected === null || vm.busy}
+          aria-keyshortcuts="Enter"
+          onClick={() => {
+            vm.act({ kind: 'check' });
+          }}
+        >
+          Check
+          <kbd className={kbd}>Enter</kbd>
+        </button>
+      );
+    }
+    if (answer.type === 'cloze') {
+      return (
+        <div className="flex flex-col gap-2">
           <button
             type="button"
             className="btn-primary min-h-14 text-section"
-            onClick={vm.showAnswer}
-            aria-keyshortcuts="Space"
+            disabled={answer.typed.trim() === '' || vm.busy}
+            aria-keyshortcuts="Enter"
+            onClick={() => {
+              vm.act({ kind: 'check' });
+            }}
           >
-            Show answer
-            <kbd className="hidden rounded-sm border border-on-accent/30 px-1.5 font-mono text-meta lg:inline">
-              Space
-            </kbd>
+            Check
+            <kbd className={kbd}>Enter</kbd>
           </button>
-        )}
-      </footer>
-    </>
+          <button type="button" className="btn-ghost text-section" onClick={vm.showAnswer}>
+            Show answer
+          </button>
+        </div>
+      );
+    }
+    return (
+      <button
+        type="button"
+        className="btn-primary min-h-14 text-section"
+        onClick={vm.showAnswer}
+        aria-keyshortcuts="Space"
+      >
+        {answer.type === 'long' ? 'Show key points' : 'Show answer'}
+        <kbd className={kbd}>Space</kbd>
+      </button>
+    );
+  }
+
+  if (stage.buttons === 'continue') {
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          className="btn-primary min-h-14 text-section"
+          disabled={vm.busy}
+          aria-keyshortcuts="Enter 1"
+          aria-describedby="continue-note"
+          onClick={() => {
+            vm.rate(1);
+          }}
+        >
+          Continue
+          <kbd className={kbd}>Enter</kbd>
+        </button>
+        <p id="continue-note" className="text-center text-meta text-text-secondary">
+          Marked as Again — you’ll see this card again soon.
+        </p>
+      </div>
+    );
+  }
+
+  const options = vm.ratings.filter((o) => stage.ratings.includes(o.rating));
+  const emphasised = stage.suggested ?? 3;
+  const ticked = answer.type === 'long' ? answer.ticked.length : 0;
+  const total = content.type === 'long' ? content.keyPoints.length : 0;
+  return (
+    <div className="flex flex-col gap-3">
+      {stage.suggested !== null ? (
+        <p
+          role="status"
+          data-testid="suggestion"
+          className="text-center text-body text-text-secondary"
+        >
+          {ticked} of {total} key points · Suggested:{' '}
+          <span className="font-semibold text-text">{RATING_LABELS[stage.suggested]}</span>
+          <span className="hidden lg:inline"> (Enter)</span>
+        </p>
+      ) : (
+        <p className="text-center text-body text-text-secondary">How well did you remember?</p>
+      )}
+      <div
+        role="group"
+        aria-label="Rate your recall"
+        className={`grid gap-2 lg:gap-3 ${options.length === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}
+      >
+        {options.map((option) => {
+          const suggested = stage.suggested === option.rating;
+          return (
+            <button
+              key={option.rating}
+              type="button"
+              aria-label={`${option.label} · ${option.interval}${suggested ? ' · suggested' : ''}`}
+              aria-keyshortcuts={answer.type === 'long' ? undefined : option.key}
+              disabled={vm.busy}
+              data-suggested={suggested ? 'true' : undefined}
+              onClick={() => {
+                vm.rate(option.rating);
+              }}
+              className={`flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-lg bg-surface transition-colors duration-150 disabled:opacity-60 ${
+                option.rating === emphasised ? 'border-2 border-accent' : 'border border-border'
+              }`}
+            >
+              <span className="text-section font-semibold">{option.label}</span>
+              <span className="font-mono text-meta text-text-secondary">
+                {suggested ? 'Suggested' : option.interval}
+                {answer.type !== 'long' && (
+                  <span className="hidden lg:inline"> · {option.key}</span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

@@ -1,6 +1,9 @@
 import { useUpdateBanner } from './useUpdateBanner';
 
-/** Non-blocking: a new version is ready; it reloads only when the user taps Reload. */
+/**
+ * Non-blocking: a new version is ready, or the server needs one to sync (§6.6). It
+ * reloads only when the user taps Reload; studying keeps working meanwhile.
+ */
 export function UpdateBanner() {
   const vm = useUpdateBanner();
   if (!vm.visible) return null;
@@ -10,7 +13,7 @@ export function UpdateBanner() {
       data-testid="update-banner"
       className="fixed inset-x-0 top-0 z-40 flex flex-wrap items-center justify-center gap-3 border-b border-border bg-surface-raised px-4 py-2 text-body"
     >
-      <span>Update available — reload</span>
+      <span>{vm.message}</span>
       <button type="button" className="btn-primary min-h-11" onClick={vm.reload}>
         Reload
       </button>

@@ -188,7 +188,13 @@ describe('loadReviewCard', () => {
   it('returns the card, its state and the interval preview for each rating', async () => {
     const { ctx, card } = await setup();
     const loaded = await loadReviewCard(ctx, card.id);
-    expect(loaded?.card).toEqual({ id: card.id, front: 'front', back: 'back' });
+    expect(loaded?.card).toEqual({
+      id: card.id,
+      front: 'front',
+      back: 'back',
+      type: 'basic',
+      content: { type: 'basic', front: 'front', back: 'back' },
+    });
     const state = await stateOf(ctx, card.id);
     if (!state) throw new Error('missing state');
     expect(loaded?.preview).toEqual(previewIntervals(state, ctx.now()));

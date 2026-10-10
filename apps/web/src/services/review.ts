@@ -3,6 +3,7 @@ import {
   previewIntervals,
   RatingSchema,
   ReviewLogSchema,
+  type CardContent,
   type CardState,
   type CardType,
   type Outcome,
@@ -120,7 +121,7 @@ export async function undoLastReview(
 }
 
 export interface ReviewCard {
-  card: { id: string; front: string; back: string };
+  card: { id: string; front: string; back: string; type: CardType; content: CardContent };
   state: CardState;
   /** ms until due for each rating, as of now: the labels on the rating buttons. */
   preview: Record<Rating, number>;
@@ -132,7 +133,13 @@ export async function loadReviewCard(ctx: AppContext, cardId: string): Promise<R
   if (!card || card.deletedAt !== null) return null;
   const state = (await ctx.db.cardStates.get(cardId)) ?? initialState(card);
   return {
-    card: { id: card.id, front: card.front, back: card.back },
+    card: {
+      id: card.id,
+      front: card.front,
+      back: card.back,
+      type: card.type,
+      content: card.content,
+    },
     state,
     preview: previewIntervals(state, ctx.now()),
   };

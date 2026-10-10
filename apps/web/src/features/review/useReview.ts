@@ -1,4 +1,4 @@
-import type { Rating } from '@recall/core';
+import type { CardContent, Rating } from '@recall/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
@@ -11,6 +11,16 @@ import { loadQueue, nextCard, remainingCount } from '../../services/queue';
 import { lastSessionRating, loadReviewCard, rateCard, undoLastReview } from '../../services/review';
 import { finishSession, sessionSummary, startSession } from '../../services/session';
 import { isPlainShortcut } from '../shell/keyboard';
+import {
+  answerReducer,
+  initialAnswer,
+  outcomeOf,
+  ratingStage,
+  shortcut,
+  type AnswerAction,
+  type AnswerState,
+  type RatingStage,
+} from './answer';
 
 export const RATING_LABELS = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' } as const;
 
@@ -31,7 +41,11 @@ export interface ReviewViewModel {
   position: { current: number; total: number };
   /** 0–1, for the thin progress bar. */
   progress: number;
-  card: { id: string; front: string; back: string } | null;
+  card: { id: string; front: string; back: string; content: CardContent } | null;
+  /** M6: where the user is with this card (choice, typed check, ticks…). */
+  answer: AnswerState | null;
+  /** M6: what the footer offers: nothing yet, a single Continue (= Again), or ratings. */
+  stage: RatingStage;
   /** Card type tag. */
   kind: 'New' | 'Review';
   revealed: boolean;
@@ -49,6 +63,8 @@ export interface ReviewViewModel {
   /** Completion: "9 tomorrow". */
   nextDueText: string;
   showAnswer: () => void;
+  /** M6: an action on the card on screen (select an option, type, check, tick…). */
+  act: (action: AnswerAction) => void;
   rate: (rating: Rating) => void;
   undo: () => void;
   /** ✕ / "Back to home": finish the session and go home. */
@@ -72,7 +88,10 @@ export function useReview(deckId: string | null): ReviewViewModel {
   // The card on screen stays put until it is rated, even if the queue order changes
   // underneath (e.g. a learning card becomes due while you are reading a new card).
   const [pinnedId, setPinnedId] = useState<string | null>(null);
-  const [revealed, setRevealed] = useState(false);
+  // Answer state per card on screen. The state a card was rated in is kept, so undo can
+  // bring the card back answered and it can be re-rated (§6.3).
+  const [answers, setAnswers] = useState<Record<string, AnswerState>>({});
+  const rated = useRef<Record<string, AnswerState>>({});
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   // After a rating or undo is saved, wait for a queue snapshot that includes it before
@@ -158,16 +177,14 @@ export function useReview(deckId: string | null): ReviewViewModel {
     if (pinnedId === null && currentId !== null) setPinnedId(currentId);
   }, [currentId, pinnedId]);
 
-  // A different card is on screen: hide the answer and restart its timer.
+  // A different card is on screen: restart its timer.
   useEffect(() => {
-    setRevealed(false);
     shownAt.current = ctx.now();
   }, [ctx, currentId]);
 
   useEffect(() => {
     if (awaiting && queueData && queueData.logsFingerprint !== awaiting.fingerprint) {
       setPinnedId(awaiting.pin);
-      setRevealed(false);
       shownAt.current = ctx.now();
       setAwaiting(null);
       setBusy(false);
@@ -179,19 +196,49 @@ export function useReview(deckId: string | null): ReviewViewModel {
     [ctx, currentId, tick],
   );
   const reviewCard = cardQuery.status === 'ready' ? cardQuery.data : null;
+  const content = reviewCard?.card.content ?? null;
+  const answer: AnswerState | null =
+    content === null || currentId === null ? null : (answers[currentId] ?? initialAnswer(content));
+  const stage: RatingStage =
+    content !== null && answer !== null ? ratingStage(content, answer) : { buttons: 'none' };
+  const revealed = stage.buttons !== 'none';
+
+  const act = useCallback(
+    (action: AnswerAction) => {
+      if (content === null || currentId === null || busy) return;
+      setAnswers((all) => ({
+        ...all,
+        [currentId]: answerReducer(content, all[currentId] ?? initialAnswer(content), action),
+      }));
+    },
+    [content, currentId, busy],
+  );
 
   const showAnswer = useCallback(() => {
-    setRevealed(true);
-  }, []);
+    act({ kind: 'reveal' });
+  }, [act]);
 
   const rate = useCallback(
     (rating: Rating) => {
-      if (!revealed || busy || currentId === null || !queueData) return;
+      if (busy || currentId === null || !queueData || content === null || answer === null) return;
+      if (stage.buttons === 'none' || !stage.ratings.includes(rating)) return;
       const fingerprint = queueData.logsFingerprint;
+      const outcome = outcomeOf(content, answer);
       setBusy(true);
       setActionError(null);
-      rateCard(ctx, { cardId: currentId, rating, durationMs: ctx.now() - shownAt.current })
+      rateCard(ctx, {
+        cardId: currentId,
+        rating,
+        durationMs: ctx.now() - shownAt.current,
+        outcome,
+      })
         .then(() => {
+          // Remember how it was answered (for undo); next time it's shown it starts fresh.
+          rated.current[currentId] = answer;
+          setAnswers((all) => {
+            const { [currentId]: _done, ...rest } = all;
+            return rest;
+          });
           // Busy until the queue reflects this rating; then the next card is picked.
           setAwaiting({ fingerprint, pin: null });
         })
@@ -200,7 +247,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
           setBusy(false);
         });
     },
-    [ctx, revealed, busy, currentId, queueData],
+    [ctx, busy, currentId, queueData, content, answer, stage],
   );
 
   const reviewed = queueData?.summary.reviewed ?? 0;
@@ -217,7 +264,10 @@ export function useReview(deckId: string | null): ReviewViewModel {
           setBusy(false);
           return;
         }
-        // Once the queue reflects the undo, bring the undone card back, answer hidden.
+        // Once the queue reflects the undo, bring the undone card back as it was answered,
+        // so it can be rated again (§6.3).
+        const before = rated.current[undone.cardId];
+        if (before) setAnswers((all) => ({ ...all, [undone.cardId]: before }));
         setAwaiting({ fingerprint, pin: undone.cardId });
       })
       .catch(() => {
@@ -239,28 +289,35 @@ export function useReview(deckId: string | null): ReviewViewModel {
       .finally(() => navigate('/'));
   }, [ctx, navigate, sync, queueData]);
 
-  // Keyboard: Space shows the answer, 1–4 rate, Z undoes. Never while typing.
+  // Keyboard (§6.3): per type (answer.ts shortcut), plus Z to undo. Never while typing;
+  // a text field handles its own Enter (check).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!isPlainShortcut(event)) return;
-      // Space on a focused button already activates that button.
-      if (event.key === ' ' && event.target instanceof HTMLButtonElement) return;
-      if (event.key === ' ' && !revealed && reviewCard) {
-        event.preventDefault();
-        showAnswer();
-      } else if (['1', '2', '3', '4'].includes(event.key) && revealed) {
-        event.preventDefault();
-        rate(Number(event.key) as Rating);
-      } else if (event.key === 'z' || event.key === 'Z') {
+      // Space or Enter on a focused button already activates that button.
+      if (
+        (event.key === ' ' || event.key === 'Enter') &&
+        event.target instanceof HTMLButtonElement
+      ) {
+        return;
+      }
+      if (event.key === 'z' || event.key === 'Z') {
         event.preventDefault();
         undo();
+        return;
       }
+      if (content === null || answer === null) return;
+      const hit = shortcut(content, answer, event.key);
+      if (hit === null) return;
+      event.preventDefault();
+      if ('rate' in hit) rate(hit.rate);
+      else act(hit.action);
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [revealed, reviewCard, showAnswer, rate, undo]);
+  }, [content, answer, act, rate, undo]);
 
   const remaining = queueData ? remainingCount(queueData.queue) : 0;
   const total = reviewed + remaining;
@@ -269,6 +326,8 @@ export function useReview(deckId: string | null): ReviewViewModel {
     position: { current: Math.min(reviewed + 1, Math.max(total, 1)), total },
     progress: total === 0 ? 0 : reviewed / total,
     card: null,
+    answer: null,
+    stage: { buttons: 'none' } as RatingStage,
     kind: 'New' as const,
     revealed: false,
     showHint: false,
@@ -283,6 +342,7 @@ export function useReview(deckId: string | null): ReviewViewModel {
     completionText: completionSentence(reviewed, queueData?.summary.timeSpentMs ?? 0),
     nextDueText: queueData?.nextDue ? nextDueValue(queueData.nextDue) : '',
     showAnswer,
+    act,
     rate,
     undo,
     finish,
@@ -313,6 +373,8 @@ export function useReview(deckId: string | null): ReviewViewModel {
     ...base,
     status: 'studying',
     card: reviewCard.card,
+    answer,
+    stage,
     kind: reviewCard.state.state === 'new' ? 'New' : 'Review',
     revealed,
     showHint: !queueData.everReviewed && !revealed,

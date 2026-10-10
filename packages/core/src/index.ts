@@ -6,3 +6,4 @@ export * from './studyDay';
 export * from './queue';
 export * from './sync';
 export * from './prebuilt';
+export * from './events';

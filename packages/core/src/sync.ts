@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EventSchema } from './events';
 import { CardSchema, DeckSchema, ReviewLogSchema, Uuid } from './schemas';
 
 // Wire format of the sync protocol (brief §8), shared by the web client and the API so
@@ -13,16 +14,22 @@ export const PushRequestSchema = z
     decks: z.array(DeckSchema),
     cards: z.array(CardSchema),
     reviewLogs: z.array(ReviewLogSchema),
+    /** Product events (M4); optional so older clients still validate. */
+    events: z.array(EventSchema).default([]),
   })
-  .refine((b) => b.decks.length + b.cards.length + b.reviewLogs.length <= MAX_PUSH_ROWS, {
-    message: `A push may contain at most ${String(MAX_PUSH_ROWS)} rows in total`,
-  });
+  .refine(
+    (b) => b.decks.length + b.cards.length + b.reviewLogs.length + b.events.length <= MAX_PUSH_ROWS,
+    {
+      message: `A push may contain at most ${String(MAX_PUSH_ROWS)} rows in total`,
+    },
+  );
 
 export const PushResponseSchema = z.object({
   accepted: z.object({
     decks: z.array(Uuid),
     cards: z.array(Uuid),
     reviewLogs: z.array(Uuid),
+    events: z.array(Uuid).default([]),
   }),
 });
 
@@ -39,6 +46,7 @@ export const PullResponseSchema = z.object({
   decks: z.array(DeckSchema),
   cards: z.array(CardSchema),
   reviewLogs: z.array(ReviewLogSchema),
+  events: z.array(EventSchema).default([]),
   nextCursor: z.string().regex(/^\d{1,19}$/),
   hasMore: z.boolean(),
 });

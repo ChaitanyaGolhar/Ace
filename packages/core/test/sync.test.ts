@@ -16,7 +16,7 @@ describe('PushRequestSchema', () => {
       cards: [makeCard()],
       reviewLogs: [makeLog()],
     };
-    expect(PushRequestSchema.parse(body)).toEqual(body);
+    expect(PushRequestSchema.parse(body)).toEqual({ ...body, events: [] });
   });
 
   it('allows at most 500 rows in total', () => {
@@ -58,7 +58,7 @@ describe('PushRequestSchema', () => {
 describe('PushResponseSchema', () => {
   it('lists the accepted ids per table', () => {
     const body = { accepted: { decks: [uuid(1)], cards: [], reviewLogs: [uuid(2)] } };
-    expect(PushResponseSchema.parse(body)).toEqual(body);
+    expect(PushResponseSchema.parse(body)).toEqual({ accepted: { ...body.accepted, events: [] } });
   });
 });
 
@@ -91,6 +91,6 @@ describe('PullResponseSchema', () => {
       nextCursor: '42',
       hasMore: false,
     };
-    expect(PullResponseSchema.parse(body)).toEqual(body);
+    expect(PullResponseSchema.parse(body)).toEqual({ ...body, events: [] });
   });
 });

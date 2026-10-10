@@ -1,0 +1,58 @@
+import { z } from 'zod';
+import { Uuid } from './schemas';
+
+// Product events (brief M4): an append-only log of what happened, for retention
+// analytics. Synced like review logs. Payloads can never carry card text: every props
+// object is strict (unknown keys are rejected) and holds only numbers, booleans, enums
+// or a deck slug.
+
+const count = z.int().nonnegative();
+const slug = z
+  .string()
+  .max(100)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+export const EVENT_PROPS = {
+  app_opened: z.strictObject({}),
+  first_review_completed: z.strictObject({}),
+  /** `due` = review + learning cards due when the session started; `new` = new cards allowed. */
+  session_started: z.strictObject({ scope: z.enum(['all', 'deck']), due: count, new: count }),
+  session_completed: z.strictObject({ reviewed: count, durationMs: count }),
+  /** Left with at least one card remaining. */
+  session_abandoned: z.strictObject({ reviewed: count, remaining: z.int().min(1) }),
+  deck_added_prebuilt: z.strictObject({ prebuiltId: slug }),
+  card_created: z.strictObject({}),
+  signed_in: z.strictObject({}),
+} as const;
+
+export type EventType = keyof typeof EVENT_PROPS;
+export const EVENT_TYPES = Object.keys(EVENT_PROPS) as EventType[];
+
+const base = {
+  id: Uuid,
+  /** Epoch ms, device clock. */
+  occurredAt: z.int().nonnegative(),
+  deviceId: z.string().min(1).max(100),
+};
+
+export const EventSchema = z.discriminatedUnion('type', [
+  z.object({ ...base, type: z.literal('app_opened'), props: EVENT_PROPS.app_opened }),
+  z.object({
+    ...base,
+    type: z.literal('first_review_completed'),
+    props: EVENT_PROPS.first_review_completed,
+  }),
+  z.object({ ...base, type: z.literal('session_started'), props: EVENT_PROPS.session_started }),
+  z.object({ ...base, type: z.literal('session_completed'), props: EVENT_PROPS.session_completed }),
+  z.object({ ...base, type: z.literal('session_abandoned'), props: EVENT_PROPS.session_abandoned }),
+  z.object({
+    ...base,
+    type: z.literal('deck_added_prebuilt'),
+    props: EVENT_PROPS.deck_added_prebuilt,
+  }),
+  z.object({ ...base, type: z.literal('card_created'), props: EVENT_PROPS.card_created }),
+  z.object({ ...base, type: z.literal('signed_in'), props: EVENT_PROPS.signed_in }),
+]);
+
+export type AppEvent = z.infer<typeof EventSchema>;
+export type EventProps<T extends EventType> = z.infer<(typeof EVENT_PROPS)[T]>;

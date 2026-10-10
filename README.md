@@ -4,7 +4,9 @@ An offline-first spaced-repetition web app (PWA) for students. Scheduling uses F
 via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 [`BUILD_BRIEF.md`](./BUILD_BRIEF.md) for the full product and technical spec.
 
-**Status:** M0 done (monorepo and `packages/core`). There is no web app or API yet.
+**Status:** M0 (core) and M1 (local-only PWA) done. See `MORNING_REPORT.md` for the
+latest milestone status, `DECISIONS.md` for decisions the brief didn't cover, and
+`apps/web/UI_CONTRACT.md` for the screen-by-screen UI contract.
 
 ## Setup
 
@@ -13,17 +15,26 @@ Requirements: Node 24+ (see `.nvmrc`) and pnpm (the version is pinned in `packag
 
 ```sh
 pnpm install
+pnpm --filter @recall/web exec playwright install chromium   # once, for E2E
+```
+
+Run the web app (local-only; no backend needed in M1):
+
+```sh
+pnpm --filter @recall/web dev       # http://localhost:5173 (no service worker in dev)
+pnpm --filter @recall/web build && pnpm --filter @recall/web preview   # http://localhost:4173, with the service worker
 ```
 
 ## Commands (run from the repo root)
 
-| Command          | What it does                                        |
-| ---------------- | --------------------------------------------------- |
-| `pnpm test`      | Runs every package's tests (Vitest)                 |
-| `pnpm lint`      | ESLint (type-aware, strict) over the whole repo     |
-| `pnpm typecheck` | `tsc` in every package                              |
-| `pnpm format`    | Prettier, writes changes                            |
-| `pnpm check`     | Format check + lint + typecheck + test, as CI would |
+| Command          | What it does                                         |
+| ---------------- | ---------------------------------------------------- |
+| `pnpm test`      | Runs every package's tests (Vitest)                  |
+| `pnpm lint`      | ESLint (type-aware, strict) over the whole repo      |
+| `pnpm typecheck` | `tsc` in every package                               |
+| `pnpm format`    | Prettier, writes changes                             |
+| `pnpm check`     | Format check + lint + typecheck + test, as CI would  |
+| `pnpm e2e`       | Playwright E2E against a production build (Chromium) |
 
 In `packages/core`, `pnpm test:watch` runs Vitest in watch mode, and `pnpm golden:update`
 regenerates the scheduler golden fixture (see "Changing the scheduler" below).
@@ -42,7 +53,16 @@ recall/
 │       │   ├── queue.ts      # buildQueue: due cards, new-card limit, learn-ahead
 │       │   └── merge.ts      # lww (decks/cards) and mergeLog (review logs)
 │       └── test/
-├── apps/                # web (M1) and api (M2), not built yet
+├── apps/
+│   └── web/             # Vite + React PWA, local-first (M1)
+│       ├── src/
+│       │   ├── db/           # Dexie schema (§7.1) and typed meta keys
+│       │   ├── services/     # all data logic: write paths (§7.2), queue, sessions — unit tested
+│       │   ├── features/     # one folder per screen: use<Screen>.ts view-model + thin component
+│       │   └── app/          # router, providers, live-query wrapper, toasts
+│       ├── test/             # Vitest + fake-indexeddb
+│       ├── e2e/              # Playwright
+│       └── UI_CONTRACT.md    # view-models, states, copy and selectors for every screen
 └── BUILD_BRIEF.md
 ```
 
@@ -113,3 +133,23 @@ exact version on purpose) can change every card's schedule. That requires bumpin
   bump.
 - **Elapsed days are counted in UTC calendar days** inside ts-fsrs, independent of our
   04:00 local study day. This is deterministic and doesn't affect correctness.
+
+## Architecture: `apps/web` (local-first)
+
+- **IndexedDB is the app's database** (Dexie). Synced tables carry two local-only
+  fields: `dirty` (not yet pushed) and `localVersion` (bumped on every local edit).
+- **Services** (`src/services`) hold all data logic and take an `AppContext`
+  (`{ db, now, newId }`), so tests use an in-memory IndexedDB (`fake-indexeddb`), a fake
+  clock and predictable ids. Real time and UUID v7s are created only in `main.tsx`.
+- **Every write path is one Dexie transaction.** Rating a card inserts the log and
+  stores the card's CardState, recomputed by `replay` over all its logs, together; a
+  crash can't leave one without the other (tested by forcing a failure mid-transaction).
+- **Undo** voids the log (never deletes it) and replays. **Deleting** writes a sticky
+  tombstone, so the undo toast works by delaying that write.
+- **Screens** are `use<Screen>` hooks returning a view-model over live queries, plus a
+  thin component. See `apps/web/UI_CONTRACT.md`.
+- **Startup** (`services/bootstrap.ts`): creates the device id, asks for persistent
+  storage once, and rebuilds every CardState by replay if `SCHEDULER_VERSION` changed.
+- **PWA:** `vite-plugin-pwa` precaches the app shell; no runtime caching (API responses
+  are never cached); a new version shows an "Update available — reload" banner and never
+  reloads by itself.

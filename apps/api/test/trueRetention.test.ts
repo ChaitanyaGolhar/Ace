@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import {
   applyReview,
+  cardFields,
   computeStats,
   initialState,
   studyDayKey,
@@ -40,8 +41,10 @@ const deck: Deck = {
 const card = (id: string): Card => ({
   id,
   deckId: deck.id,
-  front: 'q',
-  back: 'a',
+  ...cardFields({ type: 'basic', front: 'q', back: 'a' }),
+  unit: null,
+  sourceKey: null,
+  sourceHash: null,
   createdAt: T - DAY,
   updatedAt: T - DAY,
   deletedAt: null,
@@ -55,6 +58,7 @@ const log = (cardId: string, at: number, rating: 1 | 2 | 3 | 4): ReviewLog => ({
   durationMs: 1000,
   deviceId: 'dev',
   voidedAt: null,
+  outcome: null,
 });
 
 // A: a typical history. Both definitions agree.

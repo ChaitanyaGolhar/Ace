@@ -1,4 +1,4 @@
-import type { AppEvent, Card, Deck, ReviewLog } from '@recall/core';
+import { cardFields, type AppEvent, type Card, type Deck, type ReviewLog } from '@recall/core';
 import request from 'supertest';
 import { T0, type TestApp } from './helpers';
 
@@ -23,12 +23,19 @@ export function deck(overrides: Partial<Deck> = {}): Deck {
   };
 }
 
+/** A basic card built from front/back unless `content` is given (as before M6). */
 export function card(deckId: string, overrides: Partial<Card> = {}): Card {
   return {
     id: uuid(),
     deckId,
-    front: 'front',
-    back: 'back',
+    ...cardFields({
+      type: 'basic',
+      front: overrides.front ?? 'front',
+      back: overrides.back ?? 'back',
+    }),
+    unit: null,
+    sourceKey: null,
+    sourceHash: null,
     createdAt: T0,
     updatedAt: T0,
     deletedAt: null,
@@ -45,6 +52,7 @@ export function log(cardId: string, overrides: Partial<ReviewLog> = {}): ReviewL
     durationMs: 1000,
     deviceId: 'device-a',
     voidedAt: null,
+    outcome: null,
     ...overrides,
   };
 }
@@ -72,6 +80,7 @@ export function push(t: TestApp, cookie: string, batch: Batch) {
     .post('/sync/push')
     .set('Cookie', cookie)
     .send({
+      protocolVersion: 2,
       deviceId: 'device-a',
       decks: batch.decks ?? [],
       cards: batch.cards ?? [],

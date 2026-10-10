@@ -63,15 +63,22 @@ model Deck {
 }
 
 model Card {
-  id        String  @id
-  userId    String  @map("user_id")
-  deckId    String  @map("deck_id")
-  front     String
-  back      String
-  createdAt BigInt  @map("created_at")
-  updatedAt BigInt  @map("updated_at")
-  deletedAt BigInt? @map("deleted_at")
-  serverSeq BigInt  @map("server_seq")
+  id         String  @id
+  userId     String  @map("user_id")
+  deckId     String  @map("deck_id")
+  front      String
+  back       String
+  /// M6: 'basic' | 'mcq' | 'cloze' | 'short' | 'long'
+  type       String  @default("basic")
+  /// M6: the card content (a NULL content is read as basic front/back)
+  content    Json?
+  unit       Int?
+  sourceKey  String? @map("source_key")
+  sourceHash String? @map("source_hash")
+  createdAt  BigInt  @map("created_at")
+  updatedAt  BigInt  @map("updated_at")
+  deletedAt  BigInt? @map("deleted_at")
+  serverSeq  BigInt  @map("server_seq")
 
   @@index([userId, serverSeq])
   @@map("cards")
@@ -86,6 +93,8 @@ model ReviewLog {
   durationMs Int     @map("duration_ms")
   deviceId   String  @map("device_id")
   voidedAt   BigInt? @map("voided_at")
+  /// M6: the review outcome (never typed text)
+  outcome    Json?
   serverSeq  BigInt  @map("server_seq")
 
   @@index([userId, serverSeq])

@@ -187,24 +187,29 @@ function updateDeck(tx: Tx, d: Deck) {
 
 function insertCard(tx: Tx, userId: string, c: Card) {
   return tx.$executeRaw`
-    INSERT INTO cards (id, user_id, deck_id, front, back, created_at, updated_at, deleted_at, server_seq)
-    VALUES (${c.id}, ${userId}, ${c.deckId}, ${c.front}, ${c.back}, ${c.createdAt}, ${c.updatedAt},
-            ${c.deletedAt}, nextval('change_seq'))`;
+    INSERT INTO cards (id, user_id, deck_id, front, back, type, content, unit, source_key, source_hash,
+                       created_at, updated_at, deleted_at, server_seq)
+    VALUES (${c.id}, ${userId}, ${c.deckId}, ${c.front}, ${c.back}, ${c.type},
+            ${JSON.stringify(c.content)}::jsonb, ${c.unit}, ${c.sourceKey}, ${c.sourceHash},
+            ${c.createdAt}, ${c.updatedAt}, ${c.deletedAt}, nextval('change_seq'))`;
 }
 
 function updateCard(tx: Tx, c: Card) {
   return tx.$executeRaw`
-    UPDATE cards SET deck_id = ${c.deckId}, front = ${c.front}, back = ${c.back},
-      created_at = ${c.createdAt}, updated_at = ${c.updatedAt}, deleted_at = ${c.deletedAt},
-      server_seq = nextval('change_seq')
+    UPDATE cards SET deck_id = ${c.deckId}, front = ${c.front}, back = ${c.back}, type = ${c.type},
+      content = ${JSON.stringify(c.content)}::jsonb, unit = ${c.unit}, source_key = ${c.sourceKey},
+      source_hash = ${c.sourceHash}, created_at = ${c.createdAt}, updated_at = ${c.updatedAt},
+      deleted_at = ${c.deletedAt}, server_seq = nextval('change_seq')
     WHERE id = ${c.id}`;
 }
 
 function insertLog(tx: Tx, userId: string, l: ReviewLog) {
   return tx.$executeRaw`
-    INSERT INTO review_logs (id, user_id, card_id, rating, reviewed_at, duration_ms, device_id, voided_at, server_seq)
+    INSERT INTO review_logs (id, user_id, card_id, rating, reviewed_at, duration_ms, device_id, voided_at,
+                             outcome, server_seq)
     VALUES (${l.id}, ${userId}, ${l.cardId}, ${l.rating}, ${l.reviewedAt}, ${l.durationMs}, ${l.deviceId},
-            ${l.voidedAt}, nextval('change_seq'))
+            ${l.voidedAt}, ${l.outcome === null ? null : JSON.stringify(l.outcome)}::jsonb,
+            nextval('change_seq'))
     ON CONFLICT (id) DO NOTHING`;
 }
 

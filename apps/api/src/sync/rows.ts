@@ -1,4 +1,13 @@
-import { EventSchema, type AppEvent, type Card, type Deck, type ReviewLog } from '@recall/core';
+import {
+  cardFields,
+  CardContentSchema,
+  EventSchema,
+  OutcomeSchema,
+  type AppEvent,
+  type Card,
+  type Deck,
+  type ReviewLog,
+} from '@recall/core';
 
 // Raw rows as Postgres returns them (BIGINT → bigint), and conversion to the domain
 // shape (epoch-ms numbers). Every synced timestamp is a safe integer, so Number() is exact.
@@ -21,6 +30,11 @@ export interface CardRow {
   deck_id: string;
   front: string;
   back: string;
+  type: string;
+  content: unknown;
+  unit: number | null;
+  source_key: string | null;
+  source_hash: string | null;
   created_at: bigint;
   updated_at: bigint;
   deleted_at: bigint | null;
@@ -36,6 +50,7 @@ export interface LogRow {
   duration_ms: number;
   device_id: string;
   voided_at: bigint | null;
+  outcome: unknown;
   server_seq: bigint;
 }
 
@@ -64,12 +79,24 @@ export function toDeck(r: DeckRow): Deck {
   };
 }
 
+/**
+ * A card row → domain card (M6). A basic card's text is its front/back columns (also
+ * when `content` is NULL, written by pre-M6 code during a rollback). A typed card's
+ * `content` is the source of truth and front/back are re-derived from it, so what the
+ * API returns is always consistent.
+ */
 export function toCard(r: CardRow): Card {
+  const content =
+    r.content === null || r.type === 'basic'
+      ? { type: 'basic' as const, front: r.front, back: r.back }
+      : CardContentSchema.parse(r.content); // only ever written from validated content
   return {
     id: r.id,
     deckId: r.deck_id,
-    front: r.front,
-    back: r.back,
+    ...cardFields(content),
+    unit: r.unit,
+    sourceKey: r.source_key,
+    sourceHash: r.source_hash,
     createdAt: num(r.created_at),
     updatedAt: num(r.updated_at),
     deletedAt: numOrNull(r.deleted_at),
@@ -85,6 +112,7 @@ export function toLog(r: LogRow): ReviewLog {
     durationMs: r.duration_ms,
     deviceId: r.device_id,
     voidedAt: numOrNull(r.voided_at),
+    outcome: r.outcome === null ? null : OutcomeSchema.parse(r.outcome),
   };
 }
 

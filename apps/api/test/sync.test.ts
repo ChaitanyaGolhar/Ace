@@ -1,7 +1,7 @@
 import pg from 'pg';
 import request from 'supertest';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import type { PullResponse } from '@recall/core';
+import { cardFields, type PullResponse } from '@recall/core';
 import { closeTestPrisma, DAY, HOUR, makeTestApp, resetDb, signIn, T0 } from './helpers';
 import { card, deck, dump, log, pull, push } from './syncFixtures';
 import { TEST_DATABASE_URL } from './testDb';
@@ -113,7 +113,15 @@ describe('POST /sync/push', () => {
         decks: [d],
         cards: [{ ...c, deletedAt: T0 + 1, updatedAt: T0 + 1 }],
       }).expect(200);
-      await push(t, cookie, { cards: [{ ...c, front: 'edited', updatedAt: T0 + 5 }] }).expect(200);
+      await push(t, cookie, {
+        cards: [
+          {
+            ...c,
+            ...cardFields({ type: 'basic', front: 'edited', back: c.back }),
+            updatedAt: T0 + 5,
+          },
+        ],
+      }).expect(200);
       const stored = body(await pull(t, cookie)).cards[0];
       expect(stored?.deletedAt).toBe(T0 + 1);
       expect(stored?.front).toBe('front');

@@ -6,12 +6,12 @@ import {
   type PushRequest,
   type PushResponse,
   type ReviewLog,
+  sameRow,
 } from '@recall/core';
 import type { Prisma } from '../db';
 import { HttpError } from '../errors';
 import type { Logger } from '../logger';
 import {
-  sameRow,
   toCard,
   toDeck,
   toLog,

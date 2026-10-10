@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
 import { READY_MADE_DECKS } from '../../content/readyMade';
-import { addReadyMadeDeck, readyMadeStatus, type ReadyMadeDeck } from '../../services/readyMade';
+import type { PrebuiltDeck } from '@recall/core';
+import { addReadyMadeDeck, readyMadeStatus } from '../../services/readyMade';
 
 export interface BrowseRow {
   prebuiltId: string;
@@ -26,7 +27,7 @@ export interface BrowseViewModel {
   keepOneCopy: () => void;
 }
 
-export function useBrowse(catalog: readonly ReadyMadeDeck[] = READY_MADE_DECKS): BrowseViewModel {
+export function useBrowse(catalog: readonly PrebuiltDeck[] = READY_MADE_DECKS): BrowseViewModel {
   const { ctx } = useServices();
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState<BrowseViewModel['confirming']>(null);

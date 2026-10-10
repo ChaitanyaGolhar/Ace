@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lww, mergeLog, type Card } from '../src';
+import { lww, mergeLog, sameRow, type Card } from '../src';
 import { makeCard, makeLog, T0, uuid } from './helpers/fixtures';
 import { pick, randomInt, seededRandom, shuffle } from './helpers/random';
 
@@ -163,5 +163,18 @@ describe('mergeLog', () => {
     const b = Object.freeze(makeLog({ voidedAt: T0 }));
     expect(() => mergeLog(a, b)).not.toThrow();
     expect(a.voidedAt).toBeNull();
+  });
+});
+
+describe('sameRow (did a merge change anything?)', () => {
+  it('ignores key order', () => {
+    expect(sameRow({ a: 1, b: 'x', c: null }, { c: null, b: 'x', a: 1 })).toBe(true);
+  });
+
+  it('sees any differing value, missing key or extra key', () => {
+    expect(sameRow({ a: 1, b: 2 }, { a: 1, b: 3 })).toBe(false);
+    expect(sameRow({ a: 1, b: null }, { a: 1 })).toBe(false);
+    expect(sameRow({ a: 1 }, { a: 1, b: 2 })).toBe(false);
+    expect(sameRow({ a: null }, { a: 0 })).toBe(false);
   });
 });

@@ -1,23 +1,12 @@
-import { CardSchema, DeckSchema, lww, mergeLog, replay, ReviewLogSchema } from '@recall/core';
-import { z } from 'zod';
+import { BackupSchema, lww, mergeLog, replay, sameRow, type Backup } from '@recall/core';
 import { withoutSyncFields, type LocalCard, type LocalDeck, type LocalReviewLog } from '../db/db';
 import type { AppContext } from './context';
-import { sameRow } from './rows';
 
 // Export/import backup (brief §10 screen 8, M3). Import merges with exactly the rules
 // sync uses: decks/cards by `lww` (tombstones are sticky), logs by `mergeLog` (undos
 // stick). So importing is idempotent and never deletes or reverts anything newer.
 
-export const BackupSchema = z.object({
-  format: z.literal('recall-backup'),
-  version: z.literal(1),
-  exportedAt: z.int().nonnegative(),
-  decks: z.array(DeckSchema),
-  cards: z.array(CardSchema),
-  reviewLogs: z.array(ReviewLogSchema),
-});
-
-export type Backup = z.infer<typeof BackupSchema>;
+export type { Backup } from '@recall/core';
 
 export class BackupError extends Error {
   constructor(message: string) {

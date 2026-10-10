@@ -58,3 +58,13 @@ function earliest(x: number | null, y: number | null): number | null {
 function canonical(row: object): string {
   return JSON.stringify(Object.entries(row).sort(([k1], [k2]) => (k1 < k2 ? -1 : 1)));
 }
+
+/**
+ * Key-order-independent equality of two flat rows: "did merging change anything?".
+ * Used by the server push, the client pull and backup import alike.
+ */
+export function sameRow(a: object, b: object): boolean {
+  const canonical = (row: object) =>
+    JSON.stringify(Object.entries(row).sort(([x], [y]) => (x < y ? -1 : 1)));
+  return canonical(a) === canonical(b);
+}

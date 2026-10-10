@@ -5,6 +5,7 @@ import {
   MAX_PUSH_ROWS,
   mergeLog,
   replay,
+  sameRow,
   type PullResponse,
   type PushRequest,
   type PushResponse,
@@ -18,7 +19,6 @@ import {
 } from '../db/db';
 import { getMeta, setMeta } from '../db/meta';
 import type { AppContext } from '../services/context';
-import { sameRow } from '../services/rows';
 import type { SyncTransport } from './transport';
 
 // One sync round (brief §8): push everything dirty, then pull everything new.

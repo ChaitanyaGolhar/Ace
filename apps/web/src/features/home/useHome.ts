@@ -5,7 +5,8 @@ import { useQuery } from '../../app/useQuery';
 import { READY_MADE_DECKS } from '../../content/readyMade';
 import { greetingFor } from '../../services/greeting';
 import { loadHome, type DeckSummary } from '../../services/overview';
-import { addReadyMadeDeck, type ReadyMadeDeck } from '../../services/readyMade';
+import type { PrebuiltDeck } from '@recall/core';
+import { addReadyMadeDeck } from '../../services/readyMade';
 import { isPlainShortcut } from '../shell/keyboard';
 
 export interface DeckRow {
@@ -32,7 +33,7 @@ export interface HomeViewModel {
   canStudy: boolean;
   decks: DeckRow[];
   /** First ready-made deck for the welcome card (null: no ready-made decks bundled). */
-  featured: ReadyMadeDeck | null;
+  featured: PrebuiltDeck | null;
   hasReadyMade: boolean;
   adding: boolean;
   addError: string | null;

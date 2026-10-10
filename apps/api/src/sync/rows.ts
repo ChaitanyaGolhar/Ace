@@ -98,10 +98,3 @@ export function toEvent(r: EventRow): AppEvent {
     deviceId: r.device_id,
   });
 }
-
-/** Key-order-independent equality of two flat domain rows. */
-export function sameRow(a: object, b: object): boolean {
-  const canonical = (row: object) =>
-    JSON.stringify(Object.entries(row).sort(([x], [y]) => (x < y ? -1 : 1)));
-  return canonical(a) === canonical(b);
-}

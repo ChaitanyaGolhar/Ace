@@ -1,23 +1,15 @@
-import { CardSchema, DeckSchema, initialState } from '@recall/core';
+import { CardSchema, DeckSchema, initialState, type PrebuiltDeck } from '@recall/core';
 import type { LocalCard, LocalDeck } from '../db/db';
 import type { AppContext } from './context';
 import { recordEvent } from './events';
 
-/** A bundled deck (brief §11). The catalog lives in `src/content/readyMade.ts`. */
-export interface ReadyMadeDeck {
-  prebuiltId: string;
-  name: string;
-  description: string;
-  version: number;
-  cards: { front: string; back: string }[];
-}
-
 /**
- * Copies a ready-made deck into the user's decks: new UUIDs, `source='prebuilt'`,
+ * Copies a ready-made deck (a core `PrebuiltDeck`, validated at build time; the catalog
+ * lives in `src/content/readyMade.ts`) into the user's decks: new UUIDs, `source='prebuilt'`,
  * `prebuiltId` set (§10, screen 6). One transaction. Adding the same deck again makes
  * a second, independent copy (the UI warns first).
  */
-export async function addReadyMadeDeck(ctx: AppContext, source: ReadyMadeDeck): Promise<LocalDeck> {
+export async function addReadyMadeDeck(ctx: AppContext, source: PrebuiltDeck): Promise<LocalDeck> {
   const { db } = ctx;
   return db.transaction('rw', [db.decks, db.cards, db.cardStates, db.events, db.meta], async () => {
     const now = ctx.now();
@@ -59,7 +51,7 @@ export async function addReadyMadeDeck(ctx: AppContext, source: ReadyMadeDeck): 
 /** For each catalog deck: is a live copy already in the user's decks? */
 export async function readyMadeStatus(
   ctx: AppContext,
-  catalog: readonly ReadyMadeDeck[],
+  catalog: readonly PrebuiltDeck[],
 ): Promise<Record<string, boolean>> {
   const decks = await ctx.db.decks.toArray();
   const owned = new Set(

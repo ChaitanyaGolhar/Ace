@@ -3,7 +3,8 @@ import { initialState } from '@recall/core';
 import { initialize } from '../src/services/bootstrap';
 import { createCard, deleteCard } from '../src/services/cards';
 import { createDeck, deleteDeck, renameDeck } from '../src/services/decks';
-import { addReadyMadeDeck, readyMadeStatus, type ReadyMadeDeck } from '../src/services/readyMade';
+import type { PrebuiltDeck } from '@recall/core';
+import { addReadyMadeDeck, readyMadeStatus } from '../src/services/readyMade';
 import { exportBackup, importBackup, BackupError } from '../src/services/backup';
 import { rateCard, undoLastReview } from '../src/services/review';
 import { searchEverything } from '../src/services/search';
@@ -16,7 +17,7 @@ async function fresh(start = T0): Promise<TestContext> {
   return ctx;
 }
 
-const SAMPLE: ReadyMadeDeck = {
+const SAMPLE: PrebuiltDeck = {
   prebuiltId: 'sample-v1',
   name: 'Sample',
   description: 'A test deck.',

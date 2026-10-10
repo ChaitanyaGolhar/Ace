@@ -1,0 +1,33 @@
+# Render Blueprint: the Recall API (see DEPLOY.md). The web app is on Vercel and
+# Postgres on Neon. Values marked `sync: false` are secrets or per-deployment URLs:
+# Render asks for them when the Blueprint is created; they never live in git.
+services:
+  - type: web
+    name: recall-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    # Apply pending migrations, then start. Migrations are idempotent (prisma migrate deploy).
+    startCommand: cd apps/api && ./node_modules/.bin/prisma migrate deploy && node --import tsx src/server.ts
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: DATABASE_URL # Neon connection string (direct, not pooled), with sslmode=require
+        sync: false
+      - key: WEB_ORIGIN # e.g. https://app.example.com
+        sync: false
+      - key: API_ORIGIN # e.g. https://api.example.com
+        sync: false
+      - key: MAIL_MODE
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM # e.g. Recall <login@example.com> (a verified Resend domain)
+        sync: false
+      - key: COOKIE_SECURE
+        value: 'true'
+      - key: TRUST_PROXY # Render's proxy: rate limiting sees the real client IP
+        value: 'true'

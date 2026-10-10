@@ -31,23 +31,43 @@ export class MemoryMailer implements Mailer {
   }
 }
 
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 /** Production: Resend's HTTP API (https://resend.com/docs/api-reference/emails/send-email). */
 export class ResendMailer implements Mailer {
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
+    private readonly fetchFn: typeof fetch = fetch,
   ) {}
   async sendMagicLink(email: string, link: string): Promise<void> {
-    const res = await fetch('https://api.resend.com/emails', {
+    const href = escapeHtml(link);
+    const res = await this.fetchFn('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: this.from,
         to: [email],
         subject: 'Your sign-in link',
-        text: `Open this link to sign in. It works once and expires in 15 minutes.\n\n${link}\n`,
+        text: `Open this link to sign in to Recall. It works once and expires in 15 minutes.
+
+${link}
+
+If you didn't ask for it, ignore this email.
+`,
+        html: `<p>Open this link to sign in to Recall. It works once and expires in 15 minutes.</p><p><a href="${href}">Sign in to Recall</a></p><p>If you didn't ask for it, ignore this email.</p>`,
       }),
     });
-    if (!res.ok) throw new Error(`Resend returned ${String(res.status)}`);
+    if (!res.ok) {
+      let reason = '';
+      try {
+        const data = (await res.json()) as { message?: unknown };
+        if (typeof data.message === 'string') reason = `: ${data.message}`;
+      } catch {
+        // no JSON body
+      }
+      throw new Error(`Resend returned ${String(res.status)}${reason}`);
+    }
   }
 }

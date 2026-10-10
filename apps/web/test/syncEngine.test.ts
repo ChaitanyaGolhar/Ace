@@ -56,11 +56,13 @@ describe('syncOnce (push, then pull)', () => {
     const deck = await createDeck(ctx, 'D');
     for (let i = 0; i < 600; i++) await createCard(ctx, deck.id, `f${String(i)}`, 'b');
     await syncOnce(ctx, fakeTransport(server));
-    expect(server.pushes.length).toBe(2);
+    // 1 deck + 600 cards + 600 card_created events = 1201 rows → 3 batches of ≤500.
+    expect(server.pushes.length).toBe(3);
+    expect(server.events.size).toBe(600);
     expect(server.cards.size).toBe(600);
     expect(await ctx.db.cards.where('dirty').equals(1).count()).toBe(0);
     expect(await ctx.db.decks.where('dirty').equals(1).count()).toBe(0);
-  });
+  }, 30_000);
 
   it('always pushes before pulling', async () => {
     const server = new FakeServer();
@@ -111,7 +113,15 @@ describe('syncOnce (push, then pull)', () => {
     expect(await b.db.cardStates.get(card.id)).toEqual(
       replay((await b.db.cards.get(card.id)) ?? card, logs),
     );
-    expect(await getMeta(b.db, 'syncCursor')).toBe(String(server.logs.get(logs[0]?.id ?? '')?.seq));
+    const lastSeq = Math.max(
+      ...[
+        ...server.decks.values(),
+        ...server.cards.values(),
+        ...server.logs.values(),
+        ...server.events.values(),
+      ].map((v) => v.seq),
+    );
+    expect(await getMeta(b.db, 'syncCursor')).toBe(String(lastSeq));
   });
 
   it('pages through the pull until hasMore is false', async () => {

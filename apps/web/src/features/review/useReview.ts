@@ -9,7 +9,7 @@ import { formatInterval } from '../../services/format';
 import { loadNextDue } from '../../services/overview';
 import { loadQueue, nextCard, remainingCount } from '../../services/queue';
 import { lastSessionRating, loadReviewCard, rateCard, undoLastReview } from '../../services/review';
-import { completeSession, sessionSummary, startSession } from '../../services/session';
+import { finishSession, sessionSummary, startSession } from '../../services/session';
 import { isPlainShortcut } from '../shell/keyboard';
 
 export const RATING_LABELS = { 1: 'Again', 2: 'Hard', 3: 'Good', 4: 'Easy' } as const;
@@ -221,10 +221,17 @@ export function useReview(deckId: string | null): ReviewViewModel {
   }, [ctx, session, canUndo, queueData]);
 
   const finish = useCallback(() => {
-    // End of a study session is a sync trigger (§8.4); it runs in the background.
-    void sync.requestSync();
-    void completeSession(ctx).finally(() => navigate('/'));
-  }, [ctx, navigate, sync]);
+    // Records session_completed / session_abandoned (M4), then syncs in the background:
+    // the end of a study session is a sync trigger (§8.4).
+    const outcome = {
+      reviewed: queueData?.summary.reviewed ?? 0,
+      remaining: queueData ? remainingCount(queueData.queue) : 0,
+      timeSpentMs: queueData?.summary.timeSpentMs ?? 0,
+    };
+    void finishSession(ctx, outcome)
+      .then(() => sync.requestSync())
+      .finally(() => navigate('/'));
+  }, [ctx, navigate, sync, queueData]);
 
   // Keyboard: Space shows the answer, 1–4 rate, Z undoes. Never while typing.
   useEffect(() => {

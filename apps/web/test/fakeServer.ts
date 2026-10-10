@@ -1,4 +1,5 @@
 import {
+  type AppEvent,
   lww,
   mergeLog,
   type Card,
@@ -20,6 +21,7 @@ export class FakeServer {
   readonly decks = new Map<string, { row: Deck; seq: number }>();
   readonly cards = new Map<string, { row: Card; seq: number }>();
   readonly logs = new Map<string, { row: ReviewLog; seq: number }>();
+  readonly events = new Map<string, { row: AppEvent; seq: number }>();
   readonly calls: string[] = [];
   pushes: PushRequest[] = [];
 
@@ -53,11 +55,15 @@ export class FakeServer {
         }
       }
     }
+    for (const e of req.events) {
+      if (!this.events.has(e.id)) this.events.set(e.id, { row: e, seq: ++this.seq });
+    }
     return {
       accepted: {
         decks: req.decks.map((d) => d.id),
         cards: req.cards.map((c) => c.id),
         reviewLogs: req.reviewLogs.map((l) => l.id),
+        events: req.events.map((e) => e.id),
       },
     };
   }
@@ -68,6 +74,7 @@ export class FakeServer {
       ...[...this.decks.values()].map((v) => ({ ...v, kind: 'deck' as const })),
       ...[...this.cards.values()].map((v) => ({ ...v, kind: 'card' as const })),
       ...[...this.logs.values()].map((v) => ({ ...v, kind: 'log' as const })),
+      ...[...this.events.values()].map((v) => ({ ...v, kind: 'event' as const })),
     ]
       .filter((v) => v.seq > after)
       .sort((a, b) => a.seq - b.seq);
@@ -76,6 +83,7 @@ export class FakeServer {
       decks: page.filter((v) => v.kind === 'deck').map((v) => v.row),
       cards: page.filter((v) => v.kind === 'card').map((v) => v.row),
       reviewLogs: page.filter((v) => v.kind === 'log').map((v) => v.row),
+      events: page.filter((v) => v.kind === 'event').map((v) => v.row),
       nextCursor: String(page.at(-1)?.seq ?? after),
       hasMore: all.length > limit,
     };

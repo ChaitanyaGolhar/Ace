@@ -8,6 +8,7 @@ import { RecallDB } from './db/db';
 import './index.css';
 import { initialize } from './services/bootstrap';
 import type { AppContext } from './services/context';
+import { recordEvent } from './services/events';
 import { PendingActions } from './services/pendingActions';
 import { SyncEngine } from './sync/engine';
 import { httpTransport } from './sync/transport';
@@ -30,6 +31,7 @@ async function start() {
   await initialize(ctx, {
     requestPersist: typeof storage?.persist === 'function' ? () => storage.persist() : undefined,
   });
+  await recordEvent(ctx, 'app_opened', {});
   const sync = new SyncEngine({
     ctx,
     transport: httpTransport(API_URL, window.fetch.bind(window)),

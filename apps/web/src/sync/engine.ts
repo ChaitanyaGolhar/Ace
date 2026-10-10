@@ -1,5 +1,6 @@
 import { setMeta, getMeta } from '../db/meta';
 import type { AppContext } from '../services/context';
+import { recordEvent } from '../services/events';
 import type { SyncStatus } from '../services/syncStatus';
 import { syncOnce } from './syncOnce';
 import { AuthError, type SyncTransport } from './transport';
@@ -121,6 +122,8 @@ export class SyncEngine {
   }
 
   private async signedInAs(user: { email: string }): Promise<void> {
+    const before = await getMeta(this.deps.ctx.db, 'auth');
+    if (!before?.signedIn) await recordEvent(this.deps.ctx, 'signed_in', {});
     await setMeta(this.deps.ctx.db, 'auth', { signedIn: true, email: user.email });
     this.isSignedIn = true;
     await this.requestSync();

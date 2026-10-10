@@ -1,6 +1,7 @@
 import { CardSchema, DeckSchema, initialState } from '@recall/core';
 import type { LocalCard, LocalDeck } from '../db/db';
 import type { AppContext } from './context';
+import { recordEvent } from './events';
 
 /** A bundled deck (brief §11). The catalog lives in `src/content/readyMade.ts`. */
 export interface ReadyMadeDeck {
@@ -18,7 +19,7 @@ export interface ReadyMadeDeck {
  */
 export async function addReadyMadeDeck(ctx: AppContext, source: ReadyMadeDeck): Promise<LocalDeck> {
   const { db } = ctx;
-  return db.transaction('rw', [db.decks, db.cards, db.cardStates], async () => {
+  return db.transaction('rw', [db.decks, db.cards, db.cardStates, db.events, db.meta], async () => {
     const now = ctx.now();
     const deck: LocalDeck = {
       ...DeckSchema.parse({
@@ -50,6 +51,7 @@ export async function addReadyMadeDeck(ctx: AppContext, source: ReadyMadeDeck): 
     }));
     await db.cards.bulkAdd(cards);
     await db.cardStates.bulkPut(cards.map((c) => initialState(c)));
+    await recordEvent(ctx, 'deck_added_prebuilt', { prebuiltId: source.prebuiltId });
     return deck;
   });
 }

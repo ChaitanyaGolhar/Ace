@@ -10,6 +10,7 @@ import type { LocalReviewLog } from '../db/db';
 import { getMeta } from '../db/meta';
 import type { AppContext } from './context';
 import { NotFoundError } from './errors';
+import { recordEvent } from './events';
 import { recomputeCardState } from './states';
 
 export interface RateInput {
@@ -40,23 +41,31 @@ export async function rateCard(
   const rating = RatingSchema.parse(input.rating);
   const { db } = ctx;
   const deviceId = await requireDeviceId(ctx);
-  return db.transaction('rw', [db.cards, db.reviewLogs, db.cardStates], async () => {
-    const card = await db.cards.get(input.cardId);
-    if (!card || card.deletedAt !== null) throw new NotFoundError('Card', input.cardId);
-    const log = ReviewLogSchema.parse({
-      id: ctx.newId(),
-      cardId: card.id,
-      rating,
-      reviewedAt: ctx.now(),
-      durationMs: Math.round(input.durationMs),
-      deviceId,
-      voidedAt: null,
-    });
-    const row: LocalReviewLog = { ...log, dirty: 1, localVersion: 1 };
-    await db.reviewLogs.add(row);
-    const state = await recomputeCardState(ctx, card);
-    return { log: row, state };
-  });
+  return db.transaction(
+    'rw',
+    [db.cards, db.reviewLogs, db.cardStates, db.events, db.meta],
+    async () => {
+      const card = await db.cards.get(input.cardId);
+      if (!card || card.deletedAt !== null) throw new NotFoundError('Card', input.cardId);
+      const log = ReviewLogSchema.parse({
+        id: ctx.newId(),
+        cardId: card.id,
+        rating,
+        reviewedAt: ctx.now(),
+        durationMs: Math.round(input.durationMs),
+        deviceId,
+        voidedAt: null,
+      });
+      const row: LocalReviewLog = { ...log, dirty: 1, localVersion: 1 };
+      await db.reviewLogs.add(row);
+      const state = await recomputeCardState(ctx, card);
+      // The very first review on this device (M4 "time to first review").
+      if ((await db.events.where('type').equals('first_review_completed').count()) === 0) {
+        await recordEvent(ctx, 'first_review_completed', {});
+      }
+      return { log: row, state };
+    },
+  );
 }
 
 /**

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { initialize } from '../../src/services/bootstrap';
 import { createCard, updateCard } from '../../src/services/cards';
 import { createDeck } from '../../src/services/decks';
+import { recordEvent } from '../../src/services/events';
 import { rateCard } from '../../src/services/review';
 import { SyncEngine } from '../../src/sync/engine';
 import { syncOnce } from '../../src/sync/syncOnce';
@@ -191,7 +192,40 @@ describe('two clients against the real API', () => {
         ],
         cards: [],
         reviewLogs: [],
+        events: [],
       }),
     ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('events recorded offline sync later, without duplicates (M4)', async () => {
+    const a = await newDevice();
+    const b = await newDevice();
+    const ta = await transportFor(email);
+    const tb = await transportFor(email);
+    const offline: SyncTransport = {
+      ...ta,
+      push: () => Promise.reject(new Error('offline')),
+      pull: () => Promise.reject(new Error('offline')),
+    };
+
+    await recordEvent(a, 'app_opened', {});
+    const deck = await createDeck(a, 'D');
+    await createCard(a, deck.id, 'q', 'a');
+    await expect(syncOnce(a, offline)).rejects.toThrow();
+
+    await syncOnce(a, ta);
+    await syncOnce(a, ta);
+    await syncOnce(b, tb);
+    await recordEvent(b, 'app_opened', {});
+    await syncOnce(b, tb);
+    await syncOnce(a, ta);
+
+    const ids = async (ctx: TestContext) => (await ctx.db.events.toArray()).map((e) => e.id).sort();
+    expect(await ids(a)).toEqual(await ids(b));
+    expect(await ids(a)).toHaveLength(3);
+    // A fresh device pulls exactly what the server holds: three events, no duplicates.
+    const c = await newDevice();
+    await syncOnce(c, await transportFor(email));
+    expect(await ids(c)).toEqual(await ids(a));
   });
 });

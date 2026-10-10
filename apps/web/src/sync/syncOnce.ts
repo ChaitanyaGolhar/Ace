@@ -1,4 +1,5 @@
 import {
+  EventSchema,
   lww,
   MAX_PULL_LIMIT,
   MAX_PUSH_ROWS,
@@ -8,7 +9,13 @@ import {
   type PushRequest,
   type PushResponse,
 } from '@recall/core';
-import { withoutSyncFields, type LocalCard, type LocalDeck, type LocalReviewLog } from '../db/db';
+import {
+  withoutSyncFields,
+  type LocalCard,
+  type LocalDeck,
+  type LocalEvent,
+  type LocalReviewLog,
+} from '../db/db';
 import { getMeta, setMeta } from '../db/meta';
 import type { AppContext } from '../services/context';
 import { sameRow } from '../services/rows';
@@ -21,6 +28,7 @@ export interface PushSnapshot {
   decks: Map<string, number>;
   cards: Map<string, number>;
   reviewLogs: Map<string, number>;
+  events: Map<string, number>;
 }
 
 /**
@@ -34,7 +42,7 @@ export async function buildPushBatch(
   exclude: ReadonlySet<string> = new Set(),
 ): Promise<{ request: PushRequest; snapshot: PushSnapshot }> {
   const { db } = ctx;
-  return db.transaction('r', [db.decks, db.cards, db.reviewLogs], async () => {
+  return db.transaction('r', [db.decks, db.cards, db.reviewLogs, db.events], async () => {
     let room = MAX_PUSH_ROWS;
     const take = async <T extends { id: string }>(rows: Promise<T[]>): Promise<T[]> => {
       const picked = (await rows).filter((r) => !exclude.has(r.id)).slice(0, room);
@@ -44,17 +52,21 @@ export async function buildPushBatch(
     const decks: LocalDeck[] = await take(db.decks.where('dirty').equals(1).toArray());
     const cards: LocalCard[] = await take(db.cards.where('dirty').equals(1).toArray());
     const logs: LocalReviewLog[] = await take(db.reviewLogs.where('dirty').equals(1).toArray());
+    const events: LocalEvent[] = await take(db.events.where('dirty').equals(1).toArray());
     return {
       request: {
         deviceId,
         decks: decks.map(withoutSyncFields),
         cards: cards.map(withoutSyncFields),
         reviewLogs: logs.map(withoutSyncFields),
+        // Re-validate: TypeScript's Omit doesn't keep the event union's per-type shapes.
+        events: events.map((e) => EventSchema.parse(withoutSyncFields(e))),
       },
       snapshot: {
         decks: new Map(decks.map((r) => [r.id, r.localVersion])),
         cards: new Map(cards.map((r) => [r.id, r.localVersion])),
         reviewLogs: new Map(logs.map((r) => [r.id, r.localVersion])),
+        events: new Map(events.map((r) => [r.id, r.localVersion])),
       },
     };
   });
@@ -71,7 +83,7 @@ export async function markPushed(
   accepted: PushResponse['accepted'],
 ): Promise<void> {
   const { db } = ctx;
-  await db.transaction('rw', [db.decks, db.cards, db.reviewLogs], async () => {
+  await db.transaction('rw', [db.decks, db.cards, db.reviewLogs, db.events], async () => {
     for (const id of accepted.decks) {
       const row = await db.decks.get(id);
       if (row && row.localVersion === snapshot.decks.get(id))
@@ -88,6 +100,12 @@ export async function markPushed(
         await db.reviewLogs.put({ ...row, dirty: 0 });
       }
     }
+    for (const id of accepted.events) {
+      const row = await db.events.get(id);
+      if (row && row.localVersion === snapshot.events.get(id)) {
+        await db.events.put({ ...row, dirty: 0 });
+      }
+    }
   });
 }
 
@@ -100,7 +118,7 @@ export async function applyPullPage(ctx: AppContext, page: PullResponse): Promis
   const { db } = ctx;
   await db.transaction(
     'rw',
-    [db.decks, db.cards, db.reviewLogs, db.cardStates, db.meta],
+    [db.decks, db.cards, db.reviewLogs, db.cardStates, db.meta, db.events],
     async () => {
       for (const remote of page.decks) {
         const local = await db.decks.get(remote.id);
@@ -150,6 +168,13 @@ export async function applyPullPage(ctx: AppContext, page: PullResponse): Promis
         }
       }
 
+      // Events are append-only: insert if absent, never changed.
+      for (const remote of page.events) {
+        if (!(await db.events.get(remote.id))) {
+          await db.events.add({ ...remote, dirty: 0, localVersion: 0 });
+        }
+      }
+
       // CardState is never synced: re-derive it for every card whose row or logs changed.
       // (A log can arrive before its card on an earlier page; the card's own arrival
       // triggers the replay then.)
@@ -180,11 +205,22 @@ export async function syncOnce(
   const pushed = new Set<string>();
   for (;;) {
     const { request, snapshot } = await buildPushBatch(ctx, deviceId, pushed);
-    const size = request.decks.length + request.cards.length + request.reviewLogs.length;
+    const size =
+      request.decks.length +
+      request.cards.length +
+      request.reviewLogs.length +
+      request.events.length;
     if (size === 0) break;
     const response = await transport.push(request);
     await markPushed(ctx, snapshot, response.accepted);
-    for (const r of [...request.decks, ...request.cards, ...request.reviewLogs]) pushed.add(r.id);
+    for (const r of [
+      ...request.decks,
+      ...request.cards,
+      ...request.reviewLogs,
+      ...request.events,
+    ]) {
+      pushed.add(r.id);
+    }
   }
 
   const limit = options.pullLimit ?? MAX_PULL_LIMIT;

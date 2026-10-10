@@ -2,6 +2,7 @@ import { CardSchema, initialState, MAX_CARD_TEXT_LENGTH } from '@recall/core';
 import type { LocalCard } from '../db/db';
 import type { AppContext } from './context';
 import { NotFoundError, UserInputError } from './errors';
+import { recordEvent } from './events';
 
 export interface CardText {
   front: string;
@@ -31,7 +32,7 @@ export async function createCard(
 ): Promise<LocalCard> {
   const text = cleanText({ front, back });
   const { db } = ctx;
-  return db.transaction('rw', [db.decks, db.cards, db.cardStates], async () => {
+  return db.transaction('rw', [db.decks, db.cards, db.cardStates, db.events, db.meta], async () => {
     const deck = await db.decks.get(deckId);
     if (!deck || deck.deletedAt !== null) throw new NotFoundError('Deck', deckId);
     const now = ctx.now();
@@ -46,6 +47,7 @@ export async function createCard(
     const row: LocalCard = { ...card, dirty: 1, localVersion: 1 };
     await db.cards.add(row);
     await db.cardStates.put(initialState(card));
+    await recordEvent(ctx, 'card_created', {});
     return row;
   });
 }

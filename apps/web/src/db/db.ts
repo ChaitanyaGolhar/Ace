@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Card, CardState, Deck, ReviewLog } from '@recall/core';
+import type { AppEvent, Card, CardState, Deck, ReviewLog } from '@recall/core';
 
 /**
  * Local-only bookkeeping on every synced row. Never sent to the server.
@@ -15,6 +15,7 @@ export interface SyncFields {
 export type LocalDeck = Deck & SyncFields;
 export type LocalCard = Card & SyncFields;
 export type LocalReviewLog = ReviewLog & SyncFields;
+export type LocalEvent = AppEvent & SyncFields;
 
 export interface MetaRow {
   key: string;
@@ -27,6 +28,7 @@ export class RecallDB extends Dexie {
   reviewLogs!: EntityTable<LocalReviewLog, 'id'>;
   cardStates!: EntityTable<CardState, 'cardId'>;
   meta!: EntityTable<MetaRow, 'key'>;
+  events!: EntityTable<LocalEvent, 'id'>;
 
   constructor(name = 'recall') {
     super(name);
@@ -36,6 +38,10 @@ export class RecallDB extends Dexie {
       reviewLogs: 'id, cardId, reviewedAt, dirty',
       cardStates: 'cardId, due, state',
       meta: 'key', // deviceId, syncCursor, schedulerVersion, settings, session, ...
+    });
+    // M4: product events, append-only and synced like review logs.
+    this.version(2).stores({
+      events: 'id, type, occurredAt, dirty',
     });
   }
 }

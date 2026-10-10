@@ -8,6 +8,8 @@ via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 latest milestone status, `DECISIONS.md` for decisions the brief didn't cover, and
 `apps/web/UI_CONTRACT.md` for the screen-by-screen UI contract.
 
+**Deploying for test users:** see [`DEPLOY.md`](./DEPLOY.md) (Vercel + Render + Neon + Resend).
+
 ## Setup
 
 Requirements: Node 24+ (see `.nvmrc`) and pnpm (the version is pinned in `package.json` →

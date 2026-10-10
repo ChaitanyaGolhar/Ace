@@ -4,12 +4,12 @@ _Status: in progress. This file is updated after every milestone and every block
 
 ## 1. Summary
 
-| Milestone | Status                                                                                        |
-| --------- | --------------------------------------------------------------------------------------------- |
-| M1        | ✅ done — tag `m1-done`                                                                       |
-| M2        | ⏸ paused — auth API done; sync push/pull, client sync engine, sync UI not started (see below) |
-| M3        | not started (paused)                                                                          |
-| M4        | not started (paused)                                                                          |
+| Milestone | Status                  |
+| --------- | ----------------------- |
+| M1        | ✅ done — tag `m1-done` |
+| M2        | ✅ done — tag `m2-done` |
+| M3        | in progress             |
+| M4        | not started (paused)    |
 
 **Change of plan mid-run.** While M2 was in progress, a new instruction arrived: apply
 the approved visual design to `apps/web` as a UI-only change ("don't change
@@ -40,17 +40,44 @@ Bug found and fixed by the E2E suite: right after a rating, the review screen co
 briefly show the card just rated (stale live-query snapshot), so it could be rated twice.
 The screen now waits for a snapshot that includes the write (DECISIONS D-107).
 
-### M2 — Backend, auth and sync (paused)
+### M2 — Backend, auth and sync
 
-Done and committed (`apps/api`, 18 Supertest tests against real Postgres, all green):
-docker-compose Postgres (port 54329, dbs `recall_dev` / `recall_test` / `recall_e2e`),
-Prisma schema + first migration (incl. the `change_seq` sequence), magic-link auth
-(`POST /auth/magic-link`, `GET /auth/verify`, `POST /auth/logout`, `GET /me`) with hashed
-tokens, 15-min links, 60-day sessions, httpOnly/Secure/SameSite=Lax cookie, rate limits
-(5/email/h, 20/IP/h), CORS for the web origin only, one error format. Core: max lengths
-(deck name 200, front/back 20,000) and shared push/pull wire schemas, enforced by the web
-services too.
+(Resumed after the UI work, when asked to "continue".)
 
-Not started: `/sync/push` and `/sync/pull` (advisory lock, LWW upserts, seq), the client
-sync engine, sync status UI, sign in/out in Settings, and the M2 E2E tests. No M2
-acceptance criterion is claimed yet.
+| Criterion                                                                                                               | Status | Proof                                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API tests (Supertest + real Postgres): push idempotent                                                                  | ✅     | `apps/api/test/sync.test.ts` › "is idempotent: the same batch twice gives the same database state" (full table dumps compared)                                                                                                                           |
+| … LWW correct                                                                                                           | ✅     | `sync.test.ts` › "a newer edit overwrites…", "equal updatedAt falls back…", "tombstones are sticky…"                                                                                                                                                     |
+| … log insert-if-absent                                                                                                  | ✅     | `sync.test.ts` › "are inserted if absent; a different copy of an existing log never changes it"                                                                                                                                                          |
+| … `voidedAt` merges correctly                                                                                           | ✅     | `sync.test.ts` › "voidedAt: set when the stored log has none, never cleared, earliest wins"                                                                                                                                                              |
+| … ownership 403                                                                                                         | ✅     | `sync.test.ts` › "ownership: a row that exists under another user rejects the whole batch (403)"                                                                                                                                                         |
+| … pull pagination                                                                                                       | ✅     | `sync.test.ts` › "pages in serverSeq order with nextCursor and hasMore, without gaps or repeats"                                                                                                                                                         |
+| … advisory lock present                                                                                                 | ✅     | `sync.test.ts` › "takes the per-user advisory lock" (a push provably waits while another transaction holds `pg_advisory_xact_lock(hashtext(userId))`)                                                                                                    |
+| Concurrency: parallel pushes; full pull returns every row; incremental pulls never skip                                 | ✅     | `apps/api/test/concurrency.test.ts` (3 tests). Verified meaningful: with the lock removed, the race test failed 5/5 runs; with it, 5/5 pass.                                                                                                             |
+| Two-client simulation (two Dexie DBs vs the real API): same card studied offline on both → identical logs and CardState | ✅     | `apps/web/test/integration/syncWithApi.test.ts` › "both study the same card offline, then sync: identical logs and CardState"                                                                                                                            |
+| Edit during an in-flight push is not lost                                                                               | ✅     | same file › "an edit made while a push is in flight is not lost" (real API); unit: `syncEngine.test.ts`                                                                                                                                                  |
+| Anonymous local data uploaded on first sign-in, then merged with another device                                         | ✅     | `syncWithApi.test.ts` › "anonymous local data is uploaded on first sign-in…"; also the E2E two-devices test (A creates data anonymously, then signs in)                                                                                                  |
+| E2E: two browser contexts, same user; study offline in A, go online, B shows updated counts                             | ✅     | `apps/web/e2e/m2-sync.spec.ts` › "two devices: study offline on A, go online, B shows the updated counts after sync"                                                                                                                                     |
+| Studying never blocked by sync errors (API killed mid-session)                                                          | ✅     | `m2-sync.spec.ts` › "studying is never blocked by sync errors (the API is killed mid-session)" (kills the API process; status shows "Couldn’t sync · retrying"; the session completes; it syncs after the restart)                                       |
+| zod max lengths on client and server (deck name 200, front/back 20,000)                                                 | ✅     | core `schemas.test.ts` › "max lengths…"; web `decksAndCards.test.ts` › "max lengths (client side…)"; API `sync.test.ts` › "enforces the max lengths and the 500-row limit (400)"; integration › "the server enforces the same max lengths as the client" |
+| Report explains the advisory-lock and sequence reasoning                                                                | ✅     | below                                                                                                                                                                                                                                                    |
+
+**Why the advisory lock, in plain words.** Every change on the server gets a number from
+one shared counter (`change_seq`), and a device asks "give me everything after number N".
+The catch: a number is handed out when a row is _written_, but the row only becomes
+visible when its transaction _commits_, and commits can finish in a different order. Say
+push A takes numbers 10–20 and is still working, while push B takes 21 and commits first.
+A device that pulls right then sees 21, remembers "I have everything up to 21", and will
+never ask for 10–20 again, even after A commits. Taking
+`pg_advisory_xact_lock(hashtext(userId))` at the start of every push makes one user's
+pushes run one after another, so for that user the numbers are handed out in the same
+order as the commits, and "everything after N" is always complete. Different users still
+push in parallel.
+
+**A second, read-side hole, found by the concurrency test.** The pull read decks, cards
+and logs with three separate queries. A push could commit between them, so a page could
+contain its logs but not its deck, and the cursor jumped past the deck. The lock can't
+help there; the fix was to read all three in one database snapshot (DECISIONS D-206).
+
+Commands run (all green): `pnpm check` (core 132, API 38, web 178 tests) and `pnpm e2e`
+(20 passed; the 4 screenshot tests are opt-in).

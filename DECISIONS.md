@@ -171,3 +171,42 @@ decisions:
 
 - **What:** `createBrowserRouter` instead of `<BrowserRouter>`.
 - **Why:** `useBlocker` (unsaved-changes guard in the card editor) needs a data router.
+
+### D-205 Server merges `voidedAt` like the client: earliest wins
+
+- **What:** on push, a stored log's `voidedAt` is set when the stored one is null (the brief's rule) **and** replaced by an earlier one if two devices voided at different times.
+- **Why:** clients merge with `mergeLog` (earliest wins); if the server kept "first received" instead, two devices could end up with different `voidedAt` values for the same log.
+- **Reverse:** `apps/api/src/sync/push.ts` (the `mergeLog` call).
+
+### D-206 Pull reads all three tables from one snapshot (bug found by the concurrency test)
+
+- **What:** `/sync/pull` runs its three SELECTs in one `REPEATABLE READ` transaction.
+- **Why:** with independent reads, a push committing between them could put its logs (high seqs) on a page without its deck (lower seq), and the cursor would skip the deck for ever. The advisory lock can't prevent this; it's a read-side problem.
+
+### D-207 "Accepted" means "processed", including rows that lost LWW
+
+- **What:** every id in a valid batch is accepted; a row whose incoming version lost to a newer stored one is accepted too.
+- **Why:** the client should stop pushing it; the newer version reaches it on the next pull.
+
+### D-208 Client pull merge
+
+- **What:** if the server's version of a deck/card wins against the local one, it replaces it with `dirty=0` and `localVersion+1` (so an in-flight push of the losing version can't later clear anything wrongly). Logs: insert if absent, else `mergeLog`. CardStates of affected cards are replayed in the same transaction that saves the cursor.
+
+### D-209 Each row is pushed at most once per sync round
+
+- **What:** a row edited while its push is in flight stays dirty and goes out in the next round (the next trigger, at most 60 s later), not in a loop within the same round.
+- **Why:** guarantees a round always ends.
+
+### D-210 Signing in from the magic link
+
+- **What:** `/auth/verify` redirects to `/settings?signedIn=1`; the app removes the parameter, asks `/me`, caches `{ signedIn, email }` in `meta.auth`, then syncs. `?signInError=invalid` shows a message in Settings. On a 401 during sync the app marks itself signed out and keeps all local data.
+- **Known limitation:** signing into a _different_ account on a device whose rows were already synced to another account fails with 403 (ownership) on push, and the status shows "Couldn't sync". There is no "switch account" flow (not in the brief).
+
+### D-211 Test infrastructure for the real API
+
+- `apps/api` exports `./testing` (`prepareDatabase`, `startTestServer`) for other packages' tests. The web integration tests use their own database `recall_web_test` (created on demand), so they can run in parallel with the API's tests (`recall_test`).
+- E2E runs the real API as a child process (port 3100, database `recall_e2e`, `MAIL_MODE=file`); the web build points at it via `VITE_API_URL`. A test can stop and restart it (`e2e/support/apiServer.ts`).
+
+### D-212 Sync triggers
+
+- **What:** app start (after first render), the `online` event, the tab becoming visible again, every 60 s while visible and online, the end of a study session (the X button / "Back to home"), and "Sync now". One sync at a time; requests during a sync cause exactly one follow-up round. Backoff 5 s, 10 s, ... up to 5 min.

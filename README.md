@@ -4,7 +4,7 @@ An offline-first spaced-repetition web app (PWA) for students. Scheduling uses F
 via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 [`BUILD_BRIEF.md`](./BUILD_BRIEF.md) for the full product and technical spec.
 
-**Status:** M0 (core) and M1 (local-only PWA) done. See `MORNING_REPORT.md` for the
+**Status:** M0 (core), M1 (local-only PWA) and M2 (API, auth, sync) done; the approved visual design is applied. See `MORNING_REPORT.md` for the
 latest milestone status, `DECISIONS.md` for decisions the brief didn't cover, and
 `apps/web/UI_CONTRACT.md` for the screen-by-screen UI contract.
 
@@ -18,12 +18,25 @@ pnpm install
 pnpm --filter @recall/web exec playwright install chromium   # once, for E2E
 ```
 
-Run the web app (local-only; no backend needed in M1):
+Database and API (needed for sign-in/sync and for the API and integration tests):
+
+```sh
+docker compose up -d                          # Postgres on localhost:54329 (dbs: recall_dev, recall_test, recall_e2e)
+cp apps/api/.env.example apps/api/.env        # once; MAIL_MODE=console prints magic links in the API terminal
+pnpm --filter @recall/api migrate             # apply migrations to recall_dev
+pnpm --filter @recall/api dev                 # http://localhost:3000
+```
+
+Run the web app (works without the API; sign-in and sync need it):
 
 ```sh
 pnpm --filter @recall/web dev       # http://localhost:5173 (no service worker in dev)
 pnpm --filter @recall/web build && pnpm --filter @recall/web preview   # http://localhost:4173, with the service worker
 ```
+
+The web app talks to `VITE_API_URL` (default `http://localhost:3000`). To sign in during
+development: Settings › Sign in to sync › enter any email › open the link printed in the
+API terminal.
 
 ## Commands (run from the repo root)
 
@@ -153,3 +166,18 @@ exact version on purpose) can change every card's schedule. That requires bumpin
 - **PWA:** `vite-plugin-pwa` precaches the app shell; no runtime caching (API responses
   are never cached); a new version shows an "Update available — reload" banner and never
   reloads by itself.
+
+## Architecture: `apps/api` and sync
+
+- **Express 5 + Prisma 7 + Postgres.** Auth is an email magic link (token stored hashed,
+  15 min) that creates a 60-day session in an httpOnly, Secure, SameSite=Lax cookie.
+- **Sync** (`apps/api/src/sync`): `POST /sync/push` takes up to 500 rows (decks, then
+  cards, then logs) in one transaction that first takes a per-user advisory lock;
+  decks/cards are upserted with core `lww`, logs are insert-if-absent with `voidedAt`
+  merged by core `mergeLog`. Every change takes a new `server_seq` from one sequence.
+  `GET /sync/pull?since=&limit=` returns one page in seq order from a single snapshot.
+  Why the lock and the snapshot matter: see `MORNING_REPORT.md` › M2.
+- **Client sync engine** (`apps/web/src/sync`): push dirty rows, then pull pages; clear
+  `dirty` only if `localVersion` didn't change during the push; apply each pulled page
+  (lww/mergeLog, replay affected cards, save the cursor) in one Dexie transaction; one
+  sync at a time; exponential backoff; never blocks studying.

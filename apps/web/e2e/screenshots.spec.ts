@@ -21,6 +21,7 @@ const VIEWPORTS = [
   { name: 'desktop', width: 1280, height: 800 },
 ] as const;
 const THEMES = ['dark', 'light'] as const;
+const ROBBINS = 'Robbins Ch. 3 — Inflammation and Repair';
 
 async function seed(page: Page) {
   await page.goto('/settings');
@@ -41,7 +42,7 @@ for (const viewport of VIEWPORTS) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
       await page.clock.setFixedTime(NOW);
-      const shot = async (name: string) => {
+      const shot = async (name: string, options: { viewportOnly?: boolean } = {}) => {
         // Every page load starts a sync; capture the settled status, not "Syncing…".
         await expect(page.getByText('Syncing…')).toHaveCount(0);
         await expect(page.getByRole('link', { name: /^Sync status: Syncing/ })).toHaveCount(0);
@@ -49,7 +50,7 @@ for (const viewport of VIEWPORTS) {
         // Mobile mocks are one screen tall (fixed tab bar); desktop mocks show the whole page.
         await page.screenshot({
           path: join(OUT, `${name}-${viewport.name}-${theme}.png`),
-          fullPage: viewport.name === 'desktop',
+          fullPage: viewport.name === 'desktop' && !options.viewportOnly,
         });
       };
 
@@ -132,6 +133,28 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByRole('dialog', { name: 'Add DBMS Basics again?' })).toBeVisible();
       await shot('browse-duplicate');
       await page.getByRole('button', { name: 'Keep one copy' }).click();
+
+      // A card from the bundled Robbins deck: multi-line question, long answer.
+      // (The frozen clock moves on 5 minutes: a new session must start after the
+      // earlier session's reviews, as it always does with a running clock.)
+      await page.clock.setFixedTime(NOW + 5 * 60_000);
+      await page.goto('/browse');
+      await page.getByRole('button', { name: `Add ${ROBBINS}` }).click();
+      await expect(page.getByRole('heading', { level: 1, name: ROBBINS })).toBeVisible();
+      await page.getByRole('link', { name: 'Study deck' }).click();
+      await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
+      // What the window shows: a full-page capture would draw the sticky rating bar
+      // mid-page, over the answer.
+      await shot('robbins-review-front', { viewportOnly: true });
+      await page.keyboard.press('Space');
+      await expect(page.getByTestId('card-back')).toBeVisible();
+      await shot('robbins-review-revealed', { viewportOnly: true });
+      await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+      });
+      await shot('robbins-review-revealed-end', { viewportOnly: true });
+      await page.getByRole('button', { name: 'End session' }).click();
+      await page.clock.setFixedTime(NOW);
       await page.goto('/stats');
       await expect(page.getByRole('heading', { name: 'Stats' })).toBeVisible();
       await shot('stats');

@@ -2,7 +2,7 @@ import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
 import { READY_MADE_DECKS } from '../../content/readyMade';
 import { loadHome } from '../../services/overview';
-import { toDeckRows, type DeckRow } from '../home/useHome';
+import { toDeckRows, type DeckRow } from '../home/deckRows';
 
 export interface DecksViewModel {
   status: 'loading' | 'error' | 'ready';

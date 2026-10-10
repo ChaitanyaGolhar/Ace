@@ -1,5 +1,6 @@
 import type { PrebuiltDeck } from '@recall/core';
 import { describe, expect, it } from 'vitest';
+import { toDeckRows } from '../src/features/home/deckRows';
 import { formatCount } from '../src/services/format';
 import { orderForWelcome } from '../src/services/readyMade';
 import { CARD_PAGE_SIZE, pageOfCards } from '../src/services/paging';
@@ -65,4 +66,19 @@ describe('pageOfCards (deck page list)', () => {
 
 it('pages are 100 cards', () => {
   expect(CARD_PAGE_SIZE).toBe(100);
+});
+
+describe('deck list rows (Home and Decks)', () => {
+  it('group thousands in the card count, like every other screen', () => {
+    const counts = { due: 2, learning: 1, new: 20 };
+    expect(
+      toDeckRows([
+        { id: 'r', name: 'Robbins', source: 'prebuilt', cardCount: 1014, counts },
+        { id: 'o', name: 'One', source: 'user', cardCount: 1, counts },
+      ]),
+    ).toEqual([
+      { id: 'r', name: 'Robbins', meta: '1,014 cards · Ready-made', due: 3 },
+      { id: 'o', name: 'One', meta: '1 card', due: 3 },
+    ]);
+  });
 });

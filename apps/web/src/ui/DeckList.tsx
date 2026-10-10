@@ -1,6 +1,6 @@
 import { ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
-import type { DeckRow } from '../features/home/useHome';
+import type { DeckRow } from '../features/home/deckRows';
 
 /** "Your decks" rows: name, meta line, "N due" pill or "Up to date". Used by Home and Decks. */
 export function DeckList({ decks, label }: { decks: DeckRow[]; label: string }) {

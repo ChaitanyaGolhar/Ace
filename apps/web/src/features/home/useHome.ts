@@ -4,19 +4,13 @@ import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
 import { WELCOME_DECKS } from '../../content/readyMade';
 import { greetingFor } from '../../services/greeting';
-import { loadHome, type DeckSummary } from '../../services/overview';
+import { loadHome } from '../../services/overview';
 import type { PrebuiltDeck } from '@recall/core';
 import { addReadyMadeDeck } from '../../services/readyMade';
 import { isPlainShortcut } from '../shell/keyboard';
+import { toDeckRows, type DeckRow } from './deckRows';
 
-export interface DeckRow {
-  id: string;
-  name: string;
-  /** "20 cards · Ready-made" */
-  meta: string;
-  /** Review + learning cards due today; 0 = "Up to date". */
-  due: number;
-}
+export type { DeckRow };
 
 export interface HomeViewModel {
   status: 'loading' | 'error' | 'ready';
@@ -42,20 +36,6 @@ export interface HomeViewModel {
   startReviewing: () => void;
   /** Welcome: add that deck and go straight into the review session. */
   addAndStart: (prebuiltId: string) => void;
-}
-
-function plural(n: number, word: string) {
-  return `${String(n)} ${word}${n === 1 ? '' : 's'}`;
-}
-
-/** Deck list rows, shared by Home and the Decks page. */
-export function toDeckRows(decks: DeckSummary[]): DeckRow[] {
-  return decks.map((d) => ({
-    id: d.id,
-    name: d.name,
-    meta: `${plural(d.cardCount, 'card')}${d.source === 'prebuilt' ? ' · Ready-made' : ''}`,
-    due: d.counts.due + d.counts.learning,
-  }));
 }
 
 export function useHome(): HomeViewModel {

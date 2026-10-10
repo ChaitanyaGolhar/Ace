@@ -5,7 +5,9 @@ import { useQuery } from '../../app/useQuery';
 import { getMeta, type StoragePersistence, type Theme } from '../../db/meta';
 import { BackupError, exportBackup, importBackup } from '../../services/backup';
 import { getSettings, updateSettings } from '../../services/settings';
-import { syncStatusView, type SyncStatusView } from '../../services/syncStatus';
+import type { SyncStatusView } from '../../services/syncStatus';
+import { useSyncStatus } from '../shell/useSyncStatus';
+import { useSearchParams } from 'react-router';
 
 export interface SettingsViewModel {
   status: 'loading' | 'error' | 'ready';
@@ -16,9 +18,13 @@ export interface SettingsViewModel {
   rolloverOptions: { value: number; label: string }[];
   theme: Theme;
   storagePersistence: StoragePersistence | null;
-  /** Account & sync. There is no sign-in state yet, so this is always signed out. */
-  signedIn: false;
+  /** Account & sync. Cached in meta, so it is known offline (§9.1). */
+  signedIn: boolean;
+  email: string | null;
   sync: SyncStatusView;
+  syncing: boolean;
+  /** The magic link that brought the user back didn't work (?signInError=invalid). */
+  signInError: string | null;
   /** "Recall 0.1 · Scheduling by FSRS" */
   versionLine: string;
   error: string | null;
@@ -28,6 +34,8 @@ export interface SettingsViewModel {
   stepNewPerDay: (delta: 1 | -1) => void;
   setRolloverHour: (v: number) => void;
   setTheme: (v: Theme) => void;
+  syncNow: () => void;
+  signOut: () => void;
   exportBackup: () => void;
   importBackup: (file: File) => void;
 }
@@ -44,12 +52,15 @@ function majorMinor(version: string): string {
 }
 
 export function useSettingsScreen(): SettingsViewModel {
-  const { ctx } = useServices();
+  const { ctx, sync: engine } = useServices();
   const toasts = useToasts();
+  const sync = useSyncStatus();
+  const [params] = useSearchParams();
   const query = useQuery(async () => {
     const settings = await getSettings(ctx);
     const storagePersistence = (await getMeta(ctx.db, 'storagePersistence')) ?? null;
-    return { settings, storagePersistence };
+    const auth = (await getMeta(ctx.db, 'auth')) ?? { signedIn: false, email: null };
+    return { settings, storagePersistence, auth };
   }, [ctx]);
   const loaded = query.status === 'ready' ? query.data : null;
 
@@ -90,8 +101,14 @@ export function useSettingsScreen(): SettingsViewModel {
     rolloverOptions: hours.map((h) => ({ value: h, label: hourLabel(h) })),
     theme: loaded?.settings.theme ?? 'system',
     storagePersistence: loaded?.storagePersistence ?? null,
-    signedIn: false as const,
-    sync: syncStatusView({ kind: 'signedOut' }, ctx.now()),
+    signedIn: loaded?.auth.signedIn ?? false,
+    email: loaded?.auth.email ?? null,
+    sync,
+    syncing: sync.icon === 'syncing',
+    signInError:
+      params.get('signInError') === null
+        ? null
+        : 'That sign-in link didn’t work. It may have expired or already been used. Send a new one.',
     versionLine: `Recall ${majorMinor(__APP_VERSION__)} · Scheduling by FSRS`,
     error,
     busy,
@@ -111,6 +128,12 @@ export function useSettingsScreen(): SettingsViewModel {
     },
     setTheme: (v: Theme) => {
       save({ theme: v });
+    },
+    syncNow: () => {
+      void engine.requestSync();
+    },
+    signOut: () => {
+      void engine.signOut();
     },
     exportBackup: () => {
       setBusy(true);

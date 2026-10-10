@@ -12,6 +12,9 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 10_000 },
   reporter: [['list']],
+  // The real API (port 3100, its own E2E database) runs for the whole suite.
+  globalSetup: './e2e/support/globalSetup.ts',
+  globalTeardown: './e2e/support/globalTeardown.ts',
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
@@ -22,5 +25,7 @@ export default defineConfig({
     url: 'http://localhost:4173',
     reuseExistingServer: false,
     timeout: 180_000,
+    // The build talks to the E2E API.
+    env: { VITE_API_URL: 'http://localhost:3100' },
   },
 });

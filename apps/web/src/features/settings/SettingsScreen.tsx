@@ -2,6 +2,7 @@ import { Minus, Plus, Shield, ShieldCheck } from 'lucide-react';
 import { useRef, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import type { Theme } from '../../db/meta';
+import { SyncStatusLine } from '../../ui/SyncStatus';
 import { ErrorMessage, Loading } from '../shell/states';
 import { useSettingsScreen } from './useSettingsScreen';
 
@@ -186,14 +187,41 @@ export function SettingsScreen() {
       </Section>
 
       <Section title="Account & sync">
-        <Row
-          title="On this device only"
-          control={
-            <Link to="/signin" className="btn-secondary">
-              Sign in to sync
-            </Link>
-          }
-        />
+        {vm.signInError && (
+          <p role="alert" className="pt-4 text-error">
+            {vm.signInError}
+          </p>
+        )}
+        {vm.signedIn ? (
+          <Row
+            title={<>Signed in as {vm.email}</>}
+            description={<SyncStatusLine view={vm.sync} />}
+            control={
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={vm.syncNow}
+                  disabled={vm.syncing}
+                >
+                  Sync now
+                </button>
+                <button type="button" className="btn-ghost" onClick={vm.signOut}>
+                  Sign out
+                </button>
+              </div>
+            }
+          />
+        ) : (
+          <Row
+            title="On this device only"
+            control={
+              <Link to="/signin" className="btn-secondary">
+                Sign in to sync
+              </Link>
+            }
+          />
+        )}
         {persistence && (
           <div
             className="flex items-start gap-3 border-b border-border py-5"

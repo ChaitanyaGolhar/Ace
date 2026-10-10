@@ -9,6 +9,11 @@ import './index.css';
 import { initialize } from './services/bootstrap';
 import type { AppContext } from './services/context';
 import { PendingActions } from './services/pendingActions';
+import { SyncEngine } from './sync/engine';
+import { httpTransport } from './sync/transport';
+import { attachSyncTriggers, browserTriggerEnvironment } from './sync/triggers';
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('#root missing from index.html');
@@ -25,10 +30,16 @@ async function start() {
   await initialize(ctx, {
     requestPersist: typeof storage?.persist === 'function' ? () => storage.persist() : undefined,
   });
+  const sync = new SyncEngine({
+    ctx,
+    transport: httpTransport(API_URL, window.fetch.bind(window)),
+    isOnline: () => navigator.onLine,
+  });
   const services: AppServices = {
     ctx,
     browserTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     pendingDeletes: new PendingActions(5000),
+    sync,
   };
   root.render(
     <StrictMode>
@@ -39,6 +50,19 @@ async function start() {
       </ServicesProvider>
     </StrictMode>,
   );
+
+  // Sync never blocks the UI: it starts after the first render and runs in the background.
+  // Coming back from a magic link (?signedIn=1) asks the API who is signed in; otherwise
+  // the cached sign-in state decides (works offline).
+  const url = new URL(window.location.href);
+  if (url.searchParams.get('signedIn') === '1') {
+    url.searchParams.delete('signedIn');
+    window.history.replaceState(null, '', url);
+    void sync.refreshAuth();
+  } else {
+    void sync.start();
+  }
+  attachSyncTriggers(() => void sync.requestSync(), browserTriggerEnvironment());
 }
 
 root.render(

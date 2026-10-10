@@ -4,9 +4,10 @@ import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
 import { loadQueue } from '../../services/queue';
 import { getSettings } from '../../services/settings';
-import { syncStatusView, type SyncStatusView } from '../../services/syncStatus';
+import type { SyncStatusView } from '../../services/syncStatus';
 import { resolveTheme, THEME_STORAGE_KEY } from '../../services/theme';
 import { isTypingTarget } from './keyboard';
+import { useSyncStatus } from './useSyncStatus';
 
 export interface ShellViewModel {
   /** Cards to study today (due + learning + new), for the Home badge. Null while loading. */
@@ -24,6 +25,7 @@ export interface ShellViewModel {
 export function useShell(): ShellViewModel {
   const { ctx, browserTimeZone, pendingDeletes } = useServices();
   const navigate = useNavigate();
+  const sync = useSyncStatus();
   const settings = useQuery(() => getSettings(ctx), [ctx]);
   const theme = settings.status === 'ready' ? settings.data.theme : null;
   const counts = useQuery(
@@ -79,8 +81,6 @@ export function useShell(): ShellViewModel {
     counts.status === 'ready' ? counts.data.due + counts.data.learning + counts.data.new : null;
   return {
     todayCount,
-    // There is no sync engine yet (M2 was paused before it), so the app is always
-    // "on this device only". The view supports every state for when sync exists.
-    sync: syncStatusView({ kind: 'signedOut' }, ctx.now()),
+    sync,
   };
 }

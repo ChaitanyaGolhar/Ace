@@ -64,7 +64,7 @@ const TICK_MS = 15_000;
  * is its start time (for "reviewed so far" and undo).
  */
 export function useReview(deckId: string | null): ReviewViewModel {
-  const { ctx, browserTimeZone } = useServices();
+  const { ctx, browserTimeZone, sync } = useServices();
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [sessionError, setSessionError] = useState(false);
@@ -221,8 +221,10 @@ export function useReview(deckId: string | null): ReviewViewModel {
   }, [ctx, session, canUndo, queueData]);
 
   const finish = useCallback(() => {
+    // End of a study session is a sync trigger (§8.4); it runs in the background.
+    void sync.requestSync();
     void completeSession(ctx).finally(() => navigate('/'));
-  }, [ctx, navigate]);
+  }, [ctx, navigate, sync]);
 
   // Keyboard: Space shows the answer, 1–4 rate, Z undoes. Never while typing.
   useEffect(() => {

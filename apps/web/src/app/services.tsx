@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { AppContext } from '../services/context';
 import type { PendingActions } from '../services/pendingActions';
+import type { SyncEngine } from '../sync/engine';
 
 /** Everything screens' hooks need: the service context plus app-wide helpers. */
 export interface AppServices {
@@ -8,6 +9,8 @@ export interface AppServices {
   browserTimeZone: string;
   /** Delayed deletes behind undo toasts (shared, so they survive navigation). */
   pendingDeletes: PendingActions;
+  /** Background sync (only active while signed in). */
+  sync: SyncEngine;
 }
 
 const ServicesContext = createContext<AppServices | null>(null);

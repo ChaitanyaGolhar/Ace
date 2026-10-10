@@ -6,6 +6,11 @@ import { toCard, toDeck, toLog, type CardRow, type DeckRow, type LogRow } from '
  * One page of this user's changes after `since`, in serverSeq order (§8.3). Each table
  * is read up to limit+1 rows past the cursor; merging them by seq and keeping the first
  * `limit` gives an exact page, and any row left over means there is more.
+ *
+ * The three reads run in one REPEATABLE READ transaction, i.e. against one snapshot.
+ * With three independent reads, a push could commit between them: the page would then
+ * contain that push's logs (high seqs) but not its deck (a lower seq read earlier), and
+ * nextCursor would jump past the deck for ever. (The concurrency test caught this.)
  */
 export async function pullPage(
   prisma: Prisma,
@@ -14,17 +19,21 @@ export async function pullPage(
 ): Promise<PullResponse> {
   const since = BigInt(query.since);
   const take = query.limit + 1;
-  const [decks, cards, logs] = await Promise.all([
-    prisma.$queryRaw<DeckRow[]>`
-      SELECT * FROM decks WHERE user_id = ${userId} AND server_seq > ${since}
-      ORDER BY server_seq LIMIT ${take}`,
-    prisma.$queryRaw<CardRow[]>`
-      SELECT * FROM cards WHERE user_id = ${userId} AND server_seq > ${since}
-      ORDER BY server_seq LIMIT ${take}`,
-    prisma.$queryRaw<LogRow[]>`
-      SELECT * FROM review_logs WHERE user_id = ${userId} AND server_seq > ${since}
-      ORDER BY server_seq LIMIT ${take}`,
-  ]);
+  const [decks, cards, logs] = await prisma.$transaction(
+    async (tx) =>
+      [
+        await tx.$queryRaw<DeckRow[]>`
+        SELECT * FROM decks WHERE user_id = ${userId} AND server_seq > ${since}
+        ORDER BY server_seq LIMIT ${take}`,
+        await tx.$queryRaw<CardRow[]>`
+        SELECT * FROM cards WHERE user_id = ${userId} AND server_seq > ${since}
+        ORDER BY server_seq LIMIT ${take}`,
+        await tx.$queryRaw<LogRow[]>`
+        SELECT * FROM review_logs WHERE user_id = ${userId} AND server_seq > ${since}
+        ORDER BY server_seq LIMIT ${take}`,
+      ] as const,
+    { isolationLevel: 'RepeatableRead' },
+  );
 
   const merged = [
     ...decks.map((r) => ({ seq: r.server_seq, kind: 'deck' as const, r })),

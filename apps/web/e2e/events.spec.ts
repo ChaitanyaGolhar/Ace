@@ -41,7 +41,7 @@ test('deck_added_prebuilt: from the welcome card and from Browse, with the deck 
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Add & start' }).click();
+  await page.getByRole('button', { name: 'Add & start with DBMS Basics' }).click();
   await expect(page.getByTestId('card-front')).toBeVisible();
   expect((await ofType(page, 'deck_added_prebuilt')).map((e) => e.props)).toEqual([
     { prebuiltId: 'dbms-basics-v1' },

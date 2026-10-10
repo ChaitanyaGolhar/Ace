@@ -292,3 +292,11 @@ decisions:
   - The web `ReadyMadeDeck` interface was deleted in favour of core's `PrebuiltDeck`.
 - **Kept on purpose:** true retention has two definitions. The app's (core `computeStats`) replays each card's FSRS state. The server's (`analytics.sql`) has no card state and uses a ≥ 1-day gap. They can differ in both directions; `apps/api/test/trueRetention.test.ts` pins down how. The app's number is the brief's definition.
 - **Reverse:** move the files back; the tests move with them.
+
+## Ready-made deck: Robbins ch. 3
+
+### D-318 First-visit screen offers every bundled deck, in a fixed order
+
+- **What:** the welcome screen lists every bundled deck, each with its own "Add & start", in `WELCOME_ORDER` (`apps/web/src/content/readyMade.ts`): Robbins ch. 3 first, then DBMS Basics. Decks not in that list follow by name. Browse keeps listing every deck by name. Each button's accessible name includes the deck ("Add & start with DBMS Basics"), so screen-reader users can tell them apart; the visible text stays "Add & start". Card counts are grouped ("1,014 cards").
+- **Why:** asked for explicitly. A fixed list keeps the order deliberate, not alphabetical by accident.
+- **Reverse:** edit `WELCOME_ORDER`, or show `WELCOME_DECKS.slice(0, 1)` to go back to a single featured deck.

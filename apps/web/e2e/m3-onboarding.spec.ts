@@ -7,12 +7,18 @@ test('first visit: the first card is shown within 3 taps, with no forms', async 
   await expect(page.getByTestId('welcome')).toBeVisible();
   let taps = 0;
 
-  // The ready-made deck is offered right on the welcome screen.
-  await expect(page.getByRole('heading', { name: 'DBMS Basics' })).toBeVisible();
-  await page.getByRole('button', { name: 'Add & start' }).click();
+  // Both bundled decks are offered right on the welcome screen, Robbins first.
+  const offered = page.getByRole('list', { name: 'Start with a ready-made deck' });
+  await expect(offered.getByRole('heading', { level: 3 })).toHaveText([
+    'Robbins Ch. 3 — Inflammation and Repair',
+    'DBMS Basics',
+  ]);
+  await expect(offered.getByRole('listitem').first()).toContainText('1,014 cards');
+  await expect(offered.getByRole('listitem').last()).toContainText('20 cards');
+  await page.getByRole('button', { name: 'Add & start with Robbins Ch. 3 — Inflammation and Repair' }).click();
   taps += 1;
 
-  await expect(page.getByTestId('card-front')).toBeVisible();
+  await expect(page.getByTestId('card-front')).toContainText('Inflammation is best defined');
   await expect(page.getByTestId('card-kind')).toHaveText('New');
   await expect(page.getByTestId('first-card-hint')).toHaveText(
     'Try to recall the answer, then tap Show answer.',
@@ -24,10 +30,13 @@ test('first visit: the first card is shown within 3 taps, with no forms', async 
 
 test('ready-made decks: adding a deck you already have warns first', async ({ page }) => {
   await page.goto('/browse');
-  const row = page.getByRole('list', { name: 'Ready-made decks' }).getByRole('listitem');
-  await expect(row).toHaveCount(1);
-  await expect(row).toContainText('DBMS Basics');
-  await expect(row).toContainText('20 cards');
+  const rows = page.getByRole('list', { name: 'Ready-made decks' }).getByRole('listitem');
+  await expect(rows).toHaveCount(2);
+  await expect(rows.nth(0)).toContainText('DBMS Basics');
+  await expect(rows.nth(0)).toContainText('20 cards');
+  await expect(rows.nth(1)).toContainText('Robbins Ch. 3 — Inflammation and Repair');
+  await expect(rows.nth(1)).toContainText('1,014 cards');
+  const row = rows.filter({ hasText: 'DBMS Basics' });
 
   await page.getByRole('button', { name: 'Add DBMS Basics' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'DBMS Basics' })).toBeVisible();
@@ -61,7 +70,7 @@ test('backup: export, import into a fresh browser (identical states), import aga
   const source = await browser.newContext();
   const page = await source.newPage();
   await page.goto('/');
-  await page.getByRole('button', { name: 'Add & start' }).click();
+  await page.getByRole('button', { name: 'Add & start with DBMS Basics' }).click();
   for (let i = 0; i < 3; i++) {
     await page.getByRole('button', { name: 'Show answer' }).click();
     await page.getByRole('button', { name: /^Good · / }).click();

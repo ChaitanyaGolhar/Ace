@@ -25,3 +25,8 @@ export function formatDuration(ms: number): string {
   if (totalMinutes < 60) return `${String(totalMinutes)}m ${String(totalSeconds % 60)}s`;
   return `${String(Math.floor(totalMinutes / 60))}h ${String(totalMinutes % 60)}m`;
 }
+
+/** "1,014": counts shown to people, with thousands grouped. */
+export function formatCount(n: number): string {
+  return n.toLocaleString('en-US');
+}

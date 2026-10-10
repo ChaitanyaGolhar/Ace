@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { Dialog } from '../../ui/Dialog';
 import { ErrorMessage, Loading } from '../shell/states';
 import { useBrowse } from './useBrowse';
+import { formatCount } from '../../services/format';
 
 export function BrowseScreen() {
   const vm = useBrowse();
@@ -52,7 +53,7 @@ export function BrowseScreen() {
                     </>
                   )}
                   <span>
-                    <span className="font-mono">{deck.cardCount}</span> cards
+                    <span className="font-mono">{formatCount(deck.cardCount)}</span> cards
                   </span>
                 </p>
               </div>

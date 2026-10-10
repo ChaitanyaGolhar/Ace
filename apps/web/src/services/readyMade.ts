@@ -59,3 +59,18 @@ export async function readyMadeStatus(
   );
   return Object.fromEntries(catalog.map((d) => [d.prebuiltId, owned.has(d.prebuiltId)]));
 }
+
+/**
+ * Ready-made decks in first-visit order: the ids in `priority` first (in that order,
+ * skipping any that aren't bundled), then the rest of the catalog by name.
+ */
+export function orderForWelcome(
+  catalog: readonly PrebuiltDeck[],
+  priority: readonly string[],
+): PrebuiltDeck[] {
+  const rank = (d: PrebuiltDeck) => {
+    const i = priority.indexOf(d.prebuiltId);
+    return i === -1 ? priority.length : i;
+  };
+  return [...catalog].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+}

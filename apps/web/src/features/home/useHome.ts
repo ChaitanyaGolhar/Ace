@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useServices } from '../../app/services';
 import { useQuery } from '../../app/useQuery';
-import { READY_MADE_DECKS } from '../../content/readyMade';
+import { WELCOME_DECKS } from '../../content/readyMade';
 import { greetingFor } from '../../services/greeting';
 import { loadHome, type DeckSummary } from '../../services/overview';
 import type { PrebuiltDeck } from '@recall/core';
@@ -33,13 +33,15 @@ export interface HomeViewModel {
   canStudy: boolean;
   decks: DeckRow[];
   /** First ready-made deck for the welcome card (null: no ready-made decks bundled). */
-  featured: PrebuiltDeck | null;
+  /** First visit: every bundled deck, in welcome order. */
+  featured: readonly PrebuiltDeck[];
   hasReadyMade: boolean;
-  adding: boolean;
+  /** The prebuiltId being added, while it is. */
+  adding: string | null;
   addError: string | null;
   startReviewing: () => void;
-  /** Welcome: add the featured deck and go straight into the review session. */
-  addAndStart: () => void;
+  /** Welcome: add that deck and go straight into the review session. */
+  addAndStart: (prebuiltId: string) => void;
 }
 
 function plural(n: number, word: string) {
@@ -59,7 +61,7 @@ export function toDeckRows(decks: DeckSummary[]): DeckRow[] {
 export function useHome(): HomeViewModel {
   const { ctx, browserTimeZone } = useServices();
   const navigate = useNavigate();
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const query = useQuery(() => loadHome(ctx, { browserTimeZone }), [ctx, browserTimeZone]);
 
@@ -86,16 +88,17 @@ export function useHome(): HomeViewModel {
     };
   }, [canStudy, navigate]);
 
-  const featured = READY_MADE_DECKS[0] ?? null;
-  const addAndStart = () => {
-    if (!featured || adding) return;
-    setAdding(true);
+  const featured = WELCOME_DECKS;
+  const addAndStart = (prebuiltId: string) => {
+    const source = featured.find((d) => d.prebuiltId === prebuiltId);
+    if (!source || adding !== null) return;
+    setAdding(prebuiltId);
     setAddError(null);
-    addReadyMadeDeck(ctx, featured)
+    addReadyMadeDeck(ctx, source)
       .then((deck) => navigate(`/study?deck=${deck.id}`))
       .catch(() => {
         setAddError('Couldn’t add the deck. Please try again.');
-        setAdding(false);
+        setAdding(null);
       });
   };
 
@@ -111,7 +114,7 @@ export function useHome(): HomeViewModel {
     canStudy,
     decks: toDeckRows(data?.decks ?? []),
     featured,
-    hasReadyMade: READY_MADE_DECKS.length > 0,
+    hasReadyMade: WELCOME_DECKS.length > 0,
     adding,
     addError,
     startReviewing,

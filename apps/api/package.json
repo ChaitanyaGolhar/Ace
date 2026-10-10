@@ -1,0 +1,38 @@
+{
+  "name": "@recall/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --import tsx --watch src/server.ts",
+    "start": "node --env-file-if-exists=.env --import tsx src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "prisma:generate": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "migrate:test": "DATABASE_URL=postgresql://recall:recall@localhost:54329/recall_test prisma migrate deploy",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "@recall/core": "workspace:*",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "5.2.1",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.1",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "prisma": "7.10.0",
+    "supertest": "^7.3.1",
+    "vitest": "^5.0.3"
+  }
+}

@@ -9,3 +9,5 @@ dev-dist/
 playwright-report/
 test-results/
 e2e/.tmp/
+apps/api/src/generated/
+apps/api/test-outbox/

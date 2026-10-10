@@ -4,3 +4,10 @@ packages:
 
 # Run package scripts through pnpm's cross-platform shell, so `VAR=1 cmd` works on Windows too.
 shellEmulator: true
+
+# Packages allowed to run install scripts (pnpm blocks them by default).
+# Prisma downloads its migration engine; esbuild (used by tsx) checks its binary.
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+  esbuild: true

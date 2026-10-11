@@ -1,15 +1,27 @@
-import { Check, Undo2, X } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Undo2, X } from 'lucide-react';
+import { useLocation, useSearchParams } from 'react-router';
 import { ErrorMessage, Loading } from '../shell/states';
 import { CardFace, TYPE_TAGS } from './CardFace';
 import { RATING_LABELS, useReview, type ReviewViewModel } from './useReview';
 
 /** Full-screen review: no navigation, nothing top-right (§10, review-*.png). */
 export function ReviewScreen() {
+  // "Do 20 more" navigates to the same URL: a new location starts a new session.
+  const { key } = useLocation();
+  return <ReviewSession key={key} />;
+}
+
+/** `?cap=20` (feel pass): a session of the 20 most overdue cards. */
+const positiveInt = (value: string | null, max: number) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0 && n <= max ? n : undefined;
+};
+
+function ReviewSession() {
   const [params] = useSearchParams();
-  const unitParam = Number(params.get('unit'));
-  const unit = Number.isInteger(unitParam) && unitParam > 0 ? unitParam : undefined;
-  const vm = useReview(params.get('deck'), unit);
+  const unit = positiveInt(params.get('unit'), 1000);
+  const cap = positiveInt(params.get('cap'), 500);
+  const vm = useReview(params.get('deck'), unit, cap);
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg text-text">
@@ -63,32 +75,44 @@ function Studying({ vm }: { vm: ReviewViewModel }) {
   const typeTag = TYPE_TAGS[type];
   return (
     <>
-      <main className="mx-auto flex w-full max-w-[680px] flex-1 flex-col gap-5 px-4 pt-6 lg:px-6 lg:pt-12">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="rounded-sm border border-border px-1.5 py-px text-meta text-text-secondary"
-            data-testid="card-kind"
-          >
-            {vm.kind}
-          </span>
-          {typeTag && (
+      <main className="mx-auto flex w-full max-w-[680px] flex-1 flex-col px-4 pt-6 lg:px-6 lg:pt-12">
+        <h1 className="sr-only">Review</h1>
+        {/* Keyed by the card on screen: each card comes in (120ms); a rated one leaves. */}
+        <div
+          key={vm.cardKey}
+          data-testid="card"
+          className={`flex flex-col gap-5 animate-card-in ${vm.leaving ? 'card-leaving' : ''}`}
+        >
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className="rounded-sm border border-border px-1.5 py-px text-meta text-text-secondary"
-              data-testid="card-type"
+              data-testid="card-kind"
             >
-              {typeTag}
+              {vm.kind}
             </span>
+            {typeTag && (
+              <span
+                className="rounded-sm border border-border px-1.5 py-px text-meta text-text-secondary"
+                data-testid="card-type"
+              >
+                {typeTag}
+              </span>
+            )}
+          </div>
+          {vm.card && vm.answer && (
+            <CardFace
+              content={vm.card.content}
+              answer={vm.answer}
+              act={vm.act}
+              disabled={vm.busy}
+            />
+          )}
+          {vm.showHint && (
+            <p data-testid="first-card-hint" className="text-small text-text-secondary">
+              Try to recall the answer, then tap Show answer.
+            </p>
           )}
         </div>
-        <h1 className="sr-only">Review</h1>
-        {vm.card && vm.answer && (
-          <CardFace content={vm.card.content} answer={vm.answer} act={vm.act} disabled={vm.busy} />
-        )}
-        {vm.showHint && (
-          <p data-testid="first-card-hint" className="text-small text-text-secondary">
-            Try to recall the answer, then tap Show answer.
-          </p>
-        )}
       </main>
 
       <p role="status" className="sr-only" data-testid="announcer">
@@ -231,6 +255,7 @@ function FooterActions({ vm }: { vm: ReviewViewModel }) {
       >
         {options.map((option) => {
           const suggested = stage.suggested === option.rating;
+          const pressed = vm.pressedRating === option.rating;
           return (
             <button
               key={option.rating}
@@ -239,10 +264,12 @@ function FooterActions({ vm }: { vm: ReviewViewModel }) {
               aria-keyshortcuts={answer.type === 'long' ? undefined : option.key}
               disabled={vm.busy}
               data-suggested={suggested ? 'true' : undefined}
+              data-pressed={pressed ? 'true' : undefined}
               onClick={() => {
                 vm.rate(option.rating);
               }}
-              className={`flex min-h-[52px] flex-col items-center justify-center rounded-md bg-surface py-1.5 transition-colors duration-150 hover:bg-surface-raised disabled:opacity-60 ${
+              // Pressed for 80ms (a tap, or its key), then the card leaves. The others dim.
+              className={`flex min-h-[52px] flex-col items-center justify-center rounded-md bg-surface py-1.5 transition-[background-color,transform,opacity] duration-[80ms] hover:bg-surface-raised active:scale-[0.97] active:bg-surface-raised data-pressed:scale-[0.97] data-pressed:bg-surface-raised disabled:[&:not([data-pressed])]:opacity-60 ${
                 option.rating === emphasised ? 'border-2 border-accent' : 'border border-border'
               }`}
             >
@@ -263,26 +290,73 @@ function FooterActions({ vm }: { vm: ReviewViewModel }) {
   );
 }
 
+/** The one restrained moment: a ring draws in, then its check (400ms). */
+function CheckRing() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="size-12 text-success" fill="none">
+      <circle
+        cx="24"
+        cy="24"
+        r="23"
+        pathLength={1}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        transform="rotate(-90 24 24)"
+        className="draw-ring"
+      />
+      <path
+        d="M16 24.5l5.5 5.5L32.5 19"
+        pathLength={1}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="draw-check"
+      />
+    </svg>
+  );
+}
+
 function Completion({ vm }: { vm: ReviewViewModel }) {
   return (
     <main className="mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center gap-5 px-4 py-10">
-      <span
-        aria-hidden="true"
-        className="inline-flex size-12 items-center justify-center rounded-full border border-border text-success"
-      >
-        <Check className="size-6" />
-      </span>
+      <CheckRing />
       <h1 className="text-[26px] font-semibold leading-tight tracking-tight">Review complete</h1>
       <p className="text-body text-text-secondary" data-testid="completion-text">
         {vm.completionText}
       </p>
-      <dl className="flex items-center justify-between border-y border-border py-3 text-body">
-        <dt className="text-text-secondary">Next cards due</dt>
-        <dd data-testid="next-due">{vm.nextDueText}</dd>
-      </dl>
-      <button type="button" className="btn-primary" onClick={vm.finish}>
-        Back to home
-      </button>
+      {/* Only true numbers: from this session's reviews and the scheduler's states. */}
+      <ul className="flex flex-col border-y border-border text-body">
+        <li className="flex min-h-11 items-center" data-testid="remembered">
+          {vm.rememberedText}
+        </li>
+        <li className="flex min-h-11 items-center border-t border-border" data-testid="next-due">
+          {vm.nextDueText}
+        </li>
+        {vm.farOffText && (
+          <li
+            className="flex min-h-11 items-center border-t border-border text-text-secondary"
+            data-testid="far-off"
+          >
+            {vm.farOffText}
+          </li>
+        )}
+      </ul>
+      {vm.moreLabel ? (
+        // After a capped session, neither choice is the "right" one: same weight.
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" className="btn-secondary" onClick={vm.more}>
+            {vm.moreLabel}
+          </button>
+          <button type="button" className="btn-secondary" onClick={vm.finish}>
+            Done for today
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="btn-primary" onClick={vm.finish}>
+          Back to home
+        </button>
+      )}
       {vm.undoLabel && (
         <button
           type="button"

@@ -26,6 +26,7 @@ describe('loadHome', () => {
       decks: [],
       tomorrow: 0,
       estimateMinutes: null,
+      breakReturn: null,
     });
   });
 

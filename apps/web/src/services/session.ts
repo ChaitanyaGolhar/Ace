@@ -1,4 +1,4 @@
-import { studyDayKey } from '@recall/core';
+import { studyDayKey, type Outcome } from '@recall/core';
 import { getMeta, setMeta, type Session } from '../db/meta';
 import type { AppContext } from './context';
 import { recordEvent } from './events';
@@ -14,12 +14,16 @@ export async function getSession(ctx: AppContext): Promise<Session | null> {
  * the same study day (so a reload mid-session picks up where it left off). The
  * session only marks a start time: which card comes next always comes from the
  * queue, so no other session state is needed for correctness.
+ *
+ * `cap` (feel pass, "Start with 20"): the session shows only the `cap` most overdue
+ * due cards, chosen now. A capped and a full session never continue each other.
  */
 export async function startSession(
   ctx: AppContext,
   deckId: string | null,
   browserTimeZone: string,
   unit?: number,
+  cap?: number,
 ): Promise<Session> {
   const settings = await getSettings(ctx);
   const tz = effectiveTimeZone(settings, browserTimeZone);
@@ -30,23 +34,34 @@ export async function startSession(
     existing.completedAt === undefined &&
     existing.deckId === deckId &&
     existing.unit === unit &&
+    (existing.cap !== undefined) === (cap !== undefined) &&
     studyDayKey(existing.startedAt, tz, settings.rolloverHour) ===
       studyDayKey(now, tz, settings.rolloverHour)
   ) {
     return existing;
   }
-  const session: Session = { startedAt: now, deckId, ...(unit === undefined ? {} : { unit }) };
-  await setMeta(ctx.db, 'session', session);
-  const { counts } = await loadQueue(ctx, {
+  const queue = await loadQueue(ctx, {
     browserTimeZone,
     ...(deckId === null ? {} : { deckId }),
     ...(unit === undefined ? {} : { unit }),
   });
+  const { counts } = queue;
+  const session: Session = {
+    startedAt: now,
+    deckId,
+    ...(unit === undefined ? {} : { unit }),
+    // queue.due is most overdue first (core: by due, then id).
+    ...(cap === undefined ? {} : { cap: queue.due.slice(0, cap) }),
+  };
+  await setMeta(ctx.db, 'session', session);
   await recordEvent(ctx, 'session_started', {
     scope: deckId === null ? 'all' : 'deck',
     due: counts.due + counts.learning,
     new: counts.new,
   });
+  if (cap !== undefined) {
+    await recordEvent(ctx, 'capped_session_started', { cap, due: counts.due + counts.learning });
+  }
   return session;
 }
 
@@ -102,5 +117,39 @@ export async function sessionSummary(ctx: AppContext, session: Session): Promise
   return {
     reviewed: logs.length,
     timeSpentMs: logs.reduce((sum, log) => sum + log.durationMs, 0),
+  };
+}
+
+/** How far ahead counts as "won’t come back for 2+ weeks". */
+const FAR_OFF_MS = 14 * 86_400_000;
+
+export interface SessionRecap {
+  reviewed: number;
+  /** Reviews not rated Again or, where the answer was checked (MCQ, typed cloze), correct. */
+  remembered: number;
+  /** Cards from this session the scheduler won’t show again for 2+ weeks. */
+  farOff: number;
+}
+
+function remembered(log: { rating: number; outcome: Outcome | null }): boolean {
+  const correct = log.outcome && 'correct' in log.outcome ? log.outcome.correct : null;
+  return typeof correct === 'boolean' ? correct : log.rating !== 1;
+}
+
+/** The numbers on the session-complete screen (feel pass), from stored reviews and states. */
+export async function sessionRecap(ctx: AppContext, session: Session): Promise<SessionRecap> {
+  const deviceId = await getMeta(ctx.db, 'deviceId');
+  const logs = await ctx.db.reviewLogs
+    .where('reviewedAt')
+    .aboveOrEqual(session.startedAt)
+    .filter((log) => log.voidedAt === null && log.deviceId === deviceId)
+    .toArray();
+  const cardIds = [...new Set(logs.map((log) => log.cardId))];
+  const states = await ctx.db.cardStates.bulkGet(cardIds);
+  const horizon = ctx.now() + FAR_OFF_MS;
+  return {
+    reviewed: logs.length,
+    remembered: logs.filter(remembered).length,
+    farOff: states.filter((s) => s !== undefined && s.due >= horizon).length,
   };
 }

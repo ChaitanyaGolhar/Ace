@@ -242,12 +242,67 @@
   @apply border border-border shadow-overlay;
 }
 
+/*
+ * Feel pass: motion for three moments, CSS only. Each is short, and nothing waits for
+ * one: the next card, a key press or a tap never queues behind an animation.
+ */
+@keyframes feel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes feel-pop {
+  50% {
+    transform: scale(1.02);
+  }
+}
+@keyframes feel-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* Show answer / Check: the answer area fades and slides in below what's there. */
+@utility animate-reveal {
+  animation: feel-in 150ms ease-out;
+}
+/* The next card comes in. */
+@utility animate-card-in {
+  animation: feel-in 120ms ease-out;
+}
+/* A correct answer: 1.00 → 1.02 → 1.00. */
+@utility animate-pop {
+  animation: feel-pop 180ms ease-in-out;
+}
+/* A rated card leaves, after its button's 80ms pressed moment. */
+@utility card-leaving {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease-in 80ms,
+    transform 120ms ease-in 80ms;
+}
+/* Session complete: the ring draws in, then the check (400ms in all). pathLength="1". */
+@utility draw-ring {
+  stroke-dasharray: 1;
+  animation: feel-draw 300ms ease-out backwards;
+}
+@utility draw-check {
+  stroke-dasharray: 1;
+  animation: feel-draw 200ms ease-out 200ms backwards;
+}
+
 /* Motion: only short fades and colour changes, and none at all if the user asks. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
     animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
   }
 }

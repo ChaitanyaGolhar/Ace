@@ -8,6 +8,7 @@ import {
 } from '@recall/core';
 import type { LocalCard, LocalDeck, LocalReviewLog } from '../db/db';
 import { getMeta } from '../db/meta';
+import { breakReturnFor, type BreakReturn } from './breakReturn';
 import { decksWithUpdates } from './catalog';
 import type { AppContext } from './context';
 import { ESTIMATE_SAMPLE_SIZE, estimateStudyMinutes } from './estimate';
@@ -35,6 +36,8 @@ export interface HomeData {
   tomorrow: number;
   /** "About N minutes" for today's cards, or null with too little review history. */
   estimateMinutes: number | null;
+  /** Feel pass: coming back after a break ("Welcome back"), or null. */
+  breakReturn: BreakReturn | null;
 }
 
 function liveDecks(input: LocalQueueInput): LocalDeck[] {
@@ -88,6 +91,13 @@ export async function loadHome(ctx: AppContext, options: Options): Promise<HomeD
       ({ state }) => state.state !== 'new' && state.due >= endOfToday && state.due < endOfTomorrow,
     ).length,
     estimateMinutes: estimateStudyMinutes(latest, counts.due + counts.learning + counts.new),
+    breakReturn: breakReturnFor({
+      lastReviewAt: latest[0]?.reviewedAt ?? null,
+      now,
+      timeZone,
+      rolloverHour,
+      due: counts.due + counts.learning,
+    }),
   };
 }
 
@@ -168,6 +178,8 @@ export function searchCards<T extends { front: string; back: string }>(
 
 export type NextDue =
   | { kind: 'none' }
+  /** In today's queue already (another deck's, or past a session's cap). */
+  | { kind: 'dueToday'; count: number }
   | { kind: 'laterToday'; count: number }
   | { kind: 'tomorrow'; count: number }
   | { kind: 'later'; day: string; count: number };
@@ -180,23 +192,27 @@ export async function loadNextDue(ctx: AppContext, options: Options): Promise<Ne
   const dues = input.cards
     .filter((c) => c.deletedAt === null && liveDeckIds.has(c.deckId))
     .map((c) => input.states.get(c.id) ?? initialState(c))
-    .filter((s) => s.state !== 'new')
-    .map((s) => s.due);
+    .filter((s) => s.state !== 'new');
   if (dues.length === 0) return { kind: 'none' };
 
   const endOfToday = endOfStudyDay(now, timeZone, rolloverHour);
-  const laterToday = dues.filter((due) => due < endOfToday).length;
+  // As core buildQueue: review cards are due all study day, learning cards on the minute.
+  const dueToday = dues.filter((s) =>
+    s.state === 'review' ? s.due <= endOfToday : s.due <= now,
+  ).length;
+  if (dueToday > 0) return { kind: 'dueToday', count: dueToday };
+  const laterToday = dues.filter((s) => s.due < endOfToday).length;
   if (laterToday > 0) return { kind: 'laterToday', count: laterToday };
 
   const endOfTomorrow = endOfStudyDay(endOfToday, timeZone, rolloverHour);
-  const tomorrow = dues.filter((due) => due < endOfTomorrow).length;
+  const tomorrow = dues.filter((s) => s.due < endOfTomorrow).length;
   if (tomorrow > 0) return { kind: 'tomorrow', count: tomorrow };
 
-  const first = Math.min(...dues);
+  const first = Math.min(...dues.map((s) => s.due));
   const end = endOfStudyDay(first, timeZone, rolloverHour);
   return {
     kind: 'later',
     day: studyDayKey(first, timeZone, rolloverHour),
-    count: dues.filter((due) => due < end).length,
+    count: dues.filter((s) => s.due < end).length,
   };
 }

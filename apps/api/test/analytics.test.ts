@@ -117,6 +117,7 @@ afterAll(async () => {
 describe('analytics.sql', () => {
   it('has exactly the brief’s queries', () => {
     expect([...Q.keys()].sort()).toEqual([
+      'break_return_sessions', // feel pass, tested in analyticsBreak.test.ts
       'catalog_deck_funnel', // M7 (BUILD_BRIEF_M6_M8 §7.8), tested in analyticsCatalog.test.ts
       'due_review_completion_rate',
       'paid_deck_funnel', // M8 (§8.5), tested in analyticsCatalog.test.ts

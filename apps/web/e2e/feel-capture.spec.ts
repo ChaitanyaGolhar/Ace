@@ -33,7 +33,10 @@ async function importBreakBackup(page: Page) {
 
 async function studyDeck(page: Page, name: string) {
   await page.goto('/decks');
-  await page.getByRole('list', { name: 'Decks' }).getByRole('link', { name: new RegExp(name) }).click();
+  await page
+    .getByRole('list', { name: 'Decks' })
+    .getByRole('link', { name: new RegExp(name) })
+    .click();
   await page.getByRole('link', { name: 'Study deck' }).click();
 }
 

@@ -20,6 +20,11 @@ export interface Session {
   unit?: number;
   /** Set when the session-complete screen was shown. A completed session is never continued. */
   completedAt?: number;
+  /**
+   * Feel pass: a capped session ("Start with 20") — the card ids it may show, chosen when
+   * it started (the most overdue first). Absent = every card in the queue.
+   */
+  cap?: string[];
 }
 
 export type StoragePersistence = 'granted' | 'denied' | 'unsupported';
@@ -52,6 +57,8 @@ export interface MetaMap {
   entitlements: string[];
   /** M8: "Sign in to unlock": the store page to come back to after the magic link. */
   signInReturnTo: string | null;
+  /** Feel pass: the study day break_return_shown was last recorded (YYYY-MM-DD). */
+  breakReturnShownOn: string;
 }
 
 export interface StoreFilters {

@@ -5,7 +5,7 @@ import { greetingFor } from '../src/services/greeting';
 import { estimateStudyMinutes } from '../src/services/estimate';
 import { cardDueLabel, lastStudiedLabel } from '../src/services/dueLabels';
 import { relativeTime, syncStatusView } from '../src/services/syncStatus';
-import { completionSentence, nextDueValue } from '../src/services/completion';
+import { completionSentence, nextDueLine } from '../src/services/completion';
 import { DAY, HOUR, MINUTE } from './helpers';
 
 const TZ = 'Asia/Kolkata';
@@ -170,12 +170,12 @@ describe('review completion copy', () => {
     expect(completionSentence(2, 70_000)).toBe('You reviewed 2 cards in about 1 minute.');
   });
 
-  it('nextDueValue', () => {
-    expect(nextDueValue({ kind: 'tomorrow', count: 9 })).toBe('9 tomorrow');
-    expect(nextDueValue({ kind: 'laterToday', count: 1 })).toBe('1 later today');
-    expect(nextDueValue({ kind: 'none' })).toBe('None scheduled yet');
-    expect(nextDueValue({ kind: 'later', day: '2026-10-15', count: 3 })).toMatch(
-      /^3 on Thu,? 15 Oct$/,
+  it('nextDueLine (feel pass: "Next: N due tomorrow")', () => {
+    expect(nextDueLine({ kind: 'tomorrow', count: 9 })).toBe('Next: 9 due tomorrow');
+    expect(nextDueLine({ kind: 'laterToday', count: 1 })).toBe('Next: 1 due later today');
+    expect(nextDueLine({ kind: 'none' })).toBe('Next: nothing scheduled yet');
+    expect(nextDueLine({ kind: 'later', day: '2026-10-15', count: 3 })).toMatch(
+      /^Next: 3 due on Thu,? 15 Oct$/,
     );
   });
 });

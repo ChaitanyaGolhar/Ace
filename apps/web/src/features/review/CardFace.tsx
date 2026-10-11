@@ -1,6 +1,6 @@
 import { clozeAnswer, type CardContent } from '@recall/core';
 import { Check, ChevronDown, X } from 'lucide-react';
-import { useId, type KeyboardEvent } from 'react';
+import { useId, type KeyboardEvent, type ReactNode } from 'react';
 import type { AnswerAction, AnswerState } from './answer';
 
 // The card on the review screen, per type (BUILD_BRIEF_M6_M8 §6.3; UI plan in
@@ -52,14 +52,38 @@ function BasicFace({
         {content.front}
       </p>
       {revealed && (
-        <>
+        <Revealed>
           <hr className="border-border" />
           <p data-testid="card-back" className={answerText}>
             {content.back}
           </p>
-        </>
+        </Revealed>
       )}
     </>
+  );
+}
+
+/** What appears on Show answer / Check: fades and slides in below the question (150ms). */
+function Revealed({ children, testId }: { children: ReactNode; testId?: string }) {
+  return (
+    <div data-testid={testId} className="flex flex-col gap-5 animate-reveal">
+      {children}
+    </div>
+  );
+}
+
+/** "✓ Correct" or "✗ Not quite…": the icon and the words, never colour alone. */
+function Verdict({ correct, why }: { correct: boolean; why: boolean }) {
+  return correct ? (
+    <p className="inline-flex items-center gap-1.5 text-body font-semibold text-success">
+      <Check aria-hidden="true" className="size-4" />
+      Correct
+    </p>
+  ) : (
+    <p className="inline-flex items-center gap-1.5 text-body font-semibold">
+      <X aria-hidden="true" className="size-4 text-error" />
+      {why ? 'Not quite — here’s why.' : 'Not quite.'}
+    </p>
   );
 }
 
@@ -134,7 +158,7 @@ function ShortFace({
         />
       )}
       {answer.revealed && (
-        <>
+        <Revealed>
           {answer.typed.trim() !== '' && (
             <p className={note}>
               <span className="font-medium">You wrote: </span>
@@ -150,7 +174,7 @@ function ShortFace({
               {content.explanation}
             </p>
           )}
-        </>
+        </Revealed>
       )}
     </>
   );
@@ -205,37 +229,50 @@ function McqFace({
               }}
               className={`flex min-h-12 w-full items-start gap-3 rounded-md border bg-surface px-3 py-2.5 text-left text-body transition-colors duration-150 enabled:hover:bg-surface-raised disabled:cursor-default ${border} ${
                 chosen && !answer.checked ? 'bg-surface-raised' : ''
-              }`}
+              } ${chosen && answer.checked && isCorrect ? 'animate-pop' : ''}`}
             >
               <span className="font-medium text-text-secondary">{option.id.toUpperCase()}.</span>
               <span className="flex-1 whitespace-pre-wrap">{option.text}</span>
-              {status === 'correct' && (
-                <span className="inline-flex shrink-0 items-center gap-1 text-meta font-medium text-success">
-                  <Check aria-hidden="true" className="size-4" />
-                  Correct answer
-                </span>
-              )}
-              {status === 'wrong' && (
-                <span className="inline-flex shrink-0 items-center gap-1 text-meta font-medium text-error">
-                  <X aria-hidden="true" className="size-4" />
-                  Your answer
-                </span>
-              )}
+              {/* Always there, so marking an option never reflows its text. */}
+              <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center">
+                {status === 'correct' && (
+                  <>
+                    <Check aria-hidden="true" className="size-5 text-success" />
+                    <span className="sr-only">Correct answer</span>
+                  </>
+                )}
+                {status === 'wrong' && (
+                  <>
+                    <X aria-hidden="true" className="size-5 text-error" />
+                    <span className="sr-only">Your answer</span>
+                  </>
+                )}
+              </span>
             </button>
           );
         })}
       </div>
-      {answer.checked && content.explanation !== null && (
-        <p data-testid="card-explanation" className={note}>
-          {content.explanation}
-        </p>
+      {answer.checked && (
+        <Revealed testId="mcq-result">
+          <div className="flex flex-col gap-2">
+            <Verdict
+              correct={answer.selected === content.correct}
+              why={content.explanation !== null}
+            />
+            {content.explanation !== null && (
+              <p data-testid="card-explanation" className={note}>
+                {content.explanation}
+              </p>
+            )}
+          </div>
+        </Revealed>
       )}
     </>
   );
 }
 
 /** The sentence with its blank: a gap before answering, the answer (emphasised) after. */
-function Sentence({ text, filled }: { text: string; filled: boolean }) {
+function Sentence({ text, filled, pop }: { text: string; filled: boolean; pop: boolean }) {
   const match = /\{\{([^{}]*)\}\}/.exec(text);
   if (!match) return <>{text}</>;
   const before = text.slice(0, match.index);
@@ -244,7 +281,11 @@ function Sentence({ text, filled }: { text: string; filled: boolean }) {
     <>
       {before}
       {filled ? (
-        <strong className="font-semibold underline decoration-accent decoration-2 underline-offset-4">
+        <strong
+          className={`font-semibold underline decoration-accent decoration-2 underline-offset-4 ${
+            pop ? 'inline-block animate-pop' : ''
+          }`}
+        >
           {match[1]}
         </strong>
       ) : (
@@ -275,7 +316,11 @@ function ClozeFace({
   return (
     <>
       <p data-testid="card-front" className={prompt}>
-        <Sentence text={content.text} filled={done} />
+        <Sentence
+          text={content.text}
+          filled={done}
+          pop={answer.result?.mode === 'typed' && answer.result.correct}
+        />
       </p>
       {!done && content.hint !== null && !answer.hintShown && (
         <button
@@ -313,35 +358,31 @@ function ClozeFace({
           />
         </label>
       )}
-      {answer.result?.mode === 'typed' && (
-        <div data-testid="cloze-result" className="flex flex-col gap-1">
-          {answer.result.correct ? (
-            <p className="inline-flex items-center gap-1.5 text-body font-semibold text-success">
-              <Check aria-hidden="true" className="size-4" />
-              Correct
-            </p>
-          ) : (
-            <>
-              <p className="inline-flex items-center gap-1.5 text-body font-semibold text-error">
-                <X aria-hidden="true" className="size-4" />
-                Not quite
-              </p>
-              <p className="text-body">
-                <span className="text-text-secondary">Answer: </span>
-                <span className="font-medium">{clozeAnswer(content)}</span>
-              </p>
-              <p className="text-body">
-                <span className="text-text-secondary">You typed: </span>
-                {answer.typed}
-              </p>
-            </>
+      {done && (
+        <Revealed>
+          {answer.result?.mode === 'typed' && (
+            <div data-testid="cloze-result" className="flex flex-col gap-1">
+              <Verdict correct={answer.result.correct} why={content.extra !== null} />
+              {!answer.result.correct && (
+                <>
+                  <p className="text-body">
+                    <span className="text-text-secondary">Answer: </span>
+                    <span className="font-medium">{clozeAnswer(content)}</span>
+                  </p>
+                  <p className="text-body">
+                    <span className="text-text-secondary">You typed: </span>
+                    {answer.typed}
+                  </p>
+                </>
+              )}
+            </div>
           )}
-        </div>
-      )}
-      {done && content.extra !== null && (
-        <p data-testid="card-explanation" className={note}>
-          {content.extra}
-        </p>
+          {content.extra !== null && (
+            <p data-testid="card-explanation" className={note}>
+              {content.extra}
+            </p>
+          )}
+        </Revealed>
       )}
     </>
   );
@@ -375,7 +416,7 @@ function LongFace({
         />
       )}
       {answer.revealed && (
-        <>
+        <Revealed>
           {answer.typed.trim() !== '' && (
             <details className="text-body text-text-secondary">
               <summary className="cursor-pointer">What you wrote</summary>
@@ -419,7 +460,7 @@ function LongFace({
               <p className={`${answerText} mt-3`}>{content.modelAnswer}</p>
             </details>
           )}
-        </>
+        </Revealed>
       )}
     </>
   );

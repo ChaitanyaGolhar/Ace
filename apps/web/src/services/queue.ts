@@ -93,6 +93,21 @@ export function nextCard(queue: Queue): NextCard | null {
   return null;
 }
 
+/**
+ * A capped session's queue (feel pass): only the capped cards, in queue order, and no
+ * new cards. `counts` stay the whole day's. The schedule itself is untouched.
+ */
+export function capQueue(queue: Queue, cap: readonly string[]): Queue {
+  const allowed = new Set(cap);
+  const next = queue.learnAheadNext;
+  return {
+    ...queue,
+    due: queue.due.filter((id) => allowed.has(id)),
+    newCards: [],
+    learnAheadNext: next && allowed.has(next.cardId) ? next : null,
+  };
+}
+
 /** Cards left in the session, for the progress indicator. */
 export function remainingCount(queue: Queue): number {
   const n = queue.due.length + queue.newCards.length;

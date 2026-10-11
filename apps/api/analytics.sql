@@ -205,3 +205,53 @@ LEFT JOIN info i ON i.slug = p.slug
 LEFT JOIN redeemed x ON x.slug = p.slug
 LEFT JOIN studied s ON s.slug = p.slug
 ORDER BY p.slug;
+
+-- name: break_return_sessions
+-- Feel pass: of the users shown "Welcome back" (break_return_shown: no review for 2+
+-- study days and more than 30 due), the share who started a session within 24 hours of
+-- a showing, capped ("Start with 20", capped_session_started) vs full. Distinct users;
+-- one can count as both, after different showings or on different devices. A session
+-- is capped when its device recorded capped_session_started within a minute of it.
+WITH shown AS (
+  SELECT user_id, occurred_at FROM events WHERE type = 'break_return_shown'
+),
+sessions AS (
+  SELECT
+    s.user_id,
+    s.occurred_at,
+    EXISTS (
+      SELECT 1 FROM events c
+      WHERE c.type = 'capped_session_started'
+        AND c.user_id = s.user_id
+        AND c.device_id = s.device_id
+        AND abs(c.occurred_at - s.occurred_at) <= 60000
+    ) AS capped
+  FROM events s
+  WHERE s.type = 'session_started'
+),
+started AS (
+  SELECT sh.user_id, bool_or(se.capped) AS capped, bool_or(NOT se.capped) AS uncapped
+  FROM shown sh
+  JOIN sessions se
+    ON se.user_id = sh.user_id
+   AND se.occurred_at >= sh.occurred_at
+   AND se.occurred_at < sh.occurred_at + 86400000
+  GROUP BY sh.user_id
+),
+totals AS (
+  SELECT
+    (SELECT COUNT(DISTINCT user_id) FROM shown) AS users_shown,
+    COUNT(*) AS started_any,
+    COUNT(*) FILTER (WHERE capped) AS started_capped,
+    COUNT(*) FILTER (WHERE uncapped) AS started_full
+  FROM started
+)
+SELECT
+  users_shown::int,
+  started_any::int,
+  started_capped::int,
+  started_full::int,
+  ROUND(started_any::numeric / NULLIF(users_shown, 0), 4)::float8 AS share_any,
+  ROUND(started_capped::numeric / NULLIF(users_shown, 0), 4)::float8 AS share_capped,
+  ROUND(started_full::numeric / NULLIF(users_shown, 0), 4)::float8 AS share_full
+FROM totals;

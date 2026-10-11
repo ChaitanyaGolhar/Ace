@@ -41,7 +41,8 @@ export const FEEL_CARDS: CardContent[] = [
       { id: 'd', text: 'Session' },
     ],
     correct: 'b',
-    explanation: 'The network layer (IP) chooses the path between networks; data link works within one.',
+    explanation:
+      'The network layer (IP) chooses the path between networks; data link works within one.',
   },
   {
     type: 'mcq',
@@ -52,7 +53,8 @@ export const FEEL_CARDS: CardContent[] = [
       { id: 'c', text: 'ICMP' },
     ],
     correct: 'b',
-    explanation: 'TCP numbers and acknowledges segments and retransmits lost ones; UDP does neither.',
+    explanation:
+      'TCP numbers and acknowledges segments and retransmits lost ones; UDP does neither.',
   },
   {
     type: 'cloze',

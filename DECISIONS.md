@@ -514,3 +514,52 @@ The root font size was 15px, which put Tailwind's rem spacing on a 3.75px base: 
 - every visible control has a tap area of at least 44px. Links inside sentences are exempt (WCAG 2.5.8).
 
 A control may look smaller when a `::before` keeps its tap area at 44px. The 32px filter chips and the undo pill (a 28px pill inside a 44px button) use this.
+
+## Feel pass
+
+### D-348 Pulls declare the event types they can parse
+
+An app parses pulled events strictly, so one event of a type it doesn't know fails its whole pull. That's a sync error on any device still running the previous version, for a user whose other device is updated.
+
+- **What:** `EVENTS_VERSION` in core (now 2). A pull may send `eventsVersion`; none means 1, which is everything up to M8. The server sends only the types that version knows (`eventTypesFor`).
+- **Why not bump the protocol:** that would send every open M8 app to "Update required to sync" for two analytics events. This change is additive, so M8 apps keep syncing.
+- **Consequence:** an M8 device never receives the other device's `break_return_shown` or `capped_session_started`. They're on the server, which is where analytics reads them.
+- **Next time:** add the new type to `ADDED_IN` and bump `EVENTS_VERSION`.
+
+### D-349 "Coming back after a break": the exact trigger
+
+Home shows "Welcome back" when all of these hold:
+
+- the latest review that wasn't undone was at least **2 study days ago**. Days are counted by study day, with the rollover hour, and today counts as a day without a review. Example: reviewed Monday, opened Wednesday → shown.
+- **more than 30** cards are due (review + learning, the Home "reviews" count; new cards aren't counted).
+- the user has **reviewed at least once**. Someone who never has is on a first visit, not a return.
+
+A review today, even one from the capped session, turns it off. `break_return_shown {due, daysAway}` is recorded at most once per study day (meta `breakReturnShownOn`, checked in one transaction).
+
+### D-350 Capped sessions ("Start with 20")
+
+- **The cards:** the 20 cards first in core's due order (by due date, then id), so the most overdue, are chosen when the session starts and stored in the session (`cap`).
+- **No new cards.** A capped card rated Again still comes back within the session.
+- **A session limit only:** no card's state changes. Tests check the states and the uncapped queue are identical, in the unit tests and E2E.
+- **Reloads:** a reload continues the capped session. A capped and a full session never continue each other.
+- **"Do N more":** N is min(20, cards still due), so it never promises cards that don't exist. It finishes the session (`session_completed`) and starts a new capped one. "Done for today" ends it like "Back to home". The two buttons are styled the same.
+- **Space on Home** does what the primary button does: "Start with 20" after a break, "Start reviewing" otherwise.
+
+### D-351 Session-complete numbers
+
+- **"You reviewed N cards…"** keeps its sentence and its time. As before, it counts reviews, so a card seen twice counts twice.
+- **"Remembered X of N"** uses the same reviews. A review counts as remembered when the answer was checked and was correct (MCQ, typed cloze). Otherwise, including a cloze answer that was only revealed, it counts when the rating wasn't Again.
+- **"Next: …"** gained a case. Cards that are still in today's queue (another deck's, or past a capped session's limit) now read "Next: 25 still due today". They used to say "45 later today", which wasn't true of cards already overdue.
+- **"K cards won't come back for 2+ weeks."** counts distinct cards from this session whose scheduled due date is at least 14 days from now. It's shown only when K > 0.
+
+### D-352 Motion that never holds anything up
+
+- **Durations:** answer reveal 150ms, card in 120ms, the rated card out 120ms after the button's 80ms pressed state, correct-answer pop 180ms, completion ring and check 400ms. CSS only.
+- **The next card never waits for an animation.** It replaces the leaving one as soon as it has loaded.
+- **Shortcut keys go into a queue and apply in order.** Each applies once the screen shows the result of the one before, including while a rating saves and the next card loads. Fast typing used to lose keys: a rating pressed right after Space was checked against the not-yet-revealed card. The queue holds 64 keys and ignores auto-repeat, so a held key can't rate a run of cards.
+- **Reduced motion** sets every animation and transition duration and delay to 0. The meaning stays in icons and words.
+
+### D-353 Answer feedback copy and layout
+
+- **MCQ options:** each has a fixed 20px slot for ✓ or ✗, so marking one never reflows its text. "Correct answer" and "Your answer" became screen-reader text inside the option. The verdict line below says it in words.
+- **Verdict:** "✓ Correct" (success colour). Or "✗ Not quite — here's why." when there's an explanation or extra, and just "Not quite." when there isn't. Neutral text with only the ✗ in red, and no red background.

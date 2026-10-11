@@ -112,8 +112,8 @@ for (const theme of ['dark', 'light'] as const) {
     await shot('complete');
 
     if (AFTER) {
-      await page.goto('/');
-      await page.getByRole('button', { name: 'Start with 20' }).click();
+      // Studied today, so Home no longer offers it; open the capped session directly.
+      await page.goto('/study?cap=20');
       await expect(page.getByTestId('position')).toHaveText('1 of 20');
       for (let i = 0; i < 20; i++) {
         await page.keyboard.press(' ');

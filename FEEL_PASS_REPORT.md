@@ -99,3 +99,40 @@ To recapture: `FEEL_CAPTURE=1 FEEL_DIR=_after pnpm --filter @recall/web exec pla
 - **"You reviewed N cards" counts reviews, as before**, so a card seen twice counts twice; "Remembered X of N" uses the same N, so the two always agree.
 - **No sound or haptics.** Neither was asked for, and both would need a setting.
 - **The undo pill and Continue button keep their existing motion.** Only the rating buttons got the pressed state the brief describes.
+
+## Deploy and live check
+
+Deployed per DEPLOY.md on 11 Oct 2026 (IST). `main` = `ddc9683`. No migration, no env or secret changes.
+
+| Time        | Step                                                                                                                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 22:58       | Neon branch **`before-feel-pass`** (`br-proud-wind-b352leue`, from production, never expires). Baseline: decks 15, cards 2607, logs 232, events 305, users 4; seqs 5122/5195/5210/5244; md5 of every table; migrations 5  |
+| 23:00       | Pushed `feel-pass` (`ddc9683`). A throwaway test profile signed in on the live app (`index-CsEhbFR9.js`) and synced                                                                                                       |
+| 23:01–23:04 | Render branch → `feel-pass`: `dep-db5sgkd9fdbs73dvbvs0`, "No pending migrations to apply", live. `/health` ok; `/sync/pull` without a session → 401                                                                       |
+| 23:04       | **Mixed version:** the previous app against the new API: push 200, pull 200, "Synced", no banner (no protocol change; its pulls send no `eventsVersion`, so they get only the event types it knows)                       |
+| 23:05–23:06 | `main` → `ddc9683` pushed; Vercel live at 23:06 (`index-BXUyjFcU.js`)                                                                                                                                                     |
+| 23:07–23:09 | Render back on `main`: `dep-db5sig4s728c738tb0ag`, "No pending migrations to apply", live                                                                                                                                 |
+| 23:07       | The test profile took the update banner's Reload (**one tap**) → `index-BXUyjFcU.js`, Synced                                                                                                                              |
+| 23:08       | **Live check** (below), in a separate fresh profile that never signed in                                                                                                                                                  |
+| 23:09       | Post-deploy SQL: decks, cards and reviews **unchanged** (same counts, seqs and md5s); every baseline event unchanged (md5 over seq ≤ 5244). New rows: 7 events, `app_opened` ×6 and `signed_in` ×1, from the test profile |
+| 23:10       | Test profile signed out (204, old cookie → 401, 0 cookies) and deleted                                                                                                                                                    |
+
+Production now has real users (4 accounts, 15 decks), so "unchanged" was checked as: no row lost, and every row that existed at the baseline has the same checksum.
+
+### Live check (ace.orizenn.com, 390×844, dark)
+
+The break fixture was imported into a local, signed-out profile; its only API call was `GET /catalog`.
+
+- **Welcome back:** "Welcome back. 45 cards are waiting — nothing is lost." with "Start with 20" and "Review all 45".
+- **Start with 20, then 40 key presses (Space, 3) with no waits:** finished in 0.4 s; "Remembered 20 of 20", "Next: 25 still due today", "20 cards won't come back for 2+ weeks.", "Do 20 more" and "Done for today". No sideways scroll.
+- **MCQ:** right → "Correct" with the pop; wrong → "Not quite — here's why."
+
+| Home after a break                                       | After Start with 20                                     | MCQ wrong                                         |
+| -------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| ![](docs/ui-design/feel/_live/live-home-after-break.png) | ![](docs/ui-design/feel/_live/live-capped-complete.png) | ![](docs/ui-design/feel/_live/live-mcq-wrong.png) |
+
+### Rollback
+
+- **Web:** in Vercel, promote the previous deployment (`index-CsEhbFR9.js`).
+- **API:** in Render, roll back to `dep-db5dm8lckfvc739rgl80`. The previous API ignores `eventsVersion` and would send the new event types to every app, which only the new app can parse; roll the web back with it.
+- **Data:** nothing in the schema changed. `before-feel-pass` holds production as it was at 22:58.

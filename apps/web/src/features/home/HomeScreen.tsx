@@ -24,39 +24,36 @@ export function HomeScreen() {
   if (welcome) return <WelcomeScreen />;
 
   return (
-    <div className="flex flex-col gap-10 lg:gap-14">
+    <div className="flex flex-col gap-6">
       <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-page font-semibold tracking-tight lg:text-[40px]">{vm.greeting}</h1>
-          <p className="hidden text-body text-text-secondary lg:block lg:text-section lg:font-normal">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-page font-semibold tracking-tight">{vm.greeting}</h1>
+          <p className="hidden text-small text-text-secondary lg:block">
             Ready to make what you’ve learned stick?
           </p>
         </div>
         <Link
           to="/search"
-          className="hidden min-h-11 items-center gap-3 rounded-lg border border-border px-4 text-text-secondary lg:inline-flex"
+          className="hidden h-8 items-center gap-2 rounded-md border border-border pl-2.5 pr-1.5 text-small text-text-secondary transition-colors duration-150 hover:bg-surface-raised hover:text-text lg:inline-flex"
         >
-          <Search aria-hidden="true" className="size-4" />
+          <Search aria-hidden="true" className="size-3.5" />
           Search
           <kbd className="kbd">/</kbd>
         </Link>
       </header>
 
-      <section aria-labelledby="today-title" className="panel flex flex-col gap-6 p-6 lg:p-10">
-        <h2 id="today-title" className="text-body font-medium text-text-secondary">
+      <section aria-labelledby="today-title" className="panel flex flex-col gap-4 p-5">
+        <h2 id="today-title" className="text-small font-medium text-text-secondary">
           Today’s study
         </h2>
-        <div className="flex flex-col gap-3">
-          <p className="flex items-baseline gap-4">
-            <span
-              className="font-mono text-hero font-semibold tracking-tight"
-              data-testid="count-total"
-            >
+        <div className="flex flex-col gap-1">
+          <p className="flex items-baseline gap-2.5">
+            <span className="text-hero font-semibold tracking-tight" data-testid="count-total">
               {vm.total}
             </span>
-            <span className="text-card font-medium">cards to review</span>
+            <span className="text-section font-medium">cards to review</span>
           </p>
-          <p className="text-body text-text-secondary lg:text-section lg:font-normal">
+          <p className="text-small text-text-secondary">
             {vm.canStudy ? (
               <>
                 <span data-testid="count-reviews">{vm.reviews}</span> reviews ·{' '}
@@ -79,36 +76,36 @@ export function HomeScreen() {
           </p>
         </div>
         {vm.canStudy && (
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              className="btn-primary min-h-14 w-full text-section lg:w-auto lg:px-8"
+              className="btn-primary w-full lg:w-auto"
               onClick={vm.startReviewing}
               aria-keyshortcuts="Space"
             >
               Start reviewing
-              <ArrowRight aria-hidden="true" className="size-5" />
+              <ArrowRight aria-hidden="true" className="size-4" />
             </button>
-            <span className="hidden items-center gap-2 text-body text-text-muted lg:inline-flex">
+            <span className="hidden items-center gap-1.5 text-small text-text-muted lg:inline-flex">
               or press <kbd className="kbd">Space</kbd>
             </span>
           </div>
         )}
-        <p className="hidden border-t border-border pt-6 text-body text-text-muted lg:block">
+        <p className="hidden border-t border-border pt-4 text-small text-text-muted lg:block">
           Tomorrow: <span data-testid="tomorrow-count">{vm.tomorrow}</span>{' '}
           {vm.tomorrow === 1 ? 'card' : 'cards'}. Missed a day? Nothing is lost — due cards just
           wait for you.
         </p>
       </section>
 
-      <section aria-labelledby="decks-title" className="flex flex-col gap-4">
+      <section aria-labelledby="decks-title" className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-2">
-          <h2 id="decks-title" className="text-section font-semibold lg:text-[22px]">
+          <h2 id="decks-title" className="text-section font-semibold">
             Your decks
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link to="/decks/new" className="btn-ghost" aria-label="New deck">
-              <Plus aria-hidden="true" className="size-5" />
+              <Plus aria-hidden="true" className="size-4" />
               <span className="hidden lg:inline">New deck</span>
             </Link>
             <Link to="/decks" className="link hidden px-2 lg:inline-flex">
@@ -117,8 +114,8 @@ export function HomeScreen() {
           </div>
         </div>
         <DeckList decks={vm.decks} label="Your decks" />
-        <Link to="/store" className="link self-start px-2">
-          <Plus aria-hidden="true" className="size-5" />
+        <Link to="/store" className="link self-start px-2 text-small">
+          <Plus aria-hidden="true" className="size-4" />
           Find decks in the store
         </Link>
       </section>

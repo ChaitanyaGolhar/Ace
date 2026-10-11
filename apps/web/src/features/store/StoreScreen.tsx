@@ -16,17 +16,17 @@ export function StoreScreen() {
     <div className="flex flex-col gap-6">
       <header className="flex items-center gap-2">
         <Link to="/decks" className="icon-btn -ml-3" aria-label="Back to decks">
-          <ChevronLeft aria-hidden="true" className="size-6 text-text" />
+          <ChevronLeft aria-hidden="true" className="size-5 text-text" />
         </Link>
         <h1 className="text-section font-semibold lg:text-page lg:tracking-tight">Store</h1>
       </header>
-      <p className="text-body text-text-secondary lg:text-section lg:font-normal">
+      <p className="text-body text-text-secondary">
         Adding a deck copies its cards to you. Updates come when the author fixes or adds cards.
       </p>
 
       {vm.offlineSince !== null && (
         <p role="status" className="flex items-center gap-2 text-body text-text-secondary">
-          <WifiOff aria-hidden="true" className="size-5 shrink-0" />
+          <WifiOff aria-hidden="true" className="size-4 shrink-0" />
           You’re offline. Showing the store as it was on {dateFormat.format(vm.offlineSince)}.
         </p>
       )}
@@ -37,7 +37,7 @@ export function StoreScreen() {
       )}
       {vm.status === 'unavailable' && (
         <p role="status" className="flex items-center gap-2 text-body text-text-secondary">
-          <WifiOff aria-hidden="true" className="size-5 shrink-0" />
+          <WifiOff aria-hidden="true" className="size-4 shrink-0" />
           Connect to the internet to see the store.
         </p>
       )}
@@ -71,7 +71,7 @@ export function StoreScreen() {
                   )}
                   <p className="text-body text-text-muted">
                     {deck.catalog.year} · Sem {deck.catalog.semester} · {unitRange(deck.units)} ·{' '}
-                    <span className="font-mono">{formatCount(deck.cardCount)}</span> cards
+                    <span>{formatCount(deck.cardCount)}</span> cards
                   </p>
                   <p className="text-meta text-text-muted">{typesLabel(deck.typeCounts)}</p>
                 </div>
@@ -107,14 +107,19 @@ function ChipRow<T extends string | number>({
   format?: (v: T) => string;
 }) {
   const chip = (on: boolean) =>
-    `min-h-10 rounded-full border px-4 text-body transition-colors duration-150 ${
+    // 32px to look at; the ::before keeps the tap area 44px tall on phones.
+    `relative inline-flex h-8 items-center rounded-md border px-2.5 text-small transition-colors duration-150 before:absolute before:inset-x-0 before:-inset-y-[7px] before:content-[''] lg:before:hidden ${
       on
         ? 'border-accent bg-surface-raised font-medium text-text'
-        : 'border-border text-text-secondary hover:text-text'
+        : 'border-border text-text-secondary hover:bg-surface-raised hover:text-text'
     }`;
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
-      <span className="w-20 shrink-0 text-meta text-text-secondary">{label}</span>
+    <div
+      role="group"
+      aria-label={label}
+      className="flex flex-wrap items-center gap-x-1.5 gap-y-3.5"
+    >
+      <span className="w-[72px] shrink-0 text-meta text-text-secondary">{label}</span>
       <button
         type="button"
         aria-pressed={value === null}
@@ -162,11 +167,11 @@ function Filters({ vm }: { vm: StoreViewModel }) {
         <span className="sr-only">Search subjects</span>
         <Search
           aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-text-secondary"
+          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary"
         />
         <input
           type="search"
-          className="field pl-12"
+          className="field pl-9"
           placeholder="Search subjects"
           value={vm.search}
           onChange={(e) => {

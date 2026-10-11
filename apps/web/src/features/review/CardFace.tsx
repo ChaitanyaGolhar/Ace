@@ -14,9 +14,9 @@ export const TYPE_TAGS: Partial<Record<CardContent['type'], string>> = {
   long: 'Long answer',
 };
 
-const prompt = 'text-card font-medium whitespace-pre-wrap lg:text-[30px]';
-const answerText = 'text-[20px] leading-[1.5] whitespace-pre-wrap text-text lg:text-[22px]';
-const note = 'text-body whitespace-pre-wrap text-text-secondary lg:text-section lg:font-normal';
+const prompt = 'text-card font-medium tracking-tight whitespace-pre-wrap';
+const answerText = 'text-answer whitespace-pre-wrap text-text';
+const note = 'text-body whitespace-pre-wrap text-text-secondary';
 
 interface FaceProps {
   content: CardContent;
@@ -82,7 +82,7 @@ function WriteBox({
     <div className="flex flex-col gap-2">
       <button
         type="button"
-        className="btn-ghost self-start px-0 text-text-secondary"
+        className="btn-ghost self-start px-0 text-text-secondary hover:bg-transparent"
         aria-expanded={answer.typing}
         aria-controls={id}
         onClick={() => {
@@ -91,7 +91,7 @@ function WriteBox({
       >
         <ChevronDown
           aria-hidden="true"
-          className={`size-5 transition-transform duration-150 ${answer.typing ? 'rotate-180' : ''}`}
+          className={`size-4 transition-transform duration-150 ${answer.typing ? 'rotate-180' : ''}`}
         />
         {label}
       </button>
@@ -99,7 +99,7 @@ function WriteBox({
         <textarea
           id={id}
           aria-label="Your answer (not saved)"
-          className="field min-h-24 resize-y py-3 text-body"
+          className="field min-h-24 resize-y py-2 text-body"
           rows={rows}
           value={answer.typed}
           disabled={disabled}
@@ -182,13 +182,14 @@ function McqFace({
             : chosen
               ? 'chosen'
               : 'other';
+          // A hairline, doubled by an inset ring of the same colour for a state (no shift).
           const border =
             status === 'correct'
-              ? 'border-success'
+              ? 'border-success ring-1 ring-inset ring-success'
               : status === 'wrong'
-                ? 'border-error'
+                ? 'border-error ring-1 ring-inset ring-error'
                 : status === 'chosen'
-                  ? 'border-accent'
+                  ? 'border-accent ring-1 ring-inset ring-accent'
                   : 'border-border';
           return (
             <button
@@ -202,13 +203,11 @@ function McqFace({
               onClick={() => {
                 act({ kind: 'select', option: option.id });
               }}
-              className={`flex min-h-14 w-full items-start gap-3 rounded-lg border-2 bg-surface px-4 py-3 text-left text-body transition-colors duration-150 disabled:cursor-default lg:text-section lg:font-normal ${border} ${
+              className={`flex min-h-12 w-full items-start gap-3 rounded-md border bg-surface px-3 py-2.5 text-left text-body transition-colors duration-150 enabled:hover:bg-surface-raised disabled:cursor-default ${border} ${
                 chosen && !answer.checked ? 'bg-surface-raised' : ''
               }`}
             >
-              <span className="font-mono font-medium text-text-secondary">
-                {option.id.toUpperCase()}.
-              </span>
+              <span className="font-medium text-text-secondary">{option.id.toUpperCase()}.</span>
               <span className="flex-1 whitespace-pre-wrap">{option.text}</span>
               {status === 'correct' && (
                 <span className="inline-flex shrink-0 items-center gap-1 text-meta font-medium text-success">
@@ -300,7 +299,7 @@ function ClozeFace({
           Your answer
           <input
             type="text"
-            className="field text-section font-normal text-text"
+            className="field text-answer text-text"
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
@@ -317,14 +316,14 @@ function ClozeFace({
       {answer.result?.mode === 'typed' && (
         <div data-testid="cloze-result" className="flex flex-col gap-1">
           {answer.result.correct ? (
-            <p className="inline-flex items-center gap-2 text-section font-semibold text-success">
-              <Check aria-hidden="true" className="size-5" />
+            <p className="inline-flex items-center gap-1.5 text-body font-semibold text-success">
+              <Check aria-hidden="true" className="size-4" />
               Correct
             </p>
           ) : (
             <>
-              <p className="inline-flex items-center gap-2 text-section font-semibold text-error">
-                <X aria-hidden="true" className="size-5" />
+              <p className="inline-flex items-center gap-1.5 text-body font-semibold text-error">
+                <X aria-hidden="true" className="size-4" />
                 Not quite
               </p>
               <p className="text-body">
@@ -362,7 +361,7 @@ function LongFace({
         {content.question}
       </p>
       {content.marks !== null && (
-        <span className="self-start rounded-sm border border-border px-3 py-1 text-meta text-text-secondary">
+        <span className="self-start rounded-sm border border-border px-1.5 py-px text-meta text-text-secondary">
           {content.marks} {content.marks === 1 ? 'mark' : 'marks'}
         </span>
       )}
@@ -385,19 +384,19 @@ function LongFace({
           )}
           <hr className="border-border" />
           <fieldset className="flex flex-col gap-2" data-testid="key-points">
-            <legend className="mb-2 text-body text-text-secondary">
+            <legend className="mb-1 text-small text-text-secondary">
               Tick the key points your answer covered
             </legend>
             {content.keyPoints.map((point, i) => (
               <label
                 key={i}
-                className={`flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border bg-surface px-4 py-3 text-body lg:text-section lg:font-normal ${
+                className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-md border bg-surface px-3 py-2.5 text-body ${
                   ticked.has(i) ? 'border-accent' : 'border-border'
                 }`}
               >
                 <input
                   type="checkbox"
-                  className="mt-1 size-5 shrink-0 accent-[var(--color-accent)]"
+                  className="mt-0.5 size-4 shrink-0 accent-[var(--color-accent)]"
                   checked={ticked.has(i)}
                   disabled={disabled}
                   aria-keyshortcuts={i < 9 ? String(i + 1) : undefined}

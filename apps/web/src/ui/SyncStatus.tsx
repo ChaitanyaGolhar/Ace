@@ -31,7 +31,7 @@ export function SyncStatusLine({ view }: { view: SyncStatusView }) {
         {view.action && (
           <>
             {' · '}
-            <Link to="/signin" className="text-link underline underline-offset-2">
+            <Link to="/signin" className="text-text underline decoration-1 underline-offset-2">
               {view.action}
             </Link>
           </>

@@ -32,10 +32,10 @@ export function StoreDeckScreen() {
   const canAdd = !vm.paid || vm.owned;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <Link to="/store" className="link -ml-1 inline-flex items-center gap-1 self-start">
-          <ChevronLeft aria-hidden="true" className="size-5" />
+          <ChevronLeft aria-hidden="true" className="size-4" />
           Store
         </Link>
         <h1 className="text-page font-semibold tracking-tight">{deck.catalog.subject}</h1>
@@ -48,7 +48,7 @@ export function StoreDeckScreen() {
         <p className="flex items-center gap-2 text-section font-semibold">
           {vm.paid && vm.owned ? (
             <>
-              <Check aria-hidden="true" className="size-5 text-success" />
+              <Check aria-hidden="true" className="size-4 text-success" />
               Owned
             </>
           ) : (
@@ -59,12 +59,12 @@ export function StoreDeckScreen() {
           <>
             <button
               type="button"
-              className="btn-primary min-h-14 self-stretch text-section lg:self-start"
+              className="btn-primary self-stretch lg:self-start"
               disabled={vm.adding || vm.offline}
               onClick={vm.add}
               aria-describedby={vm.offline ? 'add-offline' : undefined}
             >
-              <Plus aria-hidden="true" className="size-5" />
+              <Plus aria-hidden="true" className="size-4" />
               Add to my decks
             </button>
             {vm.inMyDecks && (
@@ -72,7 +72,7 @@ export function StoreDeckScreen() {
             )}
           </>
         ) : (
-          <a href="#unlock" className="link self-start">
+          <a href="#unlock" className="link self-start underline decoration-1 underline-offset-4">
             How to buy, and unlock with a code
           </a>
         )}
@@ -82,7 +82,7 @@ export function StoreDeckScreen() {
             role="status"
             className="flex items-center gap-2 text-body text-text-secondary"
           >
-            <WifiOff aria-hidden="true" className="size-5 shrink-0" />
+            <WifiOff aria-hidden="true" className="size-4 shrink-0" />
             {OFFLINE_ADD_MESSAGE}
           </p>
         )}
@@ -97,9 +97,7 @@ export function StoreDeckScreen() {
         <h2 id="about-title" className="text-section font-semibold">
           About
         </h2>
-        <p className="text-body whitespace-pre-wrap text-text-secondary lg:text-section lg:font-normal">
-          {deck.description}
-        </p>
+        <p className="text-body whitespace-pre-wrap text-text-secondary">{deck.description}</p>
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-body">
           <dt className="text-text-secondary">University</dt>
           <dd>{deck.catalog.university}</dd>
@@ -139,12 +137,12 @@ export function StoreDeckScreen() {
             >
               <span className="w-16 shrink-0 text-text-secondary">Unit {u.number}</span>
               <span className="flex-1">{u.title}</span>
-              <span className="font-mono text-text-secondary">{formatCount(u.cardCount)}</span>
+              <span className="text-text-secondary">{formatCount(u.cardCount)}</span>
             </li>
           ))}
         </ul>
         <p className="text-body text-text-secondary">
-          <span className="font-mono">{formatCount(deck.cardCount)}</span> cards:{' '}
+          <span>{formatCount(deck.cardCount)}</span> {deck.cardCount === 1 ? 'card' : 'cards'}:{' '}
           {CARD_TYPES.filter((t) => deck.typeCounts[t] > 0)
             .map((t) => `${TYPE_NAMES[t]} ${formatCount(deck.typeCounts[t])}`)
             .join(' · ')}
@@ -157,7 +155,7 @@ export function StoreDeckScreen() {
         </h2>
         {vm.samples === null ? (
           <p className="flex items-center gap-2 text-body text-text-secondary">
-            <WifiOff aria-hidden="true" className="size-5 shrink-0" />
+            <WifiOff aria-hidden="true" className="size-4 shrink-0" />
             Connect to the internet to see sample cards.
           </p>
         ) : (
@@ -180,24 +178,15 @@ export function StoreDeckScreen() {
         title={`Add ${deck.catalog.subject} again?`}
         testId="duplicate-warning"
       >
-        <p className="text-body text-text-secondary lg:text-section lg:font-normal">
+        <p className="text-body text-text-secondary">
           You already have this deck. Adding it again makes a second copy that starts from scratch.
           Your progress on the first copy isn’t touched.
         </p>
         <div className="flex flex-col gap-3">
-          <button
-            type="button"
-            className="btn-secondary min-h-14 text-section"
-            onClick={vm.addSecondCopy}
-          >
+          <button type="button" className="btn-secondary" onClick={vm.addSecondCopy}>
             Add a second copy
           </button>
-          <button
-            type="button"
-            className="btn-primary min-h-14 text-section"
-            onClick={vm.keepOneCopy}
-            data-autofocus
-          >
+          <button type="button" className="btn-primary" onClick={vm.keepOneCopy} data-autofocus>
             Keep one copy
           </button>
         </div>
@@ -256,7 +245,7 @@ function Unlock({ vm, slug, price }: { vm: StoreDeckViewModel; slug: string; pri
               />
             </label>
             <button type="submit" className="btn-primary" disabled={vm.redeeming || vm.offline}>
-              <KeyRound aria-hidden="true" className="size-5" />
+              <KeyRound aria-hidden="true" className="size-4" />
               Redeem
             </button>
           </form>

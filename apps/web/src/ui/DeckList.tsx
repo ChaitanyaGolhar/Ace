@@ -10,30 +10,30 @@ export function DeckList({ decks, label }: { decks: DeckRow[]; label: string }) 
         <li key={deck.id} className="border-b border-border">
           <Link
             to={`/decks/${deck.id}`}
-            className="flex min-h-[72px] items-center gap-3 rounded-md px-2 py-3 transition-colors duration-150 hover:bg-surface"
+            className="flex min-h-12 items-center gap-3 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-surface"
           >
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-[17px] font-medium text-text">{deck.name}</span>
+                <span className="truncate text-body font-medium text-text">{deck.name}</span>
                 {deck.update && (
                   <span
-                    className="shrink-0 rounded-sm border border-accent px-2 py-0.5 text-meta font-medium text-accent"
+                    className="shrink-0 rounded-sm border border-border px-1.5 text-meta font-medium text-text-secondary"
                     data-testid="deck-update"
                   >
                     Update
                   </span>
                 )}
               </span>
-              <span className="text-body text-text-secondary">{deck.meta}</span>
+              <span className="text-small text-text-secondary">{deck.meta}</span>
             </span>
             {deck.due > 0 ? (
               <span className="pill tabular-nums" data-testid="deck-due">
                 {deck.due} due
               </span>
             ) : (
-              <span className="text-body text-text-muted">Up to date</span>
+              <span className="text-small text-text-muted">Up to date</span>
             )}
-            <ChevronRight aria-hidden="true" className="hidden size-5 text-text-muted lg:block" />
+            <ChevronRight aria-hidden="true" className="hidden size-4 text-text-muted lg:block" />
           </Link>
         </li>
       ))}

@@ -15,13 +15,13 @@ export function ToastRegion() {
         <div
           key={toast.id}
           data-testid="toast"
-          className="pointer-events-auto flex min-h-14 w-full max-w-sm items-center gap-2 rounded-xl bg-toast-bg py-1 pl-5 pr-1 text-toast-text"
+          className="pointer-events-auto flex min-h-12 w-full max-w-sm items-center gap-1 rounded-xl bg-toast-bg shadow-overlay py-0.5 pl-4 pr-0.5 text-toast-text"
         >
           <span className="flex-1 text-body">{toast.message}</span>
           {toast.actionLabel && (
             <button
               type="button"
-              className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-toast-action"
+              className="inline-flex min-h-11 items-center rounded-md px-3 font-semibold text-toast-action underline decoration-1 underline-offset-4"
               onClick={() => {
                 act(toast.id);
               }}

@@ -15,15 +15,12 @@ function Tile({
 }) {
   const id = useId();
   return (
-    <section aria-labelledby={id} className="panel flex flex-col gap-3 p-6">
+    <section aria-labelledby={id} className="panel flex flex-col gap-3 p-4 lg:p-5">
       <h2 id={id} className="text-body text-text-secondary">
         {title}
       </h2>
       <p className="flex items-baseline gap-2">
-        <span
-          data-testid="stat-value"
-          className="font-mono text-[40px] leading-none font-semibold tracking-tight"
-        >
+        <span data-testid="stat-value" className="text-hero font-semibold tracking-tight">
           {value}
         </span>
         {suffix && <span className="text-section font-normal text-text-secondary">{suffix}</span>}
@@ -36,7 +33,7 @@ function Tile({
 function ChartHeader({ id, title, readout }: { id: string; title: string; readout: string }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 id={id} className="text-section font-semibold lg:text-[22px]">
+      <h2 id={id} className="text-section font-semibold">
         {title}
       </h2>
       <p className="text-body text-text-secondary" aria-live="polite" data-testid={`${id}-readout`}>
@@ -86,11 +83,7 @@ function Bars({
             <span
               aria-hidden="true"
               className={`block w-full rounded-t-[4px] ${
-                bar.height === 0
-                  ? 'h-0.5 bg-border'
-                  : bar.isToday
-                    ? 'bg-accent-emphasis'
-                    : 'bg-accent'
+                bar.height === 0 ? 'h-0.5 bg-border' : bar.isToday ? 'bg-accent' : 'bg-text-muted'
               }`}
               style={
                 bar.height === 0
@@ -112,12 +105,10 @@ export function StatsScreen() {
   if (vm.status === 'error') return <ErrorMessage />;
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
-        <h1 className="text-page font-semibold tracking-tight lg:text-[40px]">Stats</h1>
-        <p className="text-body text-text-secondary lg:text-section lg:font-normal">
-          Last 30 days, across all decks.
-        </p>
+        <h1 className="text-page font-semibold tracking-tight">Stats</h1>
+        <p className="text-body text-text-secondary">Last 30 days, across all decks.</p>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -135,16 +126,16 @@ export function StatsScreen() {
         />
       </div>
 
-      <section className="flex flex-col gap-6" aria-labelledby="forecast">
+      <section className="flex flex-col gap-3" aria-labelledby="forecast">
         <ChartHeader id="forecast" title="Coming up · next 7 days" readout={vm.forecast.readout} />
         <Bars
           bars={vm.forecast.bars}
           onFocusBar={vm.focusForecast}
-          height="h-60"
-          gap="gap-6 lg:gap-12"
+          height="h-36"
+          gap="gap-4 lg:gap-8"
           labelledBy="forecast"
         >
-          <div className="mt-3 flex gap-6 lg:gap-12" aria-hidden="true">
+          <div className="mt-2 flex gap-4 lg:gap-8" aria-hidden="true">
             {vm.forecast.bars.map((bar, i) => (
               <span key={i} className="flex-1 text-center text-meta text-text-secondary">
                 {bar.axis}
@@ -154,17 +145,17 @@ export function StatsScreen() {
         </Bars>
       </section>
 
-      <section className="flex flex-col gap-6" aria-labelledby="per-day">
+      <section className="flex flex-col gap-3" aria-labelledby="per-day">
         <ChartHeader id="per-day" title="Reviews per day" readout={vm.perDay.readout} />
         <Bars
           bars={vm.perDay.bars}
           onFocusBar={vm.focusPerDay}
-          height="h-48"
+          height="h-32"
           gap="gap-0.5 lg:gap-1.5"
           labelledBy="per-day"
         >
           <div
-            className="mt-3 flex justify-between text-meta text-text-secondary"
+            className="mt-2 flex justify-between text-meta text-text-secondary"
             aria-hidden="true"
           >
             {vm.perDay.axis.map((label) => (
@@ -175,17 +166,17 @@ export function StatsScreen() {
       </section>
 
       <section aria-labelledby="your-cards" className="flex flex-col gap-4">
-        <h2 id="your-cards" className="text-section font-semibold lg:text-[22px]">
+        <h2 id="your-cards" className="text-section font-semibold">
           Your cards
         </h2>
         <dl className="border-t border-border">
           {vm.cards.map((row) => (
             <div
               key={row.label}
-              className="flex min-h-16 items-center justify-between border-b border-border"
+              className="flex min-h-12 items-center justify-between border-b border-border"
             >
-              <dt className="text-body lg:text-[17px]">{row.label}</dt>
-              <dd data-testid={`cards-${row.key}`} className="font-mono text-body lg:text-[17px]">
+              <dt className="text-body">{row.label}</dt>
+              <dd data-testid={`cards-${row.key}`} className="text-body">
                 {row.count}
               </dd>
             </div>

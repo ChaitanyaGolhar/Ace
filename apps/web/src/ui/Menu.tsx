@@ -57,14 +57,14 @@ export function Menu({
           setOpen((o) => !o);
         }}
       >
-        <Ellipsis aria-hidden="true" className="size-5" />
+        <Ellipsis aria-hidden="true" className="size-4" />
       </button>
       {open && (
         <div
           id={menuId}
           role="menu"
           aria-label={label}
-          className="absolute right-0 z-20 mt-1 flex min-w-44 flex-col rounded-lg border border-border bg-surface-raised p-1"
+          className="overlay absolute right-0 z-20 mt-1 flex min-w-44 flex-col rounded-lg bg-surface p-1"
           onKeyDown={(e) => {
             const items = [
               ...(rootRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []),
@@ -87,7 +87,7 @@ export function Menu({
               key={item.label}
               type="button"
               role="menuitem"
-              className={`flex min-h-11 items-center rounded-md px-3 text-left text-body hover:bg-surface ${item.danger ? 'text-error' : 'text-text'}`}
+              className={`flex min-h-11 items-center rounded-sm px-2.5 text-left text-body hover:bg-surface-raised lg:min-h-8 ${item.danger ? 'text-error' : 'text-text'}`}
               onClick={() => {
                 close();
                 item.onSelect();

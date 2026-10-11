@@ -3,55 +3,83 @@
 @import '@fontsource-variable/geist-mono/wght.css';
 
 /*
- * Design tokens (Foundations.png in docs/ui-design, dark and light). Every colour is a variable here;
- * components only use the semantic Tailwind names below (bg-surface, text-text-muted…),
- * never hex values. Dark is the default (:root); light overrides via data-theme, which
- * an inline script in index.html sets before first paint.
+ * Design tokens. Every colour is a variable here; components only use the semantic
+ * Tailwind names below (bg-surface, text-text-muted…), never hex values. Dark is the
+ * default (:root); light overrides via data-theme, which an inline script in index.html
+ * sets before first paint.
+ *
+ * Neutral, slightly cool surfaces on the brand's #0B0E14. The accent is reserved for the
+ * primary action, focus and selection. Every text colour is ≥ 4.5:1 on bg, surface and
+ * surface-raised in its theme (UI_POLISH_REPORT.md lists the ratios).
  */
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --bg: #111315;
-  --surface: #191c20;
-  --surface-raised: #202329;
-  --border: #2c3036;
-  --text: #f3f4f6;
-  --text-secondary: #a1a6af;
-  --text-muted: #858c97;
+  --bg: #0b0e14;
+  --surface: #10141b;
+  --surface-raised: #171c24;
+  --border: #232a35;
+  --text: #e8ebf0;
+  --text-secondary: #a4abb7;
+  --text-muted: #8c94a1;
   --accent: #7188ff;
   --accent-emphasis: #aab6ff; /* today's bar in charts */
-  --on-accent: #0d1030;
-  --link: #a0afff;
+  --on-accent: #0b0e14;
+  --link: var(--text);
   --success: #65b891;
   --warning: #e7b96c;
-  --error: #e57373;
-  --toast-bg: #202329;
-  --toast-text: #f3f4f6;
-  --toast-action: #a0afff;
+  --error: #ef7a7a;
+  --toast-bg: #1d232d;
+  --toast-text: #e8ebf0;
+  --toast-action: #ffffff;
   --scrim: rgb(0 0 0 / 0.6);
+  /* Overlays (dialogs, toasts) are the only things with a shadow. */
+  --overlay-shadow: 0 8px 24px rgb(0 0 0 / 0.45), 0 1px 3px rgb(0 0 0 / 0.3);
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #f7f7f5;
+  --bg: #f6f7f9;
   --surface: #ffffff;
   --surface-raised: #eef0f3;
-  --border: #e2e4e8;
-  --text: #16181c;
-  --text-secondary: #5c636e;
-  --text-muted: #6b727d;
-  --accent: #4a63e6;
+  --border: #e2e5ea;
+  --text: #14171d;
+  --text-secondary: #565e6b;
+  --text-muted: #636b78;
+  --accent: #4159dd;
   --accent-emphasis: #2e42b8;
   --on-accent: #ffffff;
-  --link: #3f55d6;
-  --success: #237a52; /* ≥ 4.5:1 as text on bg, surface and surface-raised (D-325) */
-  --warning: #b7791f;
-  --error: #b23c3c; /* ≥ 4.5:1 as text on every surface (D-325) */
+  --link: var(--text);
+  --success: #237a52;
+  --warning: #8f5e10;
+  --error: #b23c3c;
   /* The toast is dark in both themes. */
-  --toast-bg: #16181c;
-  --toast-text: #f3f4f6;
-  --toast-action: #a0afff;
-  --scrim: rgb(0 0 0 / 0.4);
+  --toast-bg: #14171d;
+  --toast-text: #e8ebf0;
+  --toast-action: #ffffff;
+  --scrim: rgb(11 14 20 / 0.4);
+  --overlay-shadow: 0 8px 24px rgb(11 14 20 / 0.14), 0 1px 3px rgb(11 14 20 / 0.08);
+}
+
+/*
+ * Type sizes, mobile first: body 15 on phones and 14 on desktop, and the same one-step
+ * difference for section titles, the review question and its answer.
+ */
+:root {
+  --fs-page: 20px;
+  --fs-card: 20px;
+  --fs-answer: 16px;
+  --fs-section: 16px;
+  --fs-body: 15px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --fs-page: 22px;
+    --fs-card: 22px;
+    --fs-answer: 17px;
+    --fs-section: 15px;
+    --fs-body: 14px;
+  }
 }
 
 @theme inline {
@@ -81,74 +109,112 @@
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
 
-  /* Type scale: page 30/600, card 24/500, section 18/600, body 15/400, meta 13/400. */
-  --text-hero: 64px;
-  --text-hero--line-height: 1;
-  --text-page: 30px;
-  --text-page--line-height: 1.2;
-  --text-card: 24px;
+  /*
+   * Type scale: due count 34, page title 20–22, review question 20–22, answer 16–17,
+   * section title 15–16, body 14–15, secondary 13, meta 12.
+   */
+  --text-hero: 34px;
+  --text-hero--line-height: 1.1;
+  --text-page: var(--fs-page);
+  --text-page--line-height: 1.25;
+  --text-card: var(--fs-card);
   --text-card--line-height: 1.35;
-  --text-section: 18px;
+  --text-answer: var(--fs-answer);
+  --text-answer--line-height: 1.55;
+  --text-section: var(--fs-section);
   --text-section--line-height: 1.4;
-  --text-body: 15px;
+  --text-body: var(--fs-body);
   --text-body--line-height: 1.5;
-  --text-meta: 13px;
-  --text-meta--line-height: 1.45;
+  --text-small: 13px;
+  --text-small--line-height: 1.45;
+  --text-meta: 12px;
+  --text-meta--line-height: 1.4;
 
-  /* Radii: 8 small controls, 10–12 buttons/inputs, 16 panels. */
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* Radii: 4 tags and keys, 6 controls, 10 panels. */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+
+  --shadow-overlay: var(--overlay-shadow);
 }
 
 @layer base {
+  /* The root keeps the browser's size (16px, or the user's own), so rem spacing is on a
+   * true 4px base and min-h-11 is 44px; text sizes are set in px by the tokens. */
   html {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 15px;
     -webkit-font-smoothing: antialiased;
   }
   body {
     background: var(--bg);
     min-height: 100dvh;
+    font-size: var(--fs-body);
+    line-height: 1.5;
   }
-  /* Visible focus ring on everything (text colour, 2px gap). */
+  /* Visible focus ring on everything (accent, 2px gap). */
   :focus-visible {
-    outline: 2px solid var(--text);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
   ::placeholder {
     color: var(--text-muted);
   }
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
+    color: var(--text);
+  }
+  /* Numbers in counts and stats line up. */
+  body {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 /* Reusable control styles. Tailwind v4 needs @utility (not @layer components) for
- * classes that are @apply-ed inside other classes. */
+ * classes that are @apply-ed inside other classes.
+ *
+ * Heights: 44px on phones (touch targets); on desktop 36 for primary buttons and fields,
+ * 32 for the others. */
 @utility btn {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-body font-semibold transition-colors duration-150 select-none;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-md px-4 text-body font-medium transition-colors duration-150 select-none lg:min-h-8 lg:px-3;
   &:disabled {
     @apply cursor-not-allowed border-transparent bg-surface-raised text-text-muted;
   }
 }
 @utility btn-primary {
-  @apply btn bg-accent text-on-accent;
+  @apply btn bg-accent font-semibold text-on-accent lg:min-h-9 lg:px-4;
+  &:not(:disabled):hover {
+    background: color-mix(in srgb, var(--accent) 88%, var(--text));
+  }
 }
 @utility btn-secondary {
   @apply btn border border-border bg-surface text-text;
+  &:not(:disabled):hover {
+    @apply bg-surface-raised;
+  }
 }
 @utility btn-ghost {
-  @apply btn font-medium text-text-secondary;
+  @apply btn text-text-secondary;
+  &:not(:disabled):hover {
+    @apply bg-surface-raised text-text;
+  }
 }
 @utility btn-danger {
   @apply btn border border-border bg-transparent text-error;
+  &:not(:disabled):hover {
+    @apply bg-surface-raised;
+  }
 }
 @utility icon-btn {
-  @apply inline-flex size-11 items-center justify-center rounded-md text-text-secondary transition-colors duration-150;
+  @apply inline-flex size-11 items-center justify-center rounded-md text-text-secondary transition-colors duration-150 lg:size-8;
+  &:hover {
+    @apply bg-surface-raised text-text;
+  }
 }
 @utility field {
-  @apply block min-h-11 w-full rounded-lg border border-border bg-surface px-4 py-2 text-body text-text;
+  @apply block min-h-11 w-full rounded-md border border-border bg-surface px-3 py-2 text-body text-text lg:min-h-9;
   /* Focus: the accent border plus a 1px accent ring (2px total) is the visible indicator. */
   &:focus,
   &:focus-visible {
@@ -161,13 +227,19 @@
   @apply rounded-xl border border-border bg-surface;
 }
 @utility link {
-  @apply inline-flex min-h-11 items-center gap-2 font-medium text-link;
+  @apply inline-flex min-h-11 items-center gap-2 font-medium text-text-secondary transition-colors duration-150 lg:min-h-8;
+  &:hover {
+    @apply text-text;
+  }
 }
 @utility kbd {
-  @apply rounded-sm border border-border px-1.5 py-0.5 font-mono text-meta text-text-secondary;
+  @apply rounded-sm border border-border px-1 py-px font-mono text-meta text-text-secondary;
 }
 @utility pill {
-  @apply inline-flex items-center rounded-full bg-surface-raised px-3 py-1 font-medium text-text;
+  @apply inline-flex items-center rounded-full bg-surface-raised px-2.5 py-0.5 text-small font-medium text-text;
+}
+@utility overlay {
+  @apply border border-border shadow-overlay;
 }
 
 /* Motion: only short fades and colour changes, and none at all if the user asks. */

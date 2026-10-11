@@ -43,11 +43,11 @@ export function Dialog({ open, onClose, title, children, testId }: DialogProps) 
         // A click on the backdrop (the dialog element itself, outside its content) closes it.
         if (e.target === e.currentTarget) onClose();
       }}
-      className="fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-xl border border-border bg-surface-raised p-0 text-text backdrop:bg-scrim lg:inset-0 lg:m-auto lg:max-w-md lg:rounded-xl"
+      className="overlay fixed inset-x-0 bottom-0 top-auto m-0 w-full max-w-none rounded-t-xl bg-surface p-0 text-text backdrop:bg-scrim lg:inset-0 lg:m-auto lg:max-w-sm lg:rounded-xl"
     >
-      <div className="flex flex-col gap-4 p-6 pt-3 lg:pt-6">
+      <div className="flex flex-col gap-4 p-5 pt-3 lg:pt-5">
         <div aria-hidden="true" className="mx-auto h-1 w-10 rounded-full bg-border lg:hidden" />
-        <h2 id={titleId} className="text-card font-semibold">
+        <h2 id={titleId} className="text-section font-semibold">
           {title}
         </h2>
         {children}

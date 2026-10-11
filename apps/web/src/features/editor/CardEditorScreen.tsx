@@ -46,7 +46,7 @@ export function CardEditorScreen() {
       </header>
 
       <form
-        className="flex flex-1 flex-col gap-6 pt-6 lg:pt-0"
+        className="flex flex-1 flex-col gap-6 pt-4 lg:pt-0"
         onKeyDown={onKeyDown}
         onSubmit={(e) => {
           e.preventDefault();
@@ -61,7 +61,7 @@ export function CardEditorScreen() {
           <span className="relative">
             <select
               id="deck-select"
-              className="field appearance-none pr-12 font-normal"
+              className="field appearance-none pr-9 font-normal"
               value={vm.deckId ?? ''}
               disabled={!isNew}
               onChange={(e) => {
@@ -77,7 +77,7 @@ export function CardEditorScreen() {
             </select>
             <ChevronDown
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
+              className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-text-secondary"
             />
           </span>
         </div>
@@ -99,7 +99,7 @@ export function CardEditorScreen() {
         >
           {vm.addedStatus && (
             <>
-              <Check aria-hidden="true" className="size-5 text-success" />
+              <Check aria-hidden="true" className="size-4 text-success" />
               {vm.addedStatus}
             </>
           )}
@@ -108,7 +108,7 @@ export function CardEditorScreen() {
         <div className="sticky bottom-0 -mx-4 mt-auto flex flex-col gap-2 border-t border-border bg-bg px-4 pt-4 pb-2 lg:static lg:mx-0 lg:mt-0 lg:flex-row lg:border-0 lg:px-0 lg:pt-0">
           <button
             type="submit"
-            className="btn-primary min-h-14 text-section lg:min-h-11 lg:text-body"
+            className="btn-primary lg:min-h-11 lg:text-body"
             disabled={vm.saving || !vm.valid}
             aria-keyshortcuts="Control+Enter Meta+Enter"
           >
@@ -117,7 +117,7 @@ export function CardEditorScreen() {
           {isNew ? (
             <button
               type="button"
-              className="btn-ghost min-h-14 text-section text-text lg:min-h-11 lg:text-body"
+              className="btn-ghost text-text lg:min-h-11 lg:text-body"
               onClick={vm.saveAndClose}
               disabled={vm.saving || (vm.dirty && !vm.valid)}
             >
@@ -179,7 +179,7 @@ function TypePicker({ vm }: { vm: CardEditorViewModel }) {
         <span className="relative">
           <select
             id="card-type-select"
-            className="field appearance-none pr-12 font-normal"
+            className="field appearance-none pr-9 font-normal"
             value={vm.draft.type}
             onChange={(e) => {
               vm.setType(e.target.value as (typeof CARD_TYPES)[number]);
@@ -193,7 +193,7 @@ function TypePicker({ vm }: { vm: CardEditorViewModel }) {
           </select>
           <ChevronDown
             aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
+            className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-text-secondary"
           />
         </span>
       </div>
@@ -204,7 +204,7 @@ function TypePicker({ vm }: { vm: CardEditorViewModel }) {
         <div
           role="radiogroup"
           aria-labelledby="card-type-label"
-          className="inline-flex flex-wrap self-start rounded-lg border border-border bg-surface p-1"
+          className="inline-flex flex-wrap self-start rounded-md border border-border bg-surface p-0.5"
         >
           {CARD_TYPES.map((t) => {
             const on = vm.draft.type === t;
@@ -217,7 +217,7 @@ function TypePicker({ vm }: { vm: CardEditorViewModel }) {
                 onClick={() => {
                   vm.setType(t);
                 }}
-                className={`min-h-10 rounded-md px-3 text-body transition-colors duration-150 ${
+                className={`min-h-11 rounded-sm px-3 text-body lg:min-h-8 transition-colors duration-150 ${
                   on ? 'bg-surface-raised font-medium text-text' : 'text-text-secondary'
                 }`}
               >
@@ -474,7 +474,7 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
                 <input
                   type="radio"
                   name="correct"
-                  className="size-5 accent-[var(--color-accent)]"
+                  className="size-4 accent-[var(--color-accent)]"
                   checked={d.correct === i}
                   aria-label={`Option ${letter} is correct`}
                   onChange={() => {
@@ -513,7 +513,7 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
                   vm.removeOption(i);
                 }}
               >
-                <X aria-hidden="true" className="size-5" />
+                <X aria-hidden="true" className="size-4" />
               </button>
             </div>
             {d.correct === i && (
@@ -528,7 +528,7 @@ function McqOptions({ vm }: { vm: CardEditorViewModel }) {
       })}
       {d.options.length < 6 && (
         <button type="button" className="btn-ghost self-start px-0" onClick={vm.addOption}>
-          <Plus aria-hidden="true" className="size-5" />
+          <Plus aria-hidden="true" className="size-4" />
           Add option
         </button>
       )}
@@ -605,7 +605,7 @@ function ListField({
                       onMove(i, -1);
                     }}
                   >
-                    <ArrowUp aria-hidden="true" className="size-5" />
+                    <ArrowUp aria-hidden="true" className="size-4" />
                   </button>
                   <button
                     type="button"
@@ -616,7 +616,7 @@ function ListField({
                       onMove(i, 1);
                     }}
                   >
-                    <ArrowDown aria-hidden="true" className="size-5" />
+                    <ArrowDown aria-hidden="true" className="size-4" />
                   </button>
                 </>
               )}
@@ -629,7 +629,7 @@ function ListField({
                   onRemove(i);
                 }}
               >
-                <X aria-hidden="true" className="size-5" />
+                <X aria-hidden="true" className="size-4" />
               </button>
             </div>
             <FieldError id={`${key}-error`} message={error} />
@@ -638,7 +638,7 @@ function ListField({
       })}
       {items.length < max && (
         <button type="button" className="btn-ghost self-start px-0" onClick={onAdd}>
-          <Plus aria-hidden="true" className="size-5" />
+          <Plus aria-hidden="true" className="size-4" />
           {addLabel}
         </button>
       )}

@@ -477,3 +477,40 @@ The banner now waits for the new service worker to install and activates it. Bef
 ### D-343 Weak ETags
 
 Render compresses responses and weakens ETags to `W/"…"`. The catalog now compares If-None-Match weakly, as RFC 9110 allows for GET, so 304s work in production.
+
+## Ace rebrand and UI polish
+
+### D-344 The rebrand touches names, not identifiers
+
+- **What changed:** every user-facing "Recall" is now "Ace": title, manifest, wordmark, welcome copy, the Settings version line, the sign-in email and README.
+- **What stays:**
+  - the `@recall/*` packages, the repo and the databases;
+  - the Dexie database `recall`;
+  - the theme key `recall.theme` in localStorage. Renaming it would reset every existing user's theme choice.
+- **Email sender name:** the API sets "Ace" and takes only the address from `MAIL_FROM`. The rename needed no env change on Render, where env vars are left alone.
+- **Icons:** from `public/brand`. The old `public/icons` are removed, and the service worker precaches `.ico` too.
+
+### D-345 Type sizes in px, root at the browser default
+
+The root font size was 15px, which put Tailwind's rem spacing on a 3.75px base: `min-h-11` was 41px, not 44.
+
+- The root now keeps the browser's size (16px, or the user's own), so spacing is a true 4px base.
+- Text sizes come from px tokens:
+  - body 15 mobile / 14 desktop; secondary 13; meta 12;
+  - section titles 16 / 15; page titles 20 / 22; review question 20 / 22; answer 16 / 17; due count 34.
+- The mobile and desktop values switch at 1024px, through CSS variables.
+
+### D-346 Accent only for primary action, focus and selection
+
+- **Keeps the accent:** primary buttons, the focus ring (now accent instead of text colour), text selection, the active nav icon, chosen filter chips, the picked MCQ option, ticked key points, the suggested rating, and today's bar in charts.
+- **Now neutral:** links (with underlines inside sentences), the "Update" tag, decorative icons, the review progress bar and the other chart bars.
+- **Contrast:** every text colour is ≥ 4.5:1 on bg, surface and surface-raised in both themes. The light accent darkened to `#4159DD` and warning to `#8F5E10` to get there.
+
+### D-347 A phone layout guard in the E2E suite
+
+`e2e/layout.spec.ts` checks every main screen at 390×844, including review and the store's free and paid deck pages:
+
+- no sideways scroll;
+- every visible control has a tap area of at least 44px. Links inside sentences are exempt (WCAG 2.5.8).
+
+A control may look smaller when a `::before` keeps its tap area at 44px. The 32px filter chips and the undo pill (a 28px pill inside a 44px button) use this.

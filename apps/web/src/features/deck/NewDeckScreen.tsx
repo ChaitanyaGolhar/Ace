@@ -4,8 +4,8 @@ import { useNewDeck } from './useNewDeck';
 export function NewDeckScreen() {
   const vm = useNewDeck();
   return (
-    <section aria-labelledby="new-deck-title" className="mx-auto flex max-w-[640px] flex-col gap-8">
-      <h1 id="new-deck-title" className="text-page font-semibold tracking-tight lg:text-[40px]">
+    <section aria-labelledby="new-deck-title" className="mx-auto flex max-w-[640px] flex-col gap-6">
+      <h1 id="new-deck-title" className="text-page font-semibold tracking-tight">
         New deck
       </h1>
       <form
@@ -34,7 +34,7 @@ export function NewDeckScreen() {
             {vm.error}
           </p>
         )}
-        <button type="submit" className="btn-primary min-h-14 text-section" disabled={vm.saving}>
+        <button type="submit" className="btn-primary" disabled={vm.saving}>
           Create deck
         </button>
       </form>

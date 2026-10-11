@@ -37,7 +37,7 @@ function Row({
   return (
     <div className="flex flex-col gap-3 border-b border-border py-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
       <div className="flex flex-col gap-1">
-        <span id={id} className="text-body font-medium text-text lg:text-[17px]">
+        <span id={id} className="text-body font-medium text-text">
           {title}
         </span>
         {description && (
@@ -79,8 +79,8 @@ export function SettingsScreen() {
   const persistence = vm.storagePersistence ? PERSISTENCE[vm.storagePersistence] : null;
 
   return (
-    <div className="flex flex-col gap-10">
-      <h1 className="text-page font-semibold tracking-tight lg:text-[40px]">Settings</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-page font-semibold tracking-tight">Settings</h1>
       {vm.error && (
         <p role="alert" className="text-error">
           {vm.error}
@@ -93,7 +93,7 @@ export function SettingsScreen() {
           title="New cards per day"
           description="Cards you haven’t seen before. Reviews are never limited."
           control={
-            <div className="inline-flex h-12 items-stretch overflow-hidden rounded-lg border border-border bg-surface">
+            <div className="inline-flex h-[46px] items-stretch overflow-hidden rounded-md border border-border bg-surface lg:h-9">
               <button
                 type="button"
                 className="inline-flex w-12 items-center justify-center text-text"
@@ -102,10 +102,10 @@ export function SettingsScreen() {
                   vm.stepNewPerDay(-1);
                 }}
               >
-                <Minus aria-hidden="true" className="size-5" />
+                <Minus aria-hidden="true" className="size-4" />
               </button>
               <input
-                className="w-16 border-x border-border bg-transparent text-center font-mono text-body text-text"
+                className="w-14 border-x border-border bg-transparent text-center text-body text-text"
                 inputMode="numeric"
                 aria-labelledby="new-per-day-label"
                 value={vm.newPerDayText}
@@ -125,7 +125,7 @@ export function SettingsScreen() {
                   vm.stepNewPerDay(1);
                 }}
               >
-                <Plus aria-hidden="true" className="size-5" />
+                <Plus aria-hidden="true" className="size-4" />
               </button>
             </div>
           }
@@ -161,7 +161,7 @@ export function SettingsScreen() {
             <div
               role="radiogroup"
               aria-labelledby="theme-label"
-              className="inline-flex rounded-lg border border-border bg-surface p-1"
+              className="inline-flex rounded-md border border-border bg-surface p-0.5"
             >
               {THEMES.map((t) => (
                 <button
@@ -169,7 +169,7 @@ export function SettingsScreen() {
                   type="button"
                   role="radio"
                   aria-checked={vm.theme === t.value}
-                  className={`min-h-11 rounded-md px-4 text-body transition-colors duration-150 ${
+                  className={`min-h-11 rounded-sm px-3 text-body lg:min-h-8 transition-colors duration-150 ${
                     vm.theme === t.value
                       ? 'bg-surface-raised font-medium text-text'
                       : 'text-text-secondary'
@@ -229,10 +229,10 @@ export function SettingsScreen() {
           >
             <persistence.Icon
               aria-hidden="true"
-              className={`mt-0.5 size-5 shrink-0 ${persistence.tone}`}
+              className={`mt-0.5 size-4 shrink-0 ${persistence.tone}`}
             />
             <div className="flex flex-col gap-1">
-              <span className="text-body font-medium lg:text-[17px]">{persistence.title}</span>
+              <span className="text-body font-medium">{persistence.title}</span>
               <span className="text-meta text-text-secondary lg:text-body">{persistence.text}</span>
             </div>
           </div>

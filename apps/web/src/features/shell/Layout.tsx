@@ -18,13 +18,15 @@ const NAV = [
 ] as const;
 
 function sideLinkClass({ isActive }: { isActive: boolean }) {
-  return `flex min-h-11 items-center gap-3 rounded-lg px-3 text-body transition-colors duration-150 ${
-    isActive ? 'bg-surface-raised font-medium text-text' : 'text-text-secondary hover:text-text'
+  return `flex h-8 items-center gap-2.5 rounded-md px-2 text-body transition-colors duration-150 ${
+    isActive
+      ? 'bg-surface-raised font-medium text-text'
+      : 'text-text-secondary hover:bg-surface-raised hover:text-text'
   }`;
 }
 
 function tabLinkClass({ isActive }: { isActive: boolean }) {
-  return `flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-meta ${
+  return `flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-meta ${
     isActive ? 'text-text' : 'text-text-secondary'
   }`;
 }
@@ -42,29 +44,29 @@ export function Layout() {
     <div className="min-h-dvh lg:flex">
       <aside
         aria-label="Sidebar"
-        className="hidden w-[272px] shrink-0 border-r border-border lg:block"
+        className="hidden w-[208px] shrink-0 border-r border-border lg:block"
       >
-        <div className="sticky top-0 flex h-dvh flex-col px-4 py-6">
+        <div className="sticky top-0 flex h-dvh flex-col px-3 py-5">
           <Link
             to="/"
-            className="mb-8 inline-flex min-h-11 items-center px-2"
+            className="mb-6 inline-flex h-8 items-center self-start rounded-md px-2"
             aria-label="Ace home"
           >
             <Logo />
           </Link>
-          <nav aria-label="Main" className="flex flex-col gap-1">
+          <nav aria-label="Main" className="flex flex-col gap-0.5">
             {NAV.map(({ to, label, Icon, end }) => (
               <NavLink key={to} to={to} end={end} className={sideLinkClass}>
                 {({ isActive }) => (
                   <>
                     <Icon
                       aria-hidden="true"
-                      className={`size-5 ${isActive ? 'text-accent' : ''}`}
+                      className={`size-4 ${isActive ? 'text-accent' : ''}`}
                     />
                     <span className="flex-1">{label}</span>
                     {to === '/' && vm.todayCount !== null && vm.todayCount > 0 && (
                       <span
-                        className="font-mono text-meta text-text-secondary"
+                        className="text-meta text-text-secondary"
                         aria-label={`${String(vm.todayCount)} to study`}
                       >
                         {vm.todayCount}
@@ -75,19 +77,19 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div className="mt-auto flex flex-col gap-3">
+          <div className="mt-auto flex flex-col gap-2">
             <NavLink to="/settings" className={sideLinkClass}>
               {({ isActive }) => (
                 <>
                   <Settings
                     aria-hidden="true"
-                    className={`size-5 ${isActive ? 'text-accent' : ''}`}
+                    className={`size-4 ${isActive ? 'text-accent' : ''}`}
                   />
                   Settings
                 </>
               )}
             </NavLink>
-            <div className="px-3">
+            <div className="px-2">
               <SyncStatusLine view={vm.sync} />
             </div>
           </div>
@@ -96,23 +98,23 @@ export function Layout() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileChrome && (
-          <header className="flex items-center gap-1 px-4 pt-3 lg:hidden">
+          <header className="flex items-center gap-1 px-4 pt-2 lg:hidden">
             <Link to="/" className="inline-flex min-h-11 flex-1 items-center" aria-label="Ace home">
               <Logo />
             </Link>
             <Link to="/settings" className="icon-btn" aria-label={`Sync status: ${vm.sync.text}`}>
-              <SyncStatusIcon view={vm.sync} className="size-6" />
+              <SyncStatusIcon view={vm.sync} className="size-5" />
             </Link>
             <Link to="/search" className="icon-btn" aria-label="Search">
-              <Search aria-hidden="true" className="size-6" />
+              <Search aria-hidden="true" className="size-5" />
             </Link>
           </header>
         )}
 
         <main
-          className={`flex-1 px-4 lg:px-8 ${mobileChrome ? 'pb-28 pt-4' : 'pb-8'} lg:pb-12 lg:pt-12`}
+          className={`flex-1 px-4 lg:px-10 ${mobileChrome ? 'pb-24 pt-3' : 'pb-8'} lg:pb-12 lg:pt-8`}
         >
-          <div className="mx-auto w-full max-w-[740px]">
+          <div className="mx-auto w-full max-w-[680px]">
             <Outlet context={outletContext} />
           </div>
         </main>
@@ -129,7 +131,7 @@ export function Layout() {
                     <>
                       <Icon
                         aria-hidden="true"
-                        className={`size-6 ${isActive ? 'text-accent' : ''}`}
+                        className={`size-5 ${isActive ? 'text-accent' : ''}`}
                       />
                       {label}
                     </>

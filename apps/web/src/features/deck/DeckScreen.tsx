@@ -16,7 +16,7 @@ export function DeckScreen() {
     return <NotFound message="This deck doesn’t exist or was deleted." />;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <nav aria-label="Breadcrumb" className="text-body">
         <ol className="flex items-center gap-2">
           <li>
@@ -36,13 +36,8 @@ export function DeckScreen() {
       <header className="flex flex-col gap-6">
         <div className="flex items-start gap-4">
           <div className="flex min-w-0 flex-1 flex-col gap-2">
-            <h1 className="text-page font-semibold tracking-tight break-words lg:text-[40px]">
-              {vm.name}
-            </h1>
-            <p
-              className="text-body text-text-secondary lg:text-section lg:font-normal"
-              data-testid="deck-meta"
-            >
+            <h1 className="text-page font-semibold tracking-tight break-words">{vm.name}</h1>
+            <p className="text-body text-text-secondary" data-testid="deck-meta">
               {vm.meta}
             </p>
           </div>
@@ -61,8 +56,11 @@ export function DeckScreen() {
             data-testid="update-available"
             className="panel flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between"
           >
-            <p className="flex items-start gap-3 text-body lg:text-section lg:font-normal">
-              <RefreshCw aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-accent" />
+            <p className="flex items-start gap-3 text-body">
+              <RefreshCw
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0 text-text-secondary"
+              />
               <span>
                 <span className="font-semibold">Update available</span>
                 {vm.update.summary && (
@@ -94,7 +92,7 @@ export function DeckScreen() {
             <div className="relative">
               <select
                 aria-label="Study"
-                className="field min-h-11 appearance-none pr-12"
+                className="field min-h-11 appearance-none pr-9"
                 value={vm.unit ?? ''}
                 onChange={(e) => {
                   vm.setUnit(e.target.value === '' ? null : Number(e.target.value));
@@ -109,14 +107,14 @@ export function DeckScreen() {
               </select>
               <ChevronDown
                 aria-hidden="true"
-                className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-text-secondary"
+                className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-text-secondary"
               />
             </div>
           )}
           {vm.canStudy ? (
             <Link to={vm.studyHref} className="btn-primary px-6">
               Study deck
-              <ArrowRight aria-hidden="true" className="size-5" />
+              <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           ) : (
             <button type="button" className="btn px-6" disabled>
@@ -124,7 +122,7 @@ export function DeckScreen() {
             </button>
           )}
           <Link to={`/decks/${vm.deckId}/cards/new`} className="btn-secondary px-6">
-            <Plus aria-hidden="true" className="size-5" />
+            <Plus aria-hidden="true" className="size-4" />
             Add card
           </Link>
         </div>
@@ -132,18 +130,18 @@ export function DeckScreen() {
 
       <section aria-labelledby="cards-title" className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <h2 id="cards-title" className="text-section font-semibold lg:text-[22px]">
+          <h2 id="cards-title" className="text-section font-semibold">
             Cards
           </h2>
           <label className="relative block lg:w-[340px]">
             <span className="sr-only">Search cards</span>
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-text-muted"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted"
             />
             <input
               type="search"
-              className="field pl-11"
+              className="field pl-9"
               placeholder="Search questions and answers"
               value={vm.search}
               onChange={(e) => {
@@ -156,14 +154,14 @@ export function DeckScreen() {
         {vm.cardCount === 0 ? (
           <p
             data-testid="deck-empty"
-            className="border-t border-border pt-6 text-body text-text-secondary"
+            className="border-t border-border pt-4 text-body text-text-secondary"
           >
             No cards yet. Add your first card.
           </p>
         ) : vm.cards.length === 0 ? (
           <p
             data-testid="search-empty"
-            className="border-t border-border pt-6 text-body text-text-secondary"
+            className="border-t border-border pt-4 text-body text-text-secondary"
           >
             No cards match “{vm.search.trim()}”.
           </p>
@@ -172,13 +170,11 @@ export function DeckScreen() {
             {vm.cards.map((card) => (
               <li
                 key={card.id}
-                className="flex min-h-16 items-center gap-3 border-b border-border px-2"
+                className="flex min-h-12 items-center gap-3 border-b border-border px-2"
               >
-                <span className="min-w-0 flex-1 truncate text-body lg:text-[17px]">
-                  {card.front}
-                </span>
+                <span className="min-w-0 flex-1 truncate text-body">{card.front}</span>
                 <span
-                  className={`shrink-0 text-meta lg:text-body ${
+                  className={`shrink-0 text-small ${
                     card.isDue ? 'font-medium text-text' : 'text-text-secondary'
                   }`}
                 >

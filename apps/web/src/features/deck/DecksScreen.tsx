@@ -10,11 +10,11 @@ export function DecksScreen() {
   if (vm.status === 'error') return <ErrorMessage />;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <header className="flex items-center justify-between gap-4">
-        <h1 className="text-page font-semibold tracking-tight lg:text-[40px]">Decks</h1>
+        <h1 className="text-page font-semibold tracking-tight">Decks</h1>
         <Link to="/decks/new" className="btn-primary">
-          <Plus aria-hidden="true" className="size-5" />
+          <Plus aria-hidden="true" className="size-4" />
           New deck
         </Link>
       </header>
@@ -26,7 +26,7 @@ export function DecksScreen() {
         <DeckList decks={vm.decks} label="Decks" />
       )}
       <Link to="/store" className="link self-start px-2">
-        <Plus aria-hidden="true" className="size-5" />
+        <Plus aria-hidden="true" className="size-4" />
         Find decks in the store
       </Link>
     </div>

@@ -19,53 +19,53 @@ _Branch `ui-polish`. Built overnight, 11 Oct 2026, per the overnight brief._
 
 All screens, at 390×844 and 1280×800, in dark and light: `docs/ui-design/_before/` and `docs/ui-design/_after/`, 148 images each, same names. These pairs show the most change:
 
-| Screen                       | Before                                                                                 | After                                                                                |
-| ---------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Home, desktop dark           | ![](docs/ui-design/_before/home-desktop-dark.png)                                      | ![](docs/ui-design/_after/home-desktop-dark.png)                                     |
-| Home, phone light            | ![](docs/ui-design/_before/home-mobile-light.png)                                      | ![](docs/ui-design/_after/home-mobile-light.png)                                     |
-| Review, answer, phone dark   | ![](docs/ui-design/_before/review-revealed-mobile-dark.png)                            | ![](docs/ui-design/_after/review-revealed-mobile-dark.png)                           |
-| Long answer, desktop light   | ![](docs/ui-design/_before/type-long-checked-desktop-light.png)                        | ![](docs/ui-design/_after/type-long-checked-desktop-light.png)                       |
-| Store, phone dark            | ![](docs/ui-design/_before/store-mobile-dark.png)                                      | ![](docs/ui-design/_after/store-mobile-dark.png)                                     |
-| Store deck page, desktop     | ![](docs/ui-design/_before/store-deck-desktop-dark.png)                                | ![](docs/ui-design/_after/store-deck-desktop-dark.png)                               |
-| Paid deck, phone             | ![](docs/ui-design/_before/store-paid-mobile-dark.png)                                 | ![](docs/ui-design/_after/store-paid-mobile-dark.png)                                |
-| Stats, desktop light         | ![](docs/ui-design/_before/stats-desktop-light.png)                                    | ![](docs/ui-design/_after/stats-desktop-light.png)                                   |
-| Settings, desktop light      | ![](docs/ui-design/_before/settings-desktop-light.png)                                 | ![](docs/ui-design/_after/settings-desktop-light.png)                                |
-| Deck page, phone dark        | ![](docs/ui-design/_before/deck-detail-mobile-dark.png)                                | ![](docs/ui-design/_after/deck-detail-mobile-dark.png)                               |
+| Screen                     | Before                                                          | After                                                          |
+| -------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------- |
+| Home, desktop dark         | ![](docs/ui-design/_before/home-desktop-dark.png)               | ![](docs/ui-design/_after/home-desktop-dark.png)               |
+| Home, phone light          | ![](docs/ui-design/_before/home-mobile-light.png)               | ![](docs/ui-design/_after/home-mobile-light.png)               |
+| Review, answer, phone dark | ![](docs/ui-design/_before/review-revealed-mobile-dark.png)     | ![](docs/ui-design/_after/review-revealed-mobile-dark.png)     |
+| Long answer, desktop light | ![](docs/ui-design/_before/type-long-checked-desktop-light.png) | ![](docs/ui-design/_after/type-long-checked-desktop-light.png) |
+| Store, phone dark          | ![](docs/ui-design/_before/store-mobile-dark.png)               | ![](docs/ui-design/_after/store-mobile-dark.png)               |
+| Store deck page, desktop   | ![](docs/ui-design/_before/store-deck-desktop-dark.png)         | ![](docs/ui-design/_after/store-deck-desktop-dark.png)         |
+| Paid deck, phone           | ![](docs/ui-design/_before/store-paid-mobile-dark.png)          | ![](docs/ui-design/_after/store-paid-mobile-dark.png)          |
+| Stats, desktop light       | ![](docs/ui-design/_before/stats-desktop-light.png)             | ![](docs/ui-design/_after/stats-desktop-light.png)             |
+| Settings, desktop light    | ![](docs/ui-design/_before/settings-desktop-light.png)          | ![](docs/ui-design/_after/settings-desktop-light.png)          |
+| Deck page, phone dark      | ![](docs/ui-design/_before/deck-detail-mobile-dark.png)         | ![](docs/ui-design/_after/deck-detail-mobile-dark.png)         |
 
 ### What changed, against your targets
 
-| Target                                                      | Before                                        | After                                                                                                    |
-| ----------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Body 14/15 · secondary 13 · meta 12                         | body 15 (desktop bumped to 18), meta 13       | body **15 phone / 14 desktop**, secondary **13**, meta **12**                                             |
-| Page title 20–22 · section 15–16                            | 30, or 40 on desktop · 18–22                  | **20 / 22** · **16 / 15**                                                                                 |
-| Due count 32–36                                             | 64 (mono)                                     | **34** (Geist, tabular figures)                                                                           |
-| Review question 20–22 · answer 16–17                        | 24, or 30 on desktop · 20–22                  | **20 / 22** · **16 / 17**                                                                                 |
-| Buttons 32–36 desktop, primary 36 · phone primary 44        | 44–56 everywhere (really 41–52, see above)    | desktop **36** primary and fields, **32** secondary, ghost and icon · phone **44**                        |
-| 4px base · section gaps 24 · panel padding 16–20 · rows 44–48 | 3.75px base · gaps 32–56 · padding 24–40 · rows 64–72 | **4px** · **24** · **16 / 20** · deck and card rows **48**                                            |
-| Radius 6 controls / 10 panels · hairlines · shadows only on overlays | 8–12 / 16 · no overlay shadow         | **6 / 10** (tags 4) · 1px borders · a soft shadow only on dialogs, menus and toasts                       |
-| Sidebar 200–220, nav items 32, text 13–14                   | 272 · 44 · 15                                 | **208** · **32** · **14**                                                                                 |
-| Content ~680                                                | 740                                           | **680** (review 680, dialogs 384)                                                                         |
-| Rating buttons ~52, smaller undo pill                       | 72 · 44px pill                                | **52** · a 28px pill (inside a 44px tap area on phones)                                                   |
-| Neutral surfaces, `#0B0E14` base; accent only for primary, focus, selection | `#111315` base; accent on links, tags, icons, progress bar, chart bars, focus ring in text colour | `#0B0E14` / `#10141B` / `#171C24`; accent kept for the uses listed in D-346                 |
+| Target                                                                      | Before                                                                                            | After                                                                               |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Body 14/15 · secondary 13 · meta 12                                         | body 15 (desktop bumped to 18), meta 13                                                           | body **15 phone / 14 desktop**, secondary **13**, meta **12**                       |
+| Page title 20–22 · section 15–16                                            | 30, or 40 on desktop · 18–22                                                                      | **20 / 22** · **16 / 15**                                                           |
+| Due count 32–36                                                             | 64 (mono)                                                                                         | **34** (Geist, tabular figures)                                                     |
+| Review question 20–22 · answer 16–17                                        | 24, or 30 on desktop · 20–22                                                                      | **20 / 22** · **16 / 17**                                                           |
+| Buttons 32–36 desktop, primary 36 · phone primary 44                        | 44–56 everywhere (really 41–52, see above)                                                        | desktop **36** primary and fields, **32** secondary, ghost and icon · phone **44**  |
+| 4px base · section gaps 24 · panel padding 16–20 · rows 44–48               | 3.75px base · gaps 32–56 · padding 24–40 · rows 64–72                                             | **4px** · **24** · **16 / 20** · deck and card rows **48**                          |
+| Radius 6 controls / 10 panels · hairlines · shadows only on overlays        | 8–12 / 16 · no overlay shadow                                                                     | **6 / 10** (tags 4) · 1px borders · a soft shadow only on dialogs, menus and toasts |
+| Sidebar 200–220, nav items 32, text 13–14                                   | 272 · 44 · 15                                                                                     | **208** · **32** · **14**                                                           |
+| Content ~680                                                                | 740                                                                                               | **680** (review 680, dialogs 384)                                                   |
+| Rating buttons ~52, smaller undo pill                                       | 72 · 44px pill                                                                                    | **52** · a 28px pill (inside a 44px tap area on phones)                             |
+| Neutral surfaces, `#0B0E14` base; accent only for primary, focus, selection | `#111315` base; accent on links, tags, icons, progress bar, chart bars, focus ring in text colour | `#0B0E14` / `#10141B` / `#171C24`; accent kept for the uses listed in D-346         |
 
 ## Final tokens (`apps/web/src/index.css`)
 
 ### Colour
 
-| Token            | Dark      | Light     | Use                                                |
-| ---------------- | --------- | --------- | -------------------------------------------------- |
-| `bg`             | `#0B0E14` | `#F6F7F9` | page                                               |
-| `surface`        | `#10141B` | `#FFFFFF` | panels, fields, rows on hover                      |
-| `surface-raised` | `#171C24` | `#EEF0F3` | selected nav, pills, hovered controls              |
-| `border`         | `#232A35` | `#E2E5EA` | hairlines                                          |
-| `text`           | `#E8EBF0` | `#14171D` | primary text, links                                |
-| `text-secondary` | `#A4ABB7` | `#565E6B` | secondary text                                     |
-| `text-muted`     | `#8C94A1` | `#636B78` | meta, placeholders, chart bars                     |
-| `accent`         | `#7188FF` | `#4159DD` | primary buttons, focus, selection, today's bar     |
-| `on-accent`      | `#0B0E14` | `#FFFFFF` | text on accent                                     |
-| `success`        | `#65B891` | `#237A52` | correct, synced                                    |
-| `warning`        | `#E7B96C` | `#8F5E10` | offline, storage                                   |
-| `error`          | `#EF7A7A` | `#B23C3C` | wrong, errors, delete                              |
+| Token            | Dark      | Light     | Use                                            |
+| ---------------- | --------- | --------- | ---------------------------------------------- |
+| `bg`             | `#0B0E14` | `#F6F7F9` | page                                           |
+| `surface`        | `#10141B` | `#FFFFFF` | panels, fields, rows on hover                  |
+| `surface-raised` | `#171C24` | `#EEF0F3` | selected nav, pills, hovered controls          |
+| `border`         | `#232A35` | `#E2E5EA` | hairlines                                      |
+| `text`           | `#E8EBF0` | `#14171D` | primary text, links                            |
+| `text-secondary` | `#A4ABB7` | `#565E6B` | secondary text                                 |
+| `text-muted`     | `#8C94A1` | `#636B78` | meta, placeholders, chart bars                 |
+| `accent`         | `#7188FF` | `#4159DD` | primary buttons, focus, selection, today's bar |
+| `on-accent`      | `#0B0E14` | `#FFFFFF` | text on accent                                 |
+| `success`        | `#65B891` | `#237A52` | correct, synced                                |
+| `warning`        | `#E7B96C` | `#8F5E10` | offline, storage                               |
+| `error`          | `#EF7A7A` | `#B23C3C` | wrong, errors, delete                          |
 
 Contrast (computed, WCAG). Every text colour clears 4.5:1 on all three surfaces, and axe passes in both themes:
 

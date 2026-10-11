@@ -1,6 +1,7 @@
-# recall
+# Ace
 
-An offline-first spaced-repetition web app (PWA) for students. Scheduling uses FSRS
+An offline-first spaced-repetition web app (PWA) for students. (The repository, its
+`@recall/*` packages and the databases keep the working name `recall`.) Scheduling uses FSRS
 via [`ts-fsrs`](https://github.com/open-spaced-repetition/ts-fsrs). See
 [`BUILD_BRIEF.md`](./BUILD_BRIEF.md) for the full product and technical spec.
 

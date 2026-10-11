@@ -8,11 +8,20 @@ import { magicLinkFor } from './support/apiServer';
 import { deckFile, publish, uniqueSlug, type CardJson } from './support/catalog';
 
 // Screenshots of every screen at 390×844 and 1280×800, dark and light, into
-// docs/ui-design/_actual/ for comparison with the approved mocks. Opt-in:
+// docs/ui-design/_actual/ (or SCREENSHOTS_DIR, e.g. _before / _after) for comparison with
+// the approved mocks. Opt-in:
 //   SCREENSHOTS=1 pnpm --filter @recall/web exec playwright test e2e/screenshots.spec.ts
 test.skip(process.env.SCREENSHOTS !== '1', 'set SCREENSHOTS=1 to capture screenshots');
 
-const OUT = join(import.meta.dirname, '..', '..', '..', 'docs', 'ui-design', '_actual');
+const OUT = join(
+  import.meta.dirname,
+  '..',
+  '..',
+  '..',
+  'docs',
+  'ui-design',
+  process.env.SCREENSHOTS_DIR ?? '_actual',
+);
 /** 2026-10-10 09:00 in Asia/Kolkata. */
 const NOW = Date.parse('2026-10-10T03:30:00Z');
 
@@ -250,6 +259,15 @@ for (const viewport of VIEWPORTS) {
       await expect(page.getByRole('dialog', { name: `Add ${DBMS} again?` })).toBeVisible();
       await shot('store-duplicate');
       await page.getByRole('button', { name: 'Keep one copy' }).click();
+
+      // A paid deck (M8), signed out: price, How to buy, Sign in to unlock.
+      await page.goto('/store');
+      await page
+        .getByRole('list', { name: 'Store decks' })
+        .getByRole('link', { name: /Machine Learning/ })
+        .click();
+      await expect(page.getByTestId('purchase-info')).toBeVisible();
+      await shot('store-paid');
 
       // A card from the Robbins deck: multi-line question, long answer.
       // (The frozen clock moves on 5 minutes: a new session must start after the

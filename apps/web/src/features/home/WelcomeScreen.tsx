@@ -9,15 +9,16 @@ export function WelcomeScreen() {
       data-testid="welcome"
       className="flex min-h-[calc(100dvh-2rem)] flex-col gap-8 pt-4 lg:min-h-0 lg:pt-0"
     >
-      <div className="lg:hidden">
+      <p className="lg:hidden">
         <Logo />
-      </div>
+        <span className="sr-only">Ace</span>
+      </p>
       <header className="flex flex-col gap-4 pt-6">
         <h1 className="text-[44px] font-semibold leading-[1.1] tracking-tight">
           Remember what you study.
         </h1>
         <p className="text-section font-normal text-text-secondary">
-          Recall brings each card back right before you’d forget it. A few minutes a day is enough.
+          Ace brings each card back right before you’d forget it. A few minutes a day is enough.
         </p>
       </header>
 

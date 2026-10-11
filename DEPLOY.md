@@ -1,11 +1,11 @@
-# Deploying Recall for test users
+# Deploying Ace for test users
 
 **Live since 2026-10-10:**
 
 - **App:** https://ace.orizenn.com, on Vercel (project `ace`). It redeploys on every push to `main`.
 - **API:** https://api.ace.orizenn.com, on Render (service `recall-api`; also `recall-api-4oyb.onrender.com`).
 - **Database:** Neon project `ace-recall`, in Singapore.
-- **Email:** sent from `Recall <login@contact.orizenn.com>`, using the Resend domain `contact.orizenn.com` that was already verified.
+- **Email:** sent from `Ace <login@contact.orizenn.com>` (the app sets the name "Ace"; `MAIL_FROM` supplies the address), using the Resend domain `contact.orizenn.com` that was already verified.
 - **DNS:** CNAMEs `ace` and `api.ace` in Cloudflare, DNS only.
 
 Render was created from the public repo URL without a GitHub link, so it doesn't redeploy on push. Use **Manual Deploy** in the Render dashboard, or connect GitHub there.
@@ -64,7 +64,7 @@ Nothing here needs code changes: the config is in [`render.yaml`](./render.yaml)
    | `WEB_ORIGIN`     | `https://ace.orizenn.com`     |
    | `API_ORIGIN`     | `https://api.ace.orizenn.com` |
    | `RESEND_API_KEY` | the key from step 1           |
-   | `MAIL_FROM`      | `Recall <login@orizenn.com>`  |
+   | `MAIL_FROM`      | `login@orizenn.com`           |
 
    The others (`MAIL_MODE=resend`, `COOKIE_SECURE=true`, `TRUST_PROXY=true`, `NODE_VERSION=24`) are already in the file.
 

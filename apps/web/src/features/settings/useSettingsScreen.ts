@@ -25,7 +25,7 @@ export interface SettingsViewModel {
   syncing: boolean;
   /** The magic link that brought the user back didn't work (?signInError=invalid). */
   signInError: string | null;
-  /** "Recall 0.1 · Scheduling by FSRS" */
+  /** "Ace 0.1 · Scheduling by FSRS" */
   versionLine: string;
   error: string | null;
   busy: boolean;
@@ -109,7 +109,7 @@ export function useSettingsScreen(): SettingsViewModel {
       params.get('signInError') === null
         ? null
         : 'That sign-in link didn’t work. It may have expired or already been used. Send a new one.',
-    versionLine: `Recall ${majorMinor(__APP_VERSION__)} · Scheduling by FSRS`,
+    versionLine: `Ace ${majorMinor(__APP_VERSION__)} · Scheduling by FSRS`,
     error,
     busy,
     setNewPerDayText: (v: string) => {

@@ -48,7 +48,7 @@ export function Layout() {
           <Link
             to="/"
             className="mb-8 inline-flex min-h-11 items-center px-2"
-            aria-label="Recall home"
+            aria-label="Ace home"
           >
             <Logo />
           </Link>
@@ -97,11 +97,7 @@ export function Layout() {
       <div className="flex min-w-0 flex-1 flex-col">
         {mobileChrome && (
           <header className="flex items-center gap-1 px-4 pt-3 lg:hidden">
-            <Link
-              to="/"
-              className="inline-flex min-h-11 flex-1 items-center"
-              aria-label="Recall home"
-            >
+            <Link to="/" className="inline-flex min-h-11 flex-1 items-center" aria-label="Ace home">
               <Logo />
             </Link>
             <Link to="/settings" className="icon-btn" aria-label={`Sync status: ${vm.sync.text}`}>

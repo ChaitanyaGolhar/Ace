@@ -34,7 +34,20 @@ export class MemoryMailer implements Mailer {
 const escapeHtml = (text: string) =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
-/** Production: Resend's HTTP API (https://resend.com/docs/api-reference/emails/send-email). */
+/** The product's name in sign-in emails. */
+const SENDER_NAME = 'Ace';
+
+/** `Name <address>` or a bare address → the address alone. */
+function addressOf(from: string): string {
+  const match = /<([^>]+)>/.exec(from);
+  return (match?.[1] ?? from).trim();
+}
+
+/**
+ * Production: Resend's HTTP API (https://resend.com/docs/api-reference/emails/send-email).
+ * MAIL_FROM supplies the (verified) address; the display name is always Ace, whatever
+ * name MAIL_FROM carries.
+ */
 export class ResendMailer implements Mailer {
   constructor(
     private readonly apiKey: string,
@@ -47,16 +60,16 @@ export class ResendMailer implements Mailer {
       method: 'POST',
       headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: this.from,
+        from: `${SENDER_NAME} <${addressOf(this.from)}>`,
         to: [email],
-        subject: 'Your sign-in link',
-        text: `Open this link to sign in to Recall. It works once and expires in 15 minutes.
+        subject: `Your ${SENDER_NAME} sign-in link`,
+        text: `Open this link to sign in to ${SENDER_NAME}. It works once and expires in 15 minutes.
 
 ${link}
 
 If you didn't ask for it, ignore this email.
 `,
-        html: `<p>Open this link to sign in to Recall. It works once and expires in 15 minutes.</p><p><a href="${href}">Sign in to Recall</a></p><p>If you didn't ask for it, ignore this email.</p>`,
+        html: `<p>Open this link to sign in to ${SENDER_NAME}. It works once and expires in 15 minutes.</p><p><a href="${href}">Sign in to ${SENDER_NAME}</a></p><p>If you didn't ask for it, ignore this email.</p>`,
       }),
     });
     if (!res.ok) {

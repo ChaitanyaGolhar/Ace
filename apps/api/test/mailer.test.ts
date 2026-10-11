@@ -35,12 +35,28 @@ describe('ResendMailer', () => {
     });
     const body = JSON.parse(call?.init.body as string) as Record<string, unknown>;
     expect(body).toMatchObject({
-      from: 'Recall <login@example.org>',
+      from: 'Ace <login@example.org>',
       to: ['student@example.org'],
-      subject: 'Your sign-in link',
+      subject: 'Your Ace sign-in link',
     });
     expect(body.text).toContain(LINK);
+    expect(body.text).toContain('Open this link to sign in to Ace.');
     expect(body.html).toContain(`href="${LINK}"`);
+    expect(body.html).toContain('>Sign in to Ace</a>');
+    expect(JSON.stringify(body)).not.toContain('Recall');
+  });
+
+  it('the sender is always named Ace: only the address comes from MAIL_FROM', async () => {
+    for (const from of [
+      'login@example.org',
+      'Old Name <login@example.org>',
+      ' "Recall" <login@example.org> ',
+    ]) {
+      const { calls, fetchFn } = fakeFetch(new Response('{}', { status: 200 }));
+      await new ResendMailer('k', from, fetchFn).sendMagicLink('s@example.org', LINK);
+      const body = JSON.parse(calls[0]?.init.body as string) as { from: string };
+      expect(body.from, from).toBe('Ace <login@example.org>');
+    }
   });
 
   it('escapes the link in the HTML body', async () => {

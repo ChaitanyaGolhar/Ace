@@ -34,19 +34,19 @@ All screens, at 390×844 and 1280×800, in dark and light: `docs/ui-design/_befo
 
 ### What changed, against your targets
 
-| Target                                                                      | Before                                                                                            | After                                                                               |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Body 14/15 · secondary 13 · meta 12                                         | body 15 (desktop bumped to 18), meta 13                                                           | body **15 phone / 14 desktop**, secondary **13**, meta **12**                       |
-| Page title 20–22 · section 15–16                                            | 30, or 40 on desktop · 18–22                                                                      | **20 / 22** · **16 / 15**                                                           |
-| Due count 32–36                                                             | 64 (mono)                                                                                         | **34** (Geist, tabular figures)                                                     |
-| Review question 20–22 · answer 16–17                                        | 24, or 30 on desktop · 20–22                                                                      | **20 / 22** · **16 / 17**                                                           |
-| Buttons 32–36 desktop, primary 36 · phone primary 44                        | 44–56 everywhere (really 41–52, see above)                                                        | desktop **36** primary and fields, **32** secondary, ghost and icon · phone **44**  |
-| 4px base · section gaps 24 · panel padding 16–20 · rows 44–48               | 3.75px base · gaps 32–56 · padding 24–40 · rows 64–72                                             | **4px** · **24** · **16 / 20** · deck and card rows **48**                          |
-| Radius 6 controls / 10 panels · hairlines · shadows only on overlays        | 8–12 / 16 · no overlay shadow                                                                     | **6 / 10** (tags 4) · 1px borders · a soft shadow only on dialogs, menus and toasts |
-| Sidebar 200–220, nav items 32, text 13–14                                   | 272 · 44 · 15                                                                                     | **208** · **32** · **14**                                                           |
-| Content ~680                                                                | 740                                                                                               | **680** (review 680, dialogs 384)                                                   |
-| Rating buttons ~52, smaller undo pill                                       | 72 · 44px pill                                                                                    | **52** · a 28px pill (inside a 44px tap area on phones)                             |
-| Neutral surfaces, `#0B0E14` base; accent only for primary, focus, selection | `#111315` base; accent on links, tags, icons, progress bar, chart bars, focus ring in text colour | `#0B0E14` / `#10141B` / `#171C24`; accent kept for the uses listed in D-346         |
+| Target                                                                      | Before                                                                                            | After                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Body 14/15 · secondary 13 · meta 12                                         | body 15 (desktop bumped to 18), meta 13                                                           | body **15 phone / 14 desktop**, secondary **13**, meta **12**                             |
+| Page title 20–22 · section 15–16                                            | 30, or 40 on desktop · 18–22                                                                      | **20 / 22** · **16 / 15**                                                                 |
+| Due count 32–36                                                             | 64 (mono)                                                                                         | **34** (Geist, tabular figures)                                                           |
+| Review question 20–22 · answer 16–17                                        | 24, or 30 on desktop · 20–22                                                                      | **20 / 22** · **16 / 17**                                                                 |
+| Buttons 32–36 desktop, primary 36 · phone primary 44                        | 44–56 everywhere (really 41–52, see above)                                                        | desktop **36** primary and fields, **32** secondary, ghost and icon · phone **44**        |
+| 4px base · section gaps 24 · panel padding 16–20 · rows 44–48               | 3.75px base · gaps 32–56 · padding 24–40 · rows 64–72                                             | **4px** · **24** · **16 / 20** · deck and card rows **48**                                |
+| Radius 6 controls / 10 panels · hairlines · shadows only on overlays        | 8–12 / 16 · no overlay shadow                                                                     | **6 / 10** (tags 4) · 1px borders · a soft shadow only on dialogs, menus and toasts       |
+| Sidebar 200–220, nav items 32, text 13–14                                   | 272 · 44 · 15                                                                                     | **208** · **32** · **14**                                                                 |
+| Content ~680                                                                | 740                                                                                               | **680** (review 680, dialogs 384)                                                         |
+| Rating buttons ~52, smaller undo pill                                       | 72 · 44px pill                                                                                    | **52** desktop, **55** phone (15px body) · a 28px pill (inside a 44px tap area on phones) |
+| Neutral surfaces, `#0B0E14` base; accent only for primary, focus, selection | `#111315` base; accent on links, tags, icons, progress bar, chart bars, focus ring in text colour | `#0B0E14` / `#10141B` / `#171C24`; accent kept for the uses listed in D-346               |
 
 ## Final tokens (`apps/web/src/index.css`)
 
@@ -137,8 +137,45 @@ Contrast (computed, WCAG). Every text colour clears 4.5:1 on all three surfaces,
 - **Changed:**
   - The PWA test expected `name: 'Recall'`. It now expects Ace and checks more.
   - The suggested rating's "Suggested" text is now screen-reader-only. The E2E assertion (`toContainText('Suggested')`) still passes on the same element.
-- **Results:** `pnpm check`: core 327, API 129 and web 289 tests passing. `pnpm e2e`: see the deploy section. Axe in both themes passes.
+- **Results:** `pnpm check`: core 327, API 129 and web 289 tests passing. `pnpm e2e`: **67 passed** (8 opt-in screenshot captures skipped), including axe in both themes and the new rebrand and layout guards.
 
 ## Deploy and live check
 
-_Filled in after the deploy, below._
+Deployed per DEPLOY.md on 11 Oct 2026 (IST). `main` = `3418519`.
+
+| Time        | Step                                                                                                                                                                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 06:04–06:05 | Neon branch **`before-ui-polish`** (`br-lively-cell-b30z3hmp`, from production, never expires). Baseline: decks 5, cards 1059, logs 58, seqs 1163/1169/1238, md5s; catalog 0; users 1                                                               |
+| 06:05       | Pushed `ui-polish` (`3418519`)                                                                                                                                                                                                                      |
+| 06:06–06:07 | Render branch → `ui-polish`: `dep-db5djv8473hc73ap8700`, "No pending migrations to apply", live                                                                                                                                                     |
+| 06:07–06:09 | **Email and mixed version:** the M8 web app (`index-spV3x5Gs.js`) requested a link from the new API. It arrived from **"Ace"**, subject **"Your Ace sign-in link"**, button "Sign in to Ace". It signed in, then push and pull returned 200: Synced |
+| 06:09–06:10 | main → `3418519` pushed; Vercel live at 06:10 (`index-CsEhbFR9.js`): `<title>Ace</title>`, theme-color `#0B0E14`, `/brand` favicons and apple-touch-icon                                                                                            |
+| 06:11–06:13 | Render back on `main`: `dep-db5dm8lckfvc739rgl80`, live                                                                                                                                                                                             |
+| 06:14       | **Live check**, a fresh signed-out profile at 390×844 (nothing written to the server; its only API calls were `GET /catalog`). See below                                                                                                            |
+| 06:16       | Post-deploy SQL **identical** to the baseline (counts, seqs and md5s; codes 0, entitlements 0)                                                                                                                                                      |
+| 06:17       | The test profile took the update banner's Reload (**one tap**) → new bundle, Synced. Signed out (204, old cookie → 401) and deleted                                                                                                                 |
+
+### Live check
+
+**Title and icon:** the title is **Ace**.
+
+- **Manifest** (as Chrome parsed it): `name` and `short_name` "Ace", theme and background `#0B0E14`, icons `/brand/icon-192.png`, `/brand/icon-512.png` and `/brand/icon-maskable-512.png` (`purpose: maskable`).
+- **Installability:** Chrome reports **no installability errors**, and the page is controlled by the service worker.
+
+**Install app shows the Ace icon:** this is the icon Chrome installs from the live manifest.
+
+![](docs/ui-design/_live/live-icon-512.png)
+
+**Reviewing a card at phone width:** in a local deck, the card went front → answer → Easy → Review complete. There was no sideways scroll. The rating buttons are 55px.
+
+| Welcome                                        | Question                                            | Answer                                                 | Done                                                   |
+| ---------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------ |
+| ![](docs/ui-design/_live/live-welcome-390.png) | ![](docs/ui-design/_live/live-review-front-390.png) | ![](docs/ui-design/_live/live-review-revealed-390.png) | ![](docs/ui-design/_live/live-review-complete-390.png) |
+
+**Rollback:**
+
+- **Web:** in Vercel, promote the `index-spV3x5Gs.js` deployment (M8).
+- **API:** in Render, roll back to `dep-db5cuko473hc73an6cpg`. The only API change is the email sender name.
+- **Data:** no migrations, and production data is unchanged. `before-ui-polish` is there if ever needed.
+
+**On your phone:** an installed app keeps its old name and icon until the OS refreshes it, which can take a day. Removing and re-adding it updates it at once.

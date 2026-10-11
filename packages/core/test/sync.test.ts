@@ -73,6 +73,7 @@ describe('PullQuerySchema', () => {
       since: '0',
       limit: 500,
       protocolVersion: 3,
+      eventsVersion: 1,
     });
   });
 
@@ -81,6 +82,7 @@ describe('PullQuerySchema', () => {
       since: '12345',
       limit: 20,
       protocolVersion: 3,
+      eventsVersion: 1,
     });
   });
 

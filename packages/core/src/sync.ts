@@ -51,6 +51,8 @@ export const PullQuerySchema = z.object({
     .default('0'),
   limit: z.coerce.number().int().min(1).max(MAX_PULL_LIMIT).default(MAX_PULL_LIMIT),
   protocolVersion: z.coerce.number().pipe(z.literal(PROTOCOL_VERSION)),
+  /** The event catalogue the app understands (EVENTS_VERSION); apps before it send none. */
+  eventsVersion: z.coerce.number().int().min(1).default(1),
 });
 
 export const PullResponseSchema = z.object({

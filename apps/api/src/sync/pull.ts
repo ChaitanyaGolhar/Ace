@@ -1,4 +1,4 @@
-import type { PullQuery, PullResponse } from '@recall/core';
+import { eventTypesFor, type PullQuery, type PullResponse } from '@recall/core';
 import type { Prisma } from '../db';
 import {
   toCard,
@@ -20,6 +20,9 @@ import {
  * With three independent reads, a push could commit between them: the page would then
  * contain that push's logs (high seqs) but not its deck (a lower seq read earlier), and
  * nextCursor would jump past the deck for ever. (The concurrency test caught this.)
+ *
+ * Events are limited to the types the app says it can parse (`eventsVersion`, D-348):
+ * the rest stay on the server, and skipping them never stalls the cursor.
  */
 export async function pullPage(
   prisma: Prisma,
@@ -28,6 +31,7 @@ export async function pullPage(
 ): Promise<PullResponse> {
   const since = BigInt(query.since);
   const take = query.limit + 1;
+  const eventTypes = eventTypesFor(query.eventsVersion);
   const [decks, cards, logs, events] = await prisma.$transaction(
     async (tx) =>
       [
@@ -42,6 +46,7 @@ export async function pullPage(
         ORDER BY server_seq LIMIT ${take}`,
         await tx.$queryRaw<EventRow[]>`
         SELECT * FROM events WHERE user_id = ${userId} AND server_seq > ${since}
+          AND type = ANY(${eventTypes}::text[])
         ORDER BY server_seq LIMIT ${take}`,
       ] as const,
     { isolationLevel: 'RepeatableRead' },

@@ -250,6 +250,19 @@ describe('two clients against the real API', () => {
     expect(await ids(c)).toEqual(await ids(a));
   });
 
+  it('feel pass: break-return events reach this app’s other devices', async () => {
+    const a = await newDevice();
+    const b = await newDevice();
+    await recordEvent(a, 'break_return_shown', { due: 45, daysAway: 4 });
+    await recordEvent(a, 'capped_session_started', { cap: 20, due: 45 });
+    await syncOnce(a, await transportFor(email));
+    await syncOnce(b, await transportFor(email));
+    expect((await b.db.events.toArray()).map((e) => e.type).sort()).toEqual([
+      'break_return_shown',
+      'capped_session_started',
+    ]);
+  });
+
   it('M6: every card type and review outcome syncs between two devices (studied offline on both)', async () => {
     const a = await newDevice();
     const b = await newDevice();

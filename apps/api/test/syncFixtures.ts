@@ -98,13 +98,20 @@ export function push(t: TestApp, cookie: string, batch: Batch) {
     });
 }
 
-export function pull(t: TestApp, cookie: string, since = '0', limit?: number) {
+export function pull(
+  t: TestApp,
+  cookie: string,
+  since = '0',
+  limit?: number,
+  eventsVersion?: number,
+) {
   return request(t.app)
     .get('/sync/pull')
     .query({
       since,
       protocolVersion: PROTOCOL_VERSION,
       ...(limit === undefined ? {} : { limit }),
+      ...(eventsVersion === undefined ? {} : { eventsVersion }),
     })
     .set('Cookie', cookie);
 }

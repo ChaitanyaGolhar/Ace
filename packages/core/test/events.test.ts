@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
   EVENT_PROPS,
+  EVENTS_VERSION,
+  eventTypesFor,
   PROTOCOL_VERSION,
+  PullQuerySchema,
   EVENT_TYPES,
   EventSchema,
   PullResponseSchema,
@@ -33,6 +36,9 @@ describe('EventSchema', () => {
         'purchase_info_viewed',
         'code_redeemed',
         'code_redeem_failed',
+        // Feel pass: coming back after a break
+        'break_return_shown',
+        'capped_session_started',
       ].sort(),
     );
   });
@@ -47,6 +53,8 @@ describe('EventSchema', () => {
       { type: 'deck_added_prebuilt', props: { prebuiltId: 'dbms-basics-v1' } },
       { type: 'card_created', props: {} },
       { type: 'signed_in', props: {} },
+      { type: 'break_return_shown', props: { due: 45, daysAway: 4 } },
+      { type: 'capped_session_started', props: { cap: 20, due: 45 } },
     ];
     for (const sample of samples) {
       expect(EventSchema.safeParse({ ...base, ...sample }).success, sample.type).toBe(true);
@@ -153,5 +161,41 @@ describe('events in the sync protocol', () => {
         events,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe('event catalogue versions (old apps never pull a type they can’t parse)', () => {
+  const M8_TYPES = [
+    'app_opened',
+    'first_review_completed',
+    'session_started',
+    'session_completed',
+    'session_abandoned',
+    'deck_added_prebuilt',
+    'card_created',
+    'signed_in',
+    'store_opened',
+    'catalog_deck_viewed',
+    'catalog_deck_added',
+    'deck_update_applied',
+    'purchase_info_viewed',
+    'code_redeemed',
+    'code_redeem_failed',
+  ];
+
+  it('version 1 is exactly what M8 apps know; version 2 adds the break-return events', () => {
+    expect(EVENTS_VERSION).toBe(2);
+    expect([...eventTypesFor(1)].sort()).toEqual([...M8_TYPES].sort());
+    expect([...eventTypesFor(2)].sort()).toEqual([...EVENT_TYPES].sort());
+    // A newer app than this server gets everything the server has.
+    expect([...eventTypesFor(7)].sort()).toEqual([...EVENT_TYPES].sort());
+  });
+
+  it('pulls may declare the version they understand; none means 1', () => {
+    const q = { since: '0', protocolVersion: String(PROTOCOL_VERSION) };
+    expect(PullQuerySchema.parse(q).eventsVersion).toBe(1);
+    expect(PullQuerySchema.parse({ ...q, eventsVersion: '2' }).eventsVersion).toBe(2);
+    expect(PullQuerySchema.safeParse({ ...q, eventsVersion: '0' }).success).toBe(false);
+    expect(PullQuerySchema.safeParse({ ...q, eventsVersion: 'x' }).success).toBe(false);
   });
 });

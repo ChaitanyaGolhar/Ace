@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AppEvent, PullResponse } from '@recall/core';
+import { EVENTS_VERSION, eventTypesFor, type AppEvent, type PullResponse } from '@recall/core';
 import { closeTestPrisma, makeTestApp, resetDb, signIn } from './helpers';
 import { dump, event, pull, push } from './syncFixtures';
 
@@ -39,6 +39,36 @@ describe('events through /sync/push and /sync/pull', () => {
     await push(t, cookie, { events: [altered] }).expect(200);
     const pulled = (await pull(t, cookie)).body as PullResponse;
     expect(pulled.events).toEqual([e]);
+  });
+
+  it('an app that declares no event catalogue (M8 and older) never pulls a type it can’t parse', async () => {
+    const t = makeTestApp();
+    const cookie = await signIn(t, 'a@example.com');
+    const known = event({ occurredAt: 1 });
+    const added = [
+      event({ type: 'break_return_shown', props: { due: 45, daysAway: 4 }, occurredAt: 2 }),
+      event({ type: 'capped_session_started', props: { cap: 20, due: 45 }, occurredAt: 3 }),
+    ];
+    const last = event({ type: 'signed_in', occurredAt: 4 });
+    await push(t, cookie, { events: [known, ...added, last] }).expect(200);
+
+    const old = (await pull(t, cookie)).body as PullResponse;
+    expect(old.events.map((e) => e.type)).toEqual(['app_opened', 'signed_in']);
+    // What an M8 app's schema (no break-return types) makes of this page: it parses.
+    const m8Types = new Set(eventTypesFor(1));
+    expect(old.events.every((e) => m8Types.has(e.type))).toBe(true);
+    // Its cursor still moves past everything it was sent.
+    const again = (await pull(t, cookie, old.nextCursor)).body as PullResponse;
+    expect(again.events).toEqual([]);
+    expect(again.hasMore).toBe(false);
+
+    const current = (await pull(t, cookie, '0', undefined, EVENTS_VERSION)).body as PullResponse;
+    expect(current.events.map((e) => e.type)).toEqual([
+      'app_opened',
+      'break_return_shown',
+      'capped_session_started',
+      'signed_in',
+    ]);
   });
 
   it('reject card text in payloads (400)', async () => {

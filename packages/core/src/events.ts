@@ -34,10 +34,33 @@ export const EVENT_PROPS = {
   code_redeem_failed: z.strictObject({
     reason: z.enum(['invalid', 'used_up', 'expired', 'rate_limited', 'network', 'other']),
   }),
+  // Feel pass: coming back after a break. `due` = review + learning cards due;
+  // `daysAway` = study days since the last review.
+  break_return_shown: z.strictObject({ due: count, daysAway: count }),
+  /** A session limited to the `cap` most overdue cards (of `due`). */
+  capped_session_started: z.strictObject({ cap: z.int().min(1), due: count }),
 } as const;
 
 export type EventType = keyof typeof EVENT_PROPS;
 export const EVENT_TYPES = Object.keys(EVENT_PROPS) as EventType[];
+
+/**
+ * The event catalogue's version. An app parses pulled events strictly, so a type it
+ * doesn't know would fail its whole pull: pulls declare the version they understand
+ * and only get those types (DECISIONS D-348). Bump it with every new type.
+ * - 1: up to M8 (what apps that send no version know).
+ * - 2: break_return_shown, capped_session_started.
+ */
+export const EVENTS_VERSION = 2;
+const ADDED_IN: Partial<Record<EventType, number>> = {
+  break_return_shown: 2,
+  capped_session_started: 2,
+};
+
+/** The event types an app that understands catalogue `version` can parse. */
+export function eventTypesFor(version: number): EventType[] {
+  return EVENT_TYPES.filter((type) => (ADDED_IN[type] ?? 1) <= version);
+}
 
 const base = {
   id: Uuid,
@@ -89,6 +112,16 @@ export const EventSchema = z.discriminatedUnion('type', [
     ...base,
     type: z.literal('code_redeem_failed'),
     props: EVENT_PROPS.code_redeem_failed,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('break_return_shown'),
+    props: EVENT_PROPS.break_return_shown,
+  }),
+  z.object({
+    ...base,
+    type: z.literal('capped_session_started'),
+    props: EVENT_PROPS.capped_session_started,
   }),
 ]);
 

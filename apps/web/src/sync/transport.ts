@@ -1,4 +1,5 @@
 import {
+  EVENTS_VERSION,
   PROTOCOL_VERSION,
   PullResponseSchema,
   PushResponseSchema,
@@ -84,11 +85,13 @@ export function httpTransport(apiUrl: string, fetchFn: typeof fetch): SyncTransp
       return PushResponseSchema.parse(await res.json());
     },
     async pull(since, limit) {
-      // Pulls declare the protocol too (M7): the server refuses old apps with 426.
+      // Pulls declare the protocol too (M7): the server refuses old apps with 426. And
+      // the event types this app can parse (D-348): it gets no others.
       const params = new URLSearchParams({
         since,
         limit: String(limit),
         protocolVersion: String(PROTOCOL_VERSION),
+        eventsVersion: String(EVENTS_VERSION),
       });
       const res = await call(`/sync/pull?${params.toString()}`);
       return PullResponseSchema.parse(await res.json());
